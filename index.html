@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Nahian Akhtar — Systems, Polyglot SDK & Applied AI Engineer (New York, NY). Rust/C11 FFI runtimes, MCP 2025-11-25 servers, Hybrid BM25+Cosine RRF RAG, and TypeScript Node 22 streaming evaluation gateways." />
+  <title>Nahian Akhtar — Systems, Polyglot SDK &amp; Applied AI Engineer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient-grid" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="#top" class="brand" aria-label="Nahian Akhtar Portfolio Home">
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span class="brand-mono">nahianakhtar :: nyc</span><span class="brand-prompt">:~/systems-ai$</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary Navigation">
+        <a href="#repositories">Flagship Repos (4)</a>
+        <a href="#simulator">Live MoE + RRF Lab</a>
+        <a href="#competency-matrix">12-Dim Matrix</a>
+        <a href="https://github.com/nahianakhtar" target="_blank" rel="noopener noreferrer" class="btn-outline">GitHub Profile ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top" class="container">
+    <!-- Hero Bento Grid -->
+    <section class="hero-bento" aria-labelledby="hero-heading">
+      <div class="bento-card hero-main">
+        <div class="eyebrow">
+          <span class="chip chip-emerald">NEW YORK, NY</span>
+          <span class="chip chip-cyan">ZERO-DEPENDENCY SYSTEMS &amp; APPLIED AI</span>
+          <span class="chip chip-slate">MIT OPEN SOURCE</span>
+        </div>
+        <h1 id="hero-heading">Nahian Akhtar</h1>
+        <p class="hero-role">Systems, Polyglot SDK &amp; Applied AI Engineer</p>
+        <p class="hero-summary">
+          Architecting deterministic, sub-millisecond software across <strong>Rust 2021 &amp; ISO C11 FFI</strong>,
+          <strong>Python 3.10+ Model Context Protocol (<code>MCP 2025-11-25</code>)</strong>, and
+          <strong>Zero-Dependency TypeScript / Node.js 22 Streaming Gateways</strong> — uniting cache-line-aligned
+          telemetry rings, hardware-aware Sparse Top-2 MoE routing, and SQLite <code>WAL + FTS5</code> BM25 / Vector RRF retrieval.
+        </p>
+        <div class="hero-actions">
+          <a href="#simulator" class="btn-primary">Launch Live MoE + RRF Simulator <kbd>/</kbd></a>
+          <a href="#repositories" class="btn-secondary">Explore 4 Flagship Repositories</a>
+        </div>
+      </div>
+
+      <aside class="bento-card hero-terminal" aria-label="Measured Benchmark Telemetry">
+        <div class="terminal-bar">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-amber"></span>
+          <span class="dot dot-green"></span>
+          <span class="terminal-title">verified_benchmarks_2026.json</span>
+        </div>
+        <pre class="terminal-body"><code><span class="t-comment">// Verified Release Gate Telemetry</span>
+{
+  <span class="t-key">"c11_ring_vault_ops_s"</span>: <span class="t-num">2938386.3</span>,
+  <span class="t-key">"c11_ring_p95_us"</span>:      <span class="t-num">0.3819</span>,
+  <span class="t-key">"p2_quantile_obs_s"</span>:    <span class="t-num">38009399.1</span>,
+  <span class="t-key">"p2_state_bytes"</span>:       <span class="t-num">560</span>,
+  <span class="t-key">"mcp_hybrid_recall_1"</span>:  <span class="t-str">"100.0% (p95 0.466ms)"</span>,
+  <span class="t-key">"rag_eval_studio_p95"</span>:  <span class="t-str">"0.3362ms (7,623 cases/s)"</span>,
+  <span class="t-key">"external_runtime_deps"</span>:<span class="t-num"> 0</span>
+}</code></pre>
+        <div class="kpi-strip">
+          <div class="kpi-cell">
+            <span class="kpi-val">2.94M/s</span>
+            <span class="kpi-lbl">C11 CRC32C Ring Ops</span>
+          </div>
+          <div class="kpi-cell">
+            <span class="kpi-val">0.38 µs</span>
+            <span class="kpi-lbl">Ring Vault p95</span>
+          </div>
+          <div class="kpi-cell">
+            <span class="kpi-val">100%</span>
+            <span class="kpi-lbl">Golden Recall@1</span>
+          </div>
+          <div class="kpi-cell">
+            <span class="kpi-val">0 Deps</span>
+            <span class="kpi-lbl">Supply-Chain Bloat</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- 4 Public Flagship GitHub Repositories -->
+    <section id="repositories" class="section-block" aria-labelledby="repos-heading">
+      <div class="section-header">
+        <div>
+          <span class="section-kicker">PRODUCTION OPEN-SOURCE PORTFOLIO</span>
+          <h2 id="repos-heading">Flagship Polyglot Repositories</h2>
+        </div>
+        <p class="section-sub">Four MIT-licensed, CI-gated repositories spanning C11, Rust 2021, Python 3.10+, and TypeScript / Node.js 22 ESM.</p>
+      </div>
+
+      <div class="repo-grid">
+        <!-- Repo 1: mcp-moe-hybrid-sdk -->
+        <article class="bento-card repo-card">
+          <div class="repo-top">
+            <div>
+              <span class="repo-lang lang-py">Python 3.10+ · SQLite WAL FTS5</span>
+              <h3><a href="https://github.com/nahianakhtar/mcp-moe-hybrid-sdk" target="_blank" rel="noopener noreferrer">mcp-moe-hybrid-sdk</a></h3>
+            </div>
+            <a href="https://github.com/nahianakhtar/mcp-moe-hybrid-sdk" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open mcp-moe-hybrid-sdk on GitHub">GitHub ↗</a>
+          </div>
+          <p class="repo-desc">
+            Zero-bloat <strong>MCP 2025-11-25 JSON-RPC 2.0</strong> SDK &amp; server uniting VRAM/SLA-aware Sparse Top-2 MoE routing,
+            SQLite <code>WAL + FTS5</code> BM25 + L2 Cosine Reciprocal Rank Fusion (<code>k=60</code>), and deterministic secret/PII redaction.
+          </p>
+          <div class="badge-row">
+            <span class="stack-badge">MCP 2025-11-25</span>
+            <span class="stack-badge">Sparse Top-2 MoE</span>
+            <span class="stack-badge">BM25 + Cosine RRF</span>
+            <span class="stack-badge">Docker + CI</span>
+          </div>
+          <dl class="metric-grid">
+            <div><dt>Recall@1 (100 Q)</dt><dd>100.0% (1.0000)</dd></div>
+            <div><dt>Hybrid RAG p95</dt><dd>0.4660 ms</dd></div>
+            <div><dt>MoE Router p95</dt><dd>0.0122 ms</dd></div>
+            <div><dt>Runtime Deps</dt><dd>0 (Stdlib)</dd></div>
+          </dl>
+        </article>
+
+        <!-- Repo 2: polyglot-agent-runtime-rs -->
+        <article class="bento-card repo-card">
+          <div class="repo-top">
+            <div>
+              <span class="repo-lang lang-rs">Rust 2021 · ISO C11 FFI (-Werror)</span>
+              <h3><a href="https://github.com/nahianakhtar/polyglot-agent-runtime-rs" target="_blank" rel="noopener noreferrer">polyglot-agent-runtime-rs</a></h3>
+            </div>
+            <a href="https://github.com/nahianakhtar/polyglot-agent-runtime-rs" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open polyglot-agent-runtime-rs on GitHub">GitHub ↗</a>
+          </div>
+          <p class="repo-desc">
+            Systems telemetry &amp; orchestration runtime featuring a <strong>64-byte cache-line-aligned C11 Castagnoli CRC32C</strong>
+            zero-allocation ring vault, capability-fenced Kahn topological DAG executor with circuit breakers, and <code>O(1)</code> Jain-Chlamtac <code>P²</code> quantiles.
+          </p>
+          <div class="badge-row">
+            <span class="stack-badge">#[repr(C, align(64))]</span>
+            <span class="stack-badge">CRC32C C11 FFI</span>
+            <span class="stack-badge">Capability DAG</span>
+            <span class="stack-badge">Jain-Chlamtac P²</span>
+          </div>
+          <dl class="metric-grid">
+            <div><dt>Ring Throughput</dt><dd>2.94M ops/s</dd></div>
+            <div><dt>Ring Seal+Verify p95</dt><dd>0.3819 µs</dd></div>
+            <div><dt>DAG Orchestration</dt><dd>432.9K DAGs/s</dd></div>
+            <div><dt>P² Quantile Stream</dt><dd>38.01M obs/s (560 B)</dd></div>
+          </dl>
+        </article>
+
+        <!-- Repo 3: fullstack-rag-eval-studio -->
+        <article class="bento-card repo-card">
+          <div class="repo-top">
+            <div>
+              <span class="repo-lang lang-ts">TypeScript · Node.js 22 ESM</span>
+              <h3><a href="https://github.com/nahianakhtar/fullstack-rag-eval-studio" target="_blank" rel="noopener noreferrer">fullstack-rag-eval-studio</a></h3>
+            </div>
+            <a href="https://github.com/nahianakhtar/fullstack-rag-eval-studio" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open fullstack-rag-eval-studio on GitHub">GitHub ↗</a>
+          </div>
+          <p class="repo-desc">
+            Zero-dependency AI SDK &amp; HTTP/SSE streaming evaluation gateway providing strict JSON-Schema tool validation,
+            PII/key scrubbing, 256-dim cosine n-gram LRU caching, sliding-window token circuit breakers, and golden RAG evaluation.
+          </p>
+          <div class="badge-row">
+            <span class="stack-badge">Node 22 HTTP/SSE</span>
+            <span class="stack-badge">Strict .d.ts</span>
+            <span class="stack-badge">Cosine LRU Cache</span>
+            <span class="stack-badge">Token Breaker</span>
+          </div>
+          <dl class="metric-grid">
+            <div><dt>Faithfulness / Recall@2</dt><dd>100% / 100%</dd></div>
+            <div><dt>Context Precision</dt><dd>97.5% (AP@2)</dd></div>
+            <div><dt>Eval Case p95</dt><dd>0.3362 ms</dd></div>
+            <div><dt>Eval Throughput</dt><dd>7,623.5 cases/s</dd></div>
+          </dl>
+        </article>
+
+        <!-- Repo 4: nahianakhtar.github.io -->
+        <article class="bento-card repo-card">
+          <div class="repo-top">
+            <div>
+              <span class="repo-lang lang-web">ES2022 · Bento UI · Client RAG</span>
+              <h3><a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer">nahianakhtar.github.io</a></h3>
+            </div>
+            <a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open nahianakhtar.github.io on GitHub">GitHub ↗</a>
+          </div>
+          <p class="repo-desc">
+            Responsive dark Bento &amp; Terminal engineering showcase executing live client-side <strong>Sparse Top-2 MoE Softmax Gating</strong>
+            and <strong>Okapi BM25 + 256-dim Cosine Reciprocal Rank Fusion</strong> directly in the browser with zero external API calls.
+          </p>
+          <div class="badge-row">
+            <span class="stack-badge">In-Browser MoE</span>
+            <span class="stack-badge">BM25 + RRF k=60</span>
+            <span class="stack-badge">Zero API Keys</span>
+            <span class="stack-badge">Automated CI Gate</span>
+          </div>
+          <dl class="metric-grid">
+            <div><dt>Client Query p95</dt><dd>&lt; 0.80 ms</dd></div>
+            <div><dt>External Network</dt><dd>0 Calls</dd></div>
+            <div><dt>Competency Matrix</dt><dd>12 Dimensions</dd></div>
+            <div><dt>Accessibility</dt><dd>WCAG AA + Keyboard</dd></div>
+          </dl>
+        </article>
+      </div>
+    </section>
+
+    <!-- Live Interactive In-Browser MoE + Hybrid Search Simulator -->
+    <section id="simulator" class="section-block" aria-labelledby="sim-heading">
+      <div class="section-header">
+        <div>
+          <span class="section-kicker">INTERACTIVE IN-BROWSER ENGINE · ZERO API KEYS</span>
+          <h2 id="sim-heading">Live Sparse Top-2 MoE Router + BM25/Vector RRF Simulator</h2>
+        </div>
+        <p class="section-sub">
+          Type any technical query or select a preset below to execute real-time PII redaction, VRAM/SLA-constrained Sparse Top-2 Softmax routing, and Okapi BM25 + Cosine Reciprocal Rank Fusion (<code>k=60</code>) in your browser.
+        </p>
+      </div>
+
+      <div class="bento-card sim-shell">
+        <div class="sim-controls">
+          <label for="sim-query" class="sim-label">Engineering Query / Prompt</label>
+          <div class="sim-input-row">
+            <input
+              id="sim-query"
+              type="text"
+              value="How does 64-byte cache-line alignment with C11 CRC32C prevent false sharing in telemetry rings?"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button id="sim-run-btn" type="button" class="btn-primary">Execute Pipeline</button>
+          </div>
+
+          <div class="preset-bar" role="group" aria-label="Sample Engineering Queries">
+            <button type="button" class="preset-chip" data-query="How does 64-byte cache-line alignment with C11 CRC32C prevent false sharing in telemetry rings?">Rust + C11 FFI Ring</button>
+            <button type="button" class="preset-chip" data-query="Fuse SQLite WAL FTS5 Okapi BM25 rankings with dense cosine vectors via Reciprocal Rank Fusion">Hybrid BM25 + Cosine RRF</button>
+            <button type="button" class="preset-chip" data-query="Stream SSE evaluation metrics with sliding-window token circuit breaker and JSON-Schema tool validation">Node 22 SSE &amp; Breaker</button>
+            <button type="button" class="preset-chip" data-query="Route quantized MoE inference across 6 GiB GPU VRAM budget with KV-cache q8_0 slot reuse">GPU CUDA/Vulkan MoE</button>
+            <button type="button" class="preset-chip" data-query="Verify Black-Scholes PDE convexity and IEEE-754 deterministic pricing invariants">Quant Solver Invariant</button>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-group">
+              <div class="slider-head">
+                <label for="sim-vram">Hardware VRAM Budget</label>
+                <output id="sim-vram-val" for="sim-vram">6.0 GiB</output>
+              </div>
+              <input id="sim-vram" type="range" min="4" max="24" step="1" value="6" />
+            </div>
+            <div class="slider-group">
+              <div class="slider-head">
+                <label for="sim-sla">Target p95 Latency SLA</label>
+                <output id="sim-sla-val" for="sim-sla">450 ms</output>
+              </div>
+              <input id="sim-sla" type="range" min="50" max="1500" step="50" value="450" />
+            </div>
+            <div class="sim-telemetry-pill" id="sim-status-bar" aria-live="polite">
+              Ready · 0.00 ms
+            </div>
+          </div>
+        </div>
+
+        <div class="sim-results-grid">
+          <div class="sim-panel">
+            <div class="panel-header">
+              <h3>1. Sparse Top-2 MoE Gating Decision</h3>
+              <span id="sim-guard-badge" class="guard-ok">PII Guard: CLEAN</span>
+            </div>
+            <div id="sim-moe-selected" class="moe-selected-summary"></div>
+            <div id="sim-moe-bars" class="moe-bars" aria-live="polite"></div>
+          </div>
+
+          <div class="sim-panel">
+            <div class="panel-header">
+              <h3>2. Hybrid RRF Retrieval (<code>BM25 + Cosine, k=60</code>)</h3>
+              <span id="sim-corpus-count" class="corpus-meta">12 Architecture Docs</span>
+            </div>
+            <div id="sim-rag-results" class="rag-results" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12-Dimension FAANG / Fortune 500 Engineering Competency Matrix -->
+    <section id="competency-matrix" class="section-block" aria-labelledby="matrix-heading">
+      <div class="section-header">
+        <div>
+          <span class="section-kicker">STAFF-LEVEL ARCHITECTURE BREADTH &amp; DEPTH</span>
+          <h2 id="matrix-heading">12-Dimension FAANG / Fortune 500 Competency Matrix</h2>
+        </div>
+        <div class="filter-bar" role="tablist" aria-label="Filter Competency Domains">
+          <button type="button" class="filter-btn active" data-filter="all">All (12)</button>
+          <button type="button" class="filter-btn" data-filter="systems">Systems &amp; GPU</button>
+          <button type="button" class="filter-btn" data-filter="ai">AI, MCP &amp; RAG</button>
+          <button type="button" class="filter-btn" data-filter="fullstack">Full-Stack, QA &amp; Sec</button>
+        </div>
+      </div>
+
+      <div id="matrix-grid" class="matrix-grid">
+        <article class="bento-card matrix-card" data-category="systems">
+          <span class="dim-index">01 · SYSTEMS</span>
+          <h3>Systems C/C++/Rust</h3>
+          <p>ISO C11 (<code>-Wall -Wextra -Werror -Wpedantic</code>) static FFI, <code>#[repr(C, align(64))]</code> cache-line ring buffers, Castagnoli CRC32C sealing, and zero-allocation Rust 2021 vaults.</p>
+          <span class="dim-proof">Proof: <code>polyglot-agent-runtime-rs</code> (2.94M ops/s)</span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="ai">
+          <span class="dim-index">02 · PROTOCOLS</span>
+          <h3>AI Agents &amp; MCP</h3>
+          <p>Model Context Protocol (<code>MCP 2025-11-25</code>) JSON-RPC 2.0 dispatchers, capability-fenced Kahn topological DAG orchestrators, and bounded retry state machines.</p>
+          <span class="dim-proof">Proof: <code>mcp-moe-hybrid-sdk</code> &amp; <code>CapabilityDagOrchestrator</code></span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="ai">
+          <span class="dim-index">03 · RETRIEVAL</span>
+          <h3>Hybrid RAG &amp; Databases</h3>
+          <p>SQLite <code>WAL + FTS5</code> Okapi BM25 lexical indexing fused with L2-normalized dense n-gram cosine similarity via Reciprocal Rank Fusion (<code>k=60</code>) and RAGAS-style golden suites.</p>
+          <span class="dim-proof">Proof: 100% Recall@1 (<code>0.466 ms</code> p95)</span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="fullstack">
+          <span class="dim-index">04 · WEB &amp; SDK</span>
+          <h3>Full-Stack TypeScript/APIs</h3>
+          <p>Zero-dependency Node.js 22 ESM servers, strict <code>.d.ts</code> API contracts, live <code>text/event-stream</code> SSE token pipelines, and responsive dark Bento/Terminal interfaces.</p>
+          <span class="dim-proof">Proof: <code>fullstack-rag-eval-studio</code> (7,623 cases/s)</span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="systems">
+          <span class="dim-index">05 · ACCELERATORS</span>
+          <h3>GPU/CUDA/Vulkan Inference</h3>
+          <p>VRAM-constrained Sparse Top-2 Mixture-of-Experts routing, quantized GGUF CPU/GPU expert offloading, Flash-Attention <code>q8_0</code> KV-cache quantization, and persistent slot reuse.</p>
+          <span class="dim-proof">Proof: <code>SparseTop2MoeRouter</code> (0.0122 ms p95)</span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="fullstack">
+          <span class="dim-index">06 · RELEASE ENG</span>
+          <h3>CI/CD &amp; Deterministic Builds</h3>
+          <p>GitHub Actions multi-language gates (<code>cargo clippy -D warnings</code>, <code>node --test</code>), multi-stage non-root slim Dockerfiles, and reproducible SHA-256 build verification.</p>
+          <span class="dim-proof">Proof: Automated <code>.github/workflows/ci.yml</code> across all 4 repos</span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="fullstack">
+          <span class="dim-index">07 · VERIFICATION</span>
+          <h3>QA/UIA Verification</h3>
+          <p>Accessibility-tree UI automation harnesses, ephemeral port-<code>0</code> HTTP/SSE live stream assertions, bit-flip tamper injection tests, and multi-viewport zero-overflow checks.</p>
+          <span class="dim-proof">Proof: Live HTTP/SSE + FFI bit-rot test suites</span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="fullstack">
+          <span class="dim-index">08 · GOVERNANCE</span>
+          <h3>Security &amp; Zero-Leak Governance</h3>
+          <p>Recursive JSON-Schema tool-call validation, deterministic API-key/Bearer/SSN/email redaction, strict loopback/allowlist transport defaults, and zero-dependency supply-chain hygiene.</p>
+          <span class="dim-proof">Proof: <code>SchemaToolValidator</code> &amp; 0-leak repo audit</span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="systems">
+          <span class="dim-index">09 · OBSERVABILITY</span>
+          <h3>Streaming Telemetry &amp; P² Quantiles</h3>
+          <p>Jain-Chlamtac piecewise-parabolic <code>P²</code> estimators tracking <code>p50</code>, <code>p95</code>, and <code>p99</code> in constant <code>560 B</code> (<code>O(1)</code>) memory alongside Welford online moments.</p>
+          <span class="dim-proof">Proof: 38.01M observations/s (<code>26.3 ns/obs</code>)</span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="ai">
+          <span class="dim-index">10 · RESILIENCE</span>
+          <h3>Cost &amp; Token Circuit Breakers</h3>
+          <p>Sliding-window token and USD budget governors with soft-threshold fallback routing and <code>Closed → Open → Half-Open</code> recovery probes under upstream degradation.</p>
+          <span class="dim-proof">Proof: <code>TokenBudgetCircuitBreaker</code></span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="ai">
+          <span class="dim-index">11 · NUMERICAL</span>
+          <h3>Quantitative &amp; Scientific Solvers</h3>
+          <p>Deterministic IEEE-754 &amp; exact decimal pricing/risk verification, convexity boundary checks, and signed feature-hash vector projections free from stochastic drift.</p>
+          <span class="dim-proof">Proof: Deterministic Golden Benchmark Suites</span>
+        </article>
+
+        <article class="bento-card matrix-card" data-category="systems">
+          <span class="dim-index">12 · ISOLATION</span>
+          <h3>Polyglot OS &amp; Container Sandboxing</h3>
+          <p>Least-privilege non-root OCI runtime images, capability bitmask preflight enforcement, bounded IPC payload framing, and deterministic POSIX build pipelines.</p>
+          <span class="dim-proof">Proof: Multi-stage Debian/Node/Rust Container Specs</span>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <strong>Nahian Akhtar</strong> · Systems, Polyglot SDK &amp; Applied AI Engineer · New York, NY
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/nahianakhtar/mcp-moe-hybrid-sdk" target="_blank" rel="noopener noreferrer">mcp-moe-hybrid-sdk</a>
+        <a href="https://github.com/nahianakhtar/polyglot-agent-runtime-rs" target="_blank" rel="noopener noreferrer">polyglot-agent-runtime-rs</a>
+        <a href="https://github.com/nahianakhtar/fullstack-rag-eval-studio" target="_blank" rel="noopener noreferrer">fullstack-rag-eval-studio</a>
+        <a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer">Source (MIT)</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

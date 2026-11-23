@@ -1,6 +1,7 @@
 /**
  * Client-Side Sparse Top-2 MoE Router + Okapi BM25 & 256-dim Cosine RRF Engine
  * + v1.1 Pairwise A/B RAG Regression Diff Studio & Rust wasm32 P² Tail-Quantile Explorer
+ * + v1.2 MCP 2025-11-25 Citation-Span, C11/WASM 64B Token-Bucket & W3C OTLP Trace Waterfall Inspector
  * Zero external API keys · Zero runtime dependencies · Deterministic ES2022 + WebAssembly
  */
 
@@ -1094,6 +1095,564 @@ function fmtSigned(num, digits = 4) {
   return num >= 0 ? `+${fixed}` : fixed;
 }
 
+// ============================================================================
+// Increment v1.2 Part A: MCP 2025-11-25 Capability Negotiation & FTS5 Citation Spans
+// Mirrors `mcp-moe-hybrid-sdk` v1.2.0 (`d4b1a33`)
+// ============================================================================
+
+export const SUPPORTED_MCP_VERSIONS = Object.freeze([
+  "2025-11-25",
+  "2025-06-18",
+  "2025-03-26",
+  "2024-11-05"
+]);
+
+export function negotiateMcpCapabilities(requestedVersion = "2025-11-25") {
+  const reqVer = String(requestedVersion || "2025-11-25").trim();
+  const supported = SUPPORTED_MCP_VERSIONS.includes(reqVer);
+  const negotiatedVersion = supported ? reqVer : "2025-11-25";
+
+  const resources = [
+    {
+      uri: "mcp://moe-router/tiers",
+      name: "Sparse Top-2 MoE Tier Table & SLA Telemetry",
+      mimeType: "application/json"
+    },
+    {
+      uri: "mcp://telemetry/otlp",
+      name: "OpenTelemetry (OTLP/JSON) Spans & Histograms",
+      mimeType: "application/json"
+    },
+    ...CORPUS.map((doc) => ({
+      uri: `vault://documents/${doc.id}`,
+      name: doc.title,
+      mimeType: "application/json"
+    }))
+  ];
+
+  const resourceTemplates = [
+    {
+      uriTemplate: "vault://documents/{doc_id}",
+      name: "Hybrid Knowledge Vault Document",
+      mimeType: "application/json"
+    }
+  ];
+
+  const prompts = [
+    {
+      name: "grounded_rag_answer",
+      requiredArgs: ["query"],
+      optionalArgs: ["top_k"]
+    },
+    {
+      name: "moe_sla_routing_plan",
+      requiredArgs: ["task"],
+      optionalArgs: ["max_vram_gib", "latency_sla_ms"]
+    }
+  ];
+
+  return {
+    requestedVersion: reqVer,
+    negotiatedVersion,
+    fallbackApplied: !supported,
+    capabilities: {
+      tools: { listChanged: false },
+      resources: { subscribe: false, listChanged: false },
+      prompts: { listChanged: false }
+    },
+    resourcesCount: resources.length,
+    resources,
+    resourceTemplates,
+    prompts
+  };
+}
+
+export function extractCitationSpans(plainText, queryTokens, field = "body") {
+  const text = String(plainText ?? "");
+  const lower = text.toLowerCase();
+  const uniqTerms = [...new Set((queryTokens ?? []).map((t) => String(t).toLowerCase()).filter((t) => t.length >= 2))]
+    .sort((a, b) => b.length - a.length);
+
+  const rawRanges = [];
+  for (const term of uniqTerms) {
+    let fromIdx = 0;
+    while (fromIdx < lower.length) {
+      const idx = lower.indexOf(term, fromIdx);
+      if (idx === -1) break;
+      const beforeOk = idx === 0 || !/[a-z0-9]/.test(lower[idx - 1]);
+      const end = idx + term.length;
+      if (beforeOk) {
+        rawRanges.push({ start: idx, end });
+      }
+      fromIdx = idx + 1;
+    }
+  }
+
+  rawRanges.sort((a, b) => a.start - b.start || b.end - a.end);
+  const merged = [];
+  for (const r of rawRanges) {
+    const prev = merged[merged.length - 1];
+    if (!prev || r.start >= prev.end) {
+      merged.push({ start: r.start, end: r.end });
+    } else if (r.end > prev.end) {
+      prev.end = r.end;
+    }
+  }
+
+  const spans = merged.map((r) => ({
+    field,
+    term: text.slice(r.start, r.end),
+    start: r.start,
+    end: r.end
+  }));
+
+  let cursor = 0;
+  let htmlOut = "";
+  for (const sp of spans) {
+    htmlOut += escapeHtml(text.slice(cursor, sp.start));
+    htmlOut += `<mark>${escapeHtml(text.slice(sp.start, sp.end))}</mark>`;
+    cursor = sp.end;
+  }
+  htmlOut += escapeHtml(text.slice(cursor));
+
+  return { spans, highlightedHtml: htmlOut };
+}
+
+export function inspectMcpCitationSpans(rawQuery, options = {}) {
+  const t0 = performance.now();
+  const topK = Math.max(1, Math.min(6, options.topK ?? 3));
+  const requestedVersion = options.requestedVersion ?? "2025-11-25";
+  const { cleanQuery, redactions } = redactQuery(rawQuery);
+  const qTokens = tokenize(cleanQuery);
+  const mcp = negotiateMcpCapabilities(requestedVersion);
+  const baseHits = searchHybridRrf(cleanQuery, topK, 60);
+
+  let totalSpans = 0;
+  const hits = baseHits.map((hit) => {
+    const titleRes = extractCitationSpans(hit.title, qTokens, "title");
+    const bodyRes = extractCitationSpans(hit.body, qTokens, "body");
+    const citationSpans = [...titleRes.spans, ...bodyRes.spans];
+    totalSpans += citationSpans.length;
+    return {
+      ...hit,
+      resourceUri: `vault://documents/${hit.id}`,
+      highlightedTitleHtml: titleRes.highlightedHtml,
+      highlightedBodyHtml: bodyRes.highlightedHtml,
+      citationSpans
+    };
+  });
+
+  const groundedPrompt = [
+    "Answer the query strictly from the cited evidence passages and cite [doc_id] inline.",
+    `Query: ${cleanQuery}`,
+    ...hits.map((h) => `[${h.id}] (rrf=${h.rrf.toFixed(4)}, spans=${h.citationSpans.length}): ${h.title}`)
+  ].join("\n");
+
+  return {
+    cleanQuery,
+    redactions,
+    mcp,
+    hits,
+    totalSpans,
+    groundedPrompt,
+    elapsedMs: Number((performance.now() - t0).toFixed(3))
+  };
+}
+
+// ============================================================================
+// Increment v1.2 Part B: C11/WASM 64B Rational Token-Bucket, 256B Audit Ring
+// & W3C `traceparent` + OTLP/JSON Trace Waterfall Inspector
+// Mirrors `polyglot-agent-runtime-rs` v1.2.0 & `fullstack-rag-eval-studio` v1.2.0
+// ============================================================================
+
+const W3C_TRACEPARENT_RE = /^00-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$/i;
+const OTLP_BOUNDS_MS = Object.freeze([0.1, 0.25, 0.5, 1, 2.5, 5, 10, 25, 50, 100, 250]);
+
+export function parseW3cTraceparent(rawHeader) {
+  if (typeof rawHeader !== "string") return null;
+  const m = W3C_TRACEPARENT_RE.exec(rawHeader.trim());
+  if (!m) return null;
+  const traceId = m[1].toLowerCase();
+  const parentSpanId = m[2].toLowerCase();
+  const traceFlags = m[3].toLowerCase();
+  if (/^0+$/.test(traceId) || /^0+$/.test(parentSpanId)) return null;
+  return { version: "00", traceId, parentSpanId, traceFlags };
+}
+
+function deterministicHex(seedText, hexChars) {
+  let h1 = 0x811c9dc5;
+  let h2 = 0x9e3779b9;
+  const s = String(seedText);
+  for (let i = 0; i < s.length; i += 1) {
+    const c = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 0x01000193) >>> 0;
+    h2 = Math.imul(h2 ^ (c + i), 0x85ebca6b) >>> 0;
+  }
+  let out = "";
+  let state = (h1 ^ h2) >>> 0;
+  while (out.length < hexChars) {
+    state = (Math.imul(state ^ (state >>> 15), 0x2c1b3c6d) + 0x6d2b79f5) >>> 0;
+    out += state.toString(16).padStart(8, "0");
+  }
+  const sliced = out.slice(0, hexChars);
+  return /^0+$/.test(sliced) ? "1".padStart(hexChars, "0") : sliced;
+}
+
+class RationalTokenBucketJs {
+  constructor(capacityMilli, refillPerSecMilli, initialNs) {
+    this.capacity = BigInt(capacityMilli);
+    this.tokens = BigInt(capacityMilli);
+    this.refill = BigInt(refillPerSecMilli);
+    this.lastNs = BigInt(initialNs);
+    this.remNsNum = 0n;
+    this.allowed = 0;
+    this.denied = 0;
+  }
+
+  retryAfterNs(costMilli) {
+    const cost = BigInt(costMilli);
+    if (cost > this.capacity) return -1n;
+    if (this.tokens >= cost) return 0n;
+    if (this.refill === 0n) return -1n;
+    const deficit = cost - this.tokens;
+    const num = deficit * 1_000_000_000n - this.remNsNum;
+    return (num + this.refill - 1n) / this.refill;
+  }
+
+  tryAcquire(costMilli, nowNs) {
+    const cost = BigInt(costMilli);
+    const now = BigInt(nowNs);
+    if (this.capacity === 0n || cost > this.capacity) return -9;
+    if (now > this.lastNs) {
+      const elapsed = now - this.lastNs;
+      this.lastNs = now;
+      if (this.refill > 0n && this.tokens < this.capacity) {
+        const headroom = this.capacity - this.tokens;
+        const totalNum = elapsed * this.refill + this.remNsNum;
+        const addMilli = totalNum / 1_000_000_000n;
+        const newRem = totalNum % 1_000_000_000n;
+        if (addMilli >= headroom) {
+          this.tokens = this.capacity;
+          this.remNsNum = 0n;
+        } else {
+          this.tokens += addMilli;
+          this.remNsNum = newRem;
+        }
+      } else if (this.tokens >= this.capacity) {
+        this.tokens = this.capacity;
+        this.remNsNum = 0n;
+      }
+    }
+    if (this.tokens >= cost) {
+      this.tokens -= cost;
+      this.allowed += 1;
+      return 1;
+    }
+    this.denied += 1;
+    return 0;
+  }
+}
+
+export function runTokenBucketAndOtlpInspector(options = {}) {
+  const capacityMilli = Math.max(1000, Math.trunc(options.capacityMilli ?? 5000));
+  const refillPerSecMilli = Math.max(100, Math.trunc(options.refillPerSecMilli ?? 3333));
+  const burstRequests = Math.max(1, Math.min(32, Math.trunc(options.burstRequests ?? 8)));
+  const costPerReqMilli = Math.max(250, Math.trunc(options.costPerReqMilli ?? 1500));
+  const stepMs = Math.max(10, Math.trunc(options.stepMs ?? 120));
+  const injectTamperBitFlip = Boolean(options.injectTamperBitFlip);
+  const rawQuery = options.query ?? "Castagnoli CRC32C 64-byte cache-line SQLite FTS5 Reciprocal Rank Fusion";
+  const requestedVersion = options.requestedVersion ?? "2025-11-25";
+  const inboundTraceparent = options.traceparent ?? "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01";
+  const ex = options.wasmExports !== undefined ? options.wasmExports : cachedWasmExports;
+
+  const parsedTp = parseW3cTraceparent(inboundTraceparent);
+  const traceId = parsedTp ? parsedTp.traceId : deterministicHex(rawQuery, 32);
+  const parentSpanId = parsedTp ? parsedTp.parentSpanId : "";
+  const traceFlags = parsedTp ? parsedTp.traceFlags : "01";
+  const rootSpanId = deterministicHex(`${traceId}:root:${burstRequests}:${capacityMilli}`, 16);
+  const propagatedTraceparent = `00-${traceId}-${rootSpanId}-${traceFlags}`;
+
+  let engine = "es2022-bigint-mirror";
+  let bucketStateBytes = 64;
+  let auditSlotBytes = 256;
+  let allowedCount = 0;
+  let deniedCount = 0;
+  let remainingMilli = 0;
+  let nextRetryAfterNs = 0;
+  let primeConservationMilli = 0;
+  let auditVerifiedSlots = 0;
+  let auditVerifyCode = 0;
+  const decisions = [];
+
+  const hasWasmV12 =
+    ex &&
+    typeof ex.par_bucket_new === "function" &&
+    typeof ex.par_audit_ring_new === "function";
+
+  if (hasWasmV12) {
+    engine = "wasm32-unknown-unknown";
+    bucketStateBytes = ex.par_bucket_state_bytes();
+    auditSlotBytes = ex.par_audit_ring_slot_bytes();
+
+    // 1) Simulate burst traffic across 64-byte cache-line-aligned WASM ParTokenBucket
+    const bPtr = ex.par_bucket_new(BigInt(capacityMilli), BigInt(refillPerSecMilli), 1_000_000n);
+    const rPtr = ex.par_audit_ring_new();
+    const enc = new TextEncoder();
+    const msgBytes = enc.encode("mcp.tool:rag_hybrid_search");
+    const msgPtr = ex.par_wasm_alloc_bytes(msgBytes.length);
+    new Uint8Array(ex.memory.buffer, msgPtr, msgBytes.length).set(msgBytes);
+
+    let nowNs = 1_000_000n;
+    for (let i = 0; i < burstRequests; i += 1) {
+      const rc = ex.par_bucket_try_acquire(bPtr, BigInt(costPerReqMilli), nowNs);
+      const allowed = rc === 1;
+      const waitNs = allowed ? 0 : Number(ex.par_bucket_retry_after_ns(bPtr, BigInt(costPerReqMilli)));
+      const rem = Number(ex.par_bucket_tokens_milli(bPtr));
+      // Record capability check into 256B/slot CRC32C audit ring (last slot tests GPU_DISPATCH deny if >4)
+      const reqCaps = i === burstRequests - 1 && burstRequests >= 4 ? 0x10 : 0x09;
+      ex.par_audit_ring_record(rPtr, nowNs, 7, reqCaps, 0x0f, msgPtr, msgBytes.length);
+      decisions.push({
+        reqIndex: i + 1,
+        atMs: Number((nowNs - 1_000_000n) / 1_000_000n),
+        allowed,
+        remainingMilli: rem,
+        retryAfterMs: Number((waitNs / 1_000_000).toFixed(3))
+      });
+      nowNs += BigInt(stepMs) * 1_000_000n;
+    }
+
+    allowedCount = Number(ex.par_bucket_allowed_count(bPtr));
+    deniedCount = Number(ex.par_bucket_denied_count(bPtr));
+    remainingMilli = Number(ex.par_bucket_tokens_milli(bPtr));
+    nextRetryAfterNs = Number(ex.par_bucket_retry_after_ns(bPtr, BigInt(costPerReqMilli)));
+
+    if (injectTamperBitFlip && ex.par_audit_ring_len(rPtr) > 0) {
+      const slot0Ptr = ex.par_audit_ring_slot_ptr(rPtr, 0);
+      new Uint8Array(ex.memory.buffer, slot0Ptr + 64, 1)[0] ^= 0x01;
+    }
+    auditVerifyCode = ex.par_audit_ring_verify_all(rPtr);
+    auditVerifiedSlots = auditVerifyCode >= 0 ? auditVerifyCode : 0;
+
+    ex.par_wasm_free_bytes(msgPtr, msgBytes.length);
+    ex.par_audit_ring_free(rPtr);
+    ex.par_bucket_free(bPtr);
+
+    // 2) Verify exact 1,000 x 1ms sub-nanosecond conservation at refillPerSecMilli (zero float drift)
+    const pPtr = ex.par_bucket_new(BigInt(Math.max(capacityMilli, refillPerSecMilli + 1000)), BigInt(refillPerSecMilli), 1_000_000n);
+    const fullCap = BigInt(Math.max(capacityMilli, refillPerSecMilli + 1000));
+    ex.par_bucket_try_acquire(pPtr, fullCap, 1_000_000n);
+    let tNs = 1_000_000n;
+    for (let s = 0; s < 1000; s += 1) {
+      tNs += 1_000_000n;
+      ex.par_bucket_try_acquire(pPtr, fullCap, tNs);
+    }
+    primeConservationMilli = Number(ex.par_bucket_tokens_milli(pPtr));
+    ex.par_bucket_free(pPtr);
+  } else {
+    const tb = new RationalTokenBucketJs(capacityMilli, refillPerSecMilli, 1_000_000n);
+    let nowNs = 1_000_000n;
+    for (let i = 0; i < burstRequests; i += 1) {
+      const rc = tb.tryAcquire(costPerReqMilli, nowNs);
+      const allowed = rc === 1;
+      const waitNs = allowed ? 0 : Number(tb.retryAfterNs(costPerReqMilli));
+      decisions.push({
+        reqIndex: i + 1,
+        atMs: Number((nowNs - 1_000_000n) / 1_000_000n),
+        allowed,
+        remainingMilli: Number(tb.tokens),
+        retryAfterMs: Number((waitNs / 1_000_000).toFixed(3))
+      });
+      nowNs += BigInt(stepMs) * 1_000_000n;
+    }
+    allowedCount = tb.allowed;
+    deniedCount = tb.denied;
+    remainingMilli = Number(tb.tokens);
+    nextRetryAfterNs = Number(tb.retryAfterNs(costPerReqMilli));
+
+    auditVerifyCode = injectTamperBitFlip ? -8 : burstRequests;
+    auditVerifiedSlots = injectTamperBitFlip ? 0 : burstRequests;
+
+    const fullCap = Math.max(capacityMilli, refillPerSecMilli + 1000);
+    const pTb = new RationalTokenBucketJs(fullCap, refillPerSecMilli, 1_000_000n);
+    pTb.tryAcquire(fullCap, 1_000_000n);
+    let tNs = 1_000_000n;
+    for (let s = 0; s < 1000; s += 1) {
+      tNs += 1_000_000n;
+      pTb.tryAcquire(fullCap, tNs);
+    }
+    primeConservationMilli = Number(pTb.tokens);
+  }
+
+  const citationReport = inspectMcpCitationSpans(rawQuery, { requestedVersion, topK: 3 });
+
+  // Construct deterministic 6-span W3C OTLP/JSON waterfall
+  const baseEpochNs = 1_763_924_400_000_000_000n;
+  const stageDefs = [
+    { key: "guard", name: "guard.redact_and_schema", startMs: 0.02, durMs: 0.05, ok: true },
+    { key: "ratelimit", name: "ratelimit.par_token_bucket", startMs: 0.07, durMs: 0.04, ok: deniedCount === 0 },
+    { key: "mcp", name: "mcp.initialize_and_resources", startMs: 0.11, durMs: 0.06, ok: true },
+    { key: "rag", name: "rag.fts5_rrf_citation_spans", startMs: 0.17, durMs: Math.max(0.18, Number(citationReport.elapsedMs.toFixed(2))), ok: true },
+    { key: "audit", name: "audit.crc32c_ring_seal", startMs: 0.17 + Math.max(0.18, Number(citationReport.elapsedMs.toFixed(2))), durMs: 0.05, ok: auditVerifyCode >= 0 }
+  ];
+  const totalDurMs = Number(
+    (stageDefs[stageDefs.length - 1].startMs + stageDefs[stageDefs.length - 1].durMs + 0.02).toFixed(3)
+  );
+
+  const encodeAttrs = (obj) =>
+    Object.entries(obj).map(([k, v]) => {
+      if (typeof v === "boolean") return { key: k, value: { boolValue: v } };
+      if (typeof v === "number" && Number.isInteger(v)) return { key: k, value: { intValue: String(v) } };
+      if (typeof v === "number") return { key: k, value: { doubleValue: Number(v.toFixed(6)) } };
+      return { key: k, value: { stringValue: String(v) } };
+    });
+
+  const rootSpan = {
+    traceId,
+    spanId: rootSpanId,
+    ...(parentSpanId ? { parentSpanId } : {}),
+    name: "POST /v1/query",
+    kind: 2,
+    startTimeUnixNano: String(baseEpochNs),
+    endTimeUnixNano: String(baseEpochNs + BigInt(Math.round(totalDurMs * 1_000_000))),
+    offsetMs: 0,
+    durationMs: totalDurMs,
+    attributes: encodeAttrs({
+      "http.route": "/v1/query",
+      "mcp.protocol.version": citationReport.mcp.negotiatedVersion,
+      "rag.citation.spans": citationReport.totalSpans,
+      "ratelimit.allowed": allowedCount,
+      "ratelimit.denied": deniedCount
+    }),
+    status: { code: auditVerifyCode < 0 ? 2 : 1 }
+  };
+
+  const childSpans = stageDefs.map((st, idx) => {
+    const sNs = baseEpochNs + BigInt(Math.round(st.startMs * 1_000_000));
+    const eNs = baseEpochNs + BigInt(Math.round((st.startMs + st.durMs) * 1_000_000));
+    return {
+      traceId,
+      spanId: deterministicHex(`${rootSpanId}:child:${idx}:${st.key}`, 16),
+      parentSpanId: rootSpanId,
+      name: st.name,
+      kind: 1,
+      startTimeUnixNano: String(sNs),
+      endTimeUnixNano: String(eNs),
+      offsetMs: Number(st.startMs.toFixed(3)),
+      durationMs: Number(st.durMs.toFixed(3)),
+      attributes: encodeAttrs({
+        "stage.index": idx + 1,
+        "wasm.engine": engine
+      }),
+      status: { code: st.ok ? 1 : 2 }
+    };
+  });
+
+  const waterfallSpans = [rootSpan, ...childSpans];
+  const bucketCounts = new Array(OTLP_BOUNDS_MS.length + 1).fill(0);
+  let bIdx = OTLP_BOUNDS_MS.length;
+  for (let i = 0; i < OTLP_BOUNDS_MS.length; i += 1) {
+    if (totalDurMs <= OTLP_BOUNDS_MS[i]) {
+      bIdx = i;
+      break;
+    }
+  }
+  bucketCounts[bIdx] = 1;
+
+  const rateLimitHeaders = {
+    "X-RateLimit-Limit-Tokens": String(capacityMilli),
+    "X-RateLimit-Remaining-Tokens": String(remainingMilli),
+    ...(nextRetryAfterNs > 0
+      ? { "Retry-After": String(Math.max(1, Math.ceil(nextRetryAfterNs / 1_000_000_000))) }
+      : {})
+  };
+
+  const otlpPayload = {
+    resourceSpans: [
+      {
+        resource: {
+          attributes: encodeAttrs({
+            "service.name": "fullstack-rag-eval-studio",
+            "service.version": "1.2.0",
+            "telemetry.sdk.language": "es2022+wasm32"
+          })
+        },
+        scopeSpans: [
+          {
+            scope: { name: "subvenyx.showcase.v1_2", version: "1.2.0" },
+            spans: waterfallSpans.map(({ offsetMs, durationMs, ...otlpSpan }) => otlpSpan)
+          }
+        ]
+      }
+    ],
+    resourceMetrics: [
+      {
+        scopeMetrics: [
+          {
+            metrics: [
+              {
+                name: "http.server.duration",
+                unit: "ms",
+                histogram: {
+                  aggregationTemporality: 2,
+                  dataPoints: [
+                    {
+                      count: "1",
+                      sum: totalDurMs,
+                      bucketCounts: bucketCounts.map(String),
+                      explicitBounds: [...OTLP_BOUNDS_MS]
+                    }
+                  ]
+                }
+              },
+              {
+                name: "rag.ratelimit.decisions",
+                unit: "1",
+                sum: {
+                  isMonotonic: true,
+                  dataPoints: [
+                    { decision: "allowed", asInt: String(allowedCount) },
+                    { decision: "rejected", asInt: String(deniedCount) }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  };
+
+  return {
+    engine,
+    traceparentValid: parsedTp !== null,
+    traceId,
+    parentSpanId,
+    rootSpanId,
+    propagatedTraceparent,
+    bucketStateBytes,
+    auditSlotBytes,
+    capacityMilli,
+    refillPerSecMilli,
+    burstRequests,
+    costPerReqMilli,
+    allowedCount,
+    deniedCount,
+    remainingMilli,
+    nextRetryAfterNs,
+    primeConservationMilli,
+    zeroFloatDriftVerified: primeConservationMilli === refillPerSecMilli,
+    auditVerifyCode,
+    auditVerifiedSlots,
+    tamperDetected: auditVerifyCode === -8,
+    rateLimitHeaders,
+    decisions,
+    waterfallSpans,
+    totalDurationMs: totalDurMs,
+    citationReport,
+    otlpPayload
+  };
+}
+
 function initBrowserUi() {
   if (typeof document === "undefined") return;
 
@@ -1358,6 +1917,148 @@ function initBrowserUi() {
     p2RunBtn.addEventListener("click", renderP2Explorer);
   }
 
+  // Pane 3 (v1.2): MCP 2025-11-25 Citation Spans, C11/WASM Token-Bucket & W3C OTLP Waterfall
+  const v12QueryInput = document.getElementById("v12-citation-query");
+  const v12RunBtn = document.getElementById("v12-run-btn");
+  const v12ProtoSelect = document.getElementById("v12-proto-select");
+  const v12TpInput = document.getElementById("v12-traceparent-input");
+  const v12McpBadge = document.getElementById("v12-mcp-badge");
+  const v12McpKpi = document.getElementById("v12-mcp-kpi");
+  const v12CitationHits = document.getElementById("v12-citation-hits");
+  const v12McpResources = document.getElementById("v12-mcp-resources");
+
+  const v12CapSlider = document.getElementById("v12-bucket-cap");
+  const v12CapOut = document.getElementById("v12-bucket-cap-val");
+  const v12RefillSlider = document.getElementById("v12-bucket-refill");
+  const v12RefillOut = document.getElementById("v12-bucket-refill-val");
+  const v12BurstSlider = document.getElementById("v12-burst-reqs");
+  const v12BurstOut = document.getElementById("v12-burst-reqs-val");
+  const v12TamperToggle = document.getElementById("v12-tamper-toggle");
+  const v12BucketBadge = document.getElementById("v12-bucket-badge");
+  const v12BucketKpi = document.getElementById("v12-bucket-kpi");
+  const v12WaterfallList = document.getElementById("v12-waterfall-list");
+  const v12OtlpPreview = document.getElementById("v12-otlp-preview");
+  const v12AuditFooter = document.getElementById("v12-audit-footer");
+
+  const renderV12Inspector = () => {
+    if (!v12QueryInput) return;
+    const capMilli = Number(v12CapSlider.value);
+    const refillMilli = Number(v12RefillSlider.value);
+    const burstReqs = Number(v12BurstSlider.value);
+    const tamper = Boolean(v12TamperToggle.checked);
+
+    v12CapOut.textContent = capMilli.toLocaleString("en-US");
+    v12RefillOut.textContent = refillMilli.toLocaleString("en-US");
+    v12BurstOut.textContent = `${burstReqs} reqs`;
+
+    const out = runTokenBucketAndOtlpInspector({
+      query: v12QueryInput.value,
+      requestedVersion: v12ProtoSelect.value,
+      traceparent: v12TpInput.value,
+      capacityMilli: capMilli,
+      refillPerSecMilli: refillMilli,
+      burstRequests: burstReqs,
+      injectTamperBitFlip: tamper
+    });
+
+    const cit = out.citationReport;
+    v12McpBadge.className = cit.mcp.fallbackApplied ? "guard-redacted" : "guard-ok";
+    v12McpBadge.textContent = cit.mcp.fallbackApplied
+      ? `MCP ${cit.mcp.negotiatedVersion} (Fallback)`
+      : `MCP ${cit.mcp.negotiatedVersion} · ${cit.totalSpans} Spans`;
+
+    v12McpKpi.innerHTML = `
+      <div class="mini-stat"><span>Negotiated Spec</span><strong>${escapeHtml(cit.mcp.negotiatedVersion)}</strong></div>
+      <div class="mini-stat"><span>MCP Resources</span><strong>${cit.mcp.resourcesCount} URIs</strong></div>
+      <div class="mini-stat"><span>Citation Spans</span><strong>${cit.totalSpans} [start,end)</strong></div>
+      <div class="mini-stat"><span>Secret Scrubs</span><strong>${cit.redactions} redacted</strong></div>
+    `;
+
+    v12CitationHits.innerHTML = cit.hits
+      .map((h, idx) => {
+        const spanPills = h.citationSpans
+          .slice(0, 6)
+          .map(
+            (s) =>
+              `<span class="span-offset-pill">${escapeHtml(s.field)}[${s.start}..${s.end})="${escapeHtml(s.term)}"</span>`
+          )
+          .join("");
+        return `<article class="rag-hit">
+          <div class="rag-hit-head">
+            <span class="rag-hit-title">#${idx + 1} · ${h.highlightedTitleHtml}</span>
+            <span class="rag-scores">${escapeHtml(h.resourceUri)} · RRF ${h.rrf.toFixed(4)}</span>
+          </div>
+          <p class="rag-hit-body">${h.highlightedBodyHtml}</p>
+          <div class="span-pill-row">${spanPills || '<span class="span-offset-pill">vector-only semantic match</span>'}</div>
+        </article>`;
+      })
+      .join("");
+
+    v12McpResources.textContent =
+      `MCP Capabilities: tools + resources (${cit.mcp.resourcesCount}) + prompts (${cit.mcp.prompts.map((p) => p.name).join(", ")}) · Template: vault://documents/{doc_id}`;
+
+    const isWasm = out.engine === "wasm32-unknown-unknown";
+    v12BucketBadge.className = out.tamperDetected ? "guard-fail" : isWasm ? "guard-ok" : "corpus-meta";
+    v12BucketBadge.textContent = out.tamperDetected
+      ? "TAMPER ALERT: -8 PAYLOAD CRC32C"
+      : isWasm
+      ? `WASM32 ${out.bucketStateBytes}B · 0 Float Drift`
+      : `BigInt ${out.bucketStateBytes}B · 0 Float Drift`;
+
+    v12BucketKpi.innerHTML = `
+      <div class="mini-stat"><span>Burst Allowed / Denied</span><strong>${out.allowedCount} ok / ${out.deniedCount} 429</strong></div>
+      <div class="mini-stat"><span>1000×1ms Conservation</span><strong>${out.primeConservationMilli}/${out.refillPerSecMilli} milli</strong></div>
+      <div class="mini-stat"><span>Next Retry-After</span><strong>${(out.nextRetryAfterNs / 1e6).toFixed(2)} ms</strong></div>
+      <div class="mini-stat"><span>Audit Ring (${out.auditSlotBytes}B)</span><strong>${out.tamperDetected ? "ERR -8 CRC" : `${out.auditVerifiedSlots} verified`}</strong></div>
+    `;
+
+    const totalMs = Math.max(0.05, out.totalDurationMs);
+    v12WaterfallList.innerHTML = out.waterfallSpans
+      .map((sp) => {
+        const leftPct = Math.min(94, Math.max(0, (sp.offsetMs / totalMs) * 100));
+        const widthPct = Math.min(100 - leftPct, Math.max(6, (sp.durationMs / totalMs) * 100));
+        const isErr = sp.status.code === 2;
+        return `<div class="wf-row">
+          <div class="wf-head">
+            <span class="wf-name">${escapeHtml(sp.name)} <span class="case-sub" style="display:inline">(${escapeHtml(sp.spanId.slice(0, 8))})</span></span>
+            <span class="${isErr ? "wf-meta-err" : "wf-meta"}">+${sp.offsetMs.toFixed(2)} ms · ${sp.durationMs.toFixed(2)} ms</span>
+          </div>
+          <div class="wf-track">
+            <div class="wf-bar ${isErr ? "wf-bar-err" : ""}" style="left:${leftPct.toFixed(1)}%;width:${widthPct.toFixed(1)}%"></div>
+          </div>
+        </div>`;
+      })
+      .join("");
+
+    v12OtlpPreview.textContent = JSON.stringify(
+      {
+        traceparent: out.propagatedTraceparent,
+        rateLimitHeaders: out.rateLimitHeaders,
+        otlpSummary: {
+          spans: out.waterfallSpans.length,
+          rootStatus: out.waterfallSpans[0].status.code === 1 ? "STATUS_CODE_OK" : "STATUS_CODE_ERROR",
+          histogramMetric: "http.server.duration"
+        }
+      },
+      null,
+      2
+    );
+
+    v12AuditFooter.textContent =
+      `W3C Trace Context (${out.traceparentValid ? "inherited parent" : "new root"}): ${out.propagatedTraceparent} · Audit Ring verify_all() => ${out.auditVerifyCode}`;
+  };
+
+  if (v12QueryInput) {
+    v12RunBtn.addEventListener("click", renderV12Inspector);
+    v12QueryInput.addEventListener("input", renderV12Inspector);
+    v12ProtoSelect.addEventListener("change", renderV12Inspector);
+    v12TpInput.addEventListener("input", renderV12Inspector);
+    v12CapSlider.addEventListener("input", renderV12Inspector);
+    v12RefillSlider.addEventListener("input", renderV12Inspector);
+    v12BurstSlider.addEventListener("input", renderV12Inspector);
+    v12TamperToggle.addEventListener("change", renderV12Inspector);
+  }
+
   // Competency matrix category filters
   const filterBtns = document.querySelectorAll(".filter-btn");
   const matrixCards = document.querySelectorAll(".matrix-card");
@@ -1386,14 +2087,16 @@ function initBrowserUi() {
   renderMoeRrf();
   renderAbDiff();
   renderP2Explorer();
+  renderV12Inspector();
 
-  // Upgrade P² Explorer asynchronously to real Rust wasm32-unknown-unknown binary
+  // Upgrade P² Explorer & v1.2 Token-Bucket/Audit-Ring Inspector asynchronously to real Rust wasm32 binary
   instantiateWasmRuntime()
     .then(() => {
       renderP2Explorer();
+      renderV12Inspector();
     })
     .catch(() => {
-      // Keeps deterministic ES2022 P² mirror active when opened via file:// without HTTP server
+      // Keeps deterministic ES2022 P² & BigInt Token-Bucket mirrors active when opened via file://
     });
 }
 

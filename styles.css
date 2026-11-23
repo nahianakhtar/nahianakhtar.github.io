@@ -809,10 +809,389 @@ body {
   color: var(--cyan);
 }
 
+/* v1.1 Simulator Tabs, A/B Regression Diff & WASM P² Explorer */
+.sim-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sim-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 0.52rem 0.95rem;
+  border-radius: 9px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.sim-tab-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.sim-tab-btn.active {
+  border-color: var(--emerald);
+  background: rgba(16, 185, 129, 0.13);
+  color: #6ee7b7;
+}
+
+.tab-new-pill {
+  font-size: 0.66rem;
+  padding: 0.08rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(34, 211, 238, 0.18);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  color: var(--cyan);
+}
+
+.sim-tab-pane[hidden] {
+  display: none;
+}
+
+.lab-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+
+.lab-split-grid > .sim-panel {
+  min-width: 0;
+}
+
+.sim-select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: #06090f;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.sim-select:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+.lab-desc {
+  margin: 0.55rem 0 0.85rem;
+  font-size: 0.81rem;
+  color: var(--text-secondary);
+}
+
+.lab-sliders-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+  margin: 0.85rem 0;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.guard-fail {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.2rem 0.52rem;
+  border-radius: 6px;
+  background: rgba(251, 113, 133, 0.16);
+  border: 1px solid rgba(251, 113, 133, 0.38);
+  color: #fda4af;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 0.85rem;
+}
+
+.lab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.77rem;
+}
+
+.lab-table th,
+.lab-table td {
+  padding: 0.45rem 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  white-space: nowrap;
+}
+
+.lab-table th:first-child,
+.lab-table td:first-child {
+  text-align: left;
+  color: var(--text-secondary);
+}
+
+.lab-table th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.71rem;
+}
+
+.delta-pos { color: #6ee7b7; font-weight: 600; }
+.delta-neg { color: #fda4af; font-weight: 600; }
+.delta-neutral { color: var(--text-muted); }
+
+.mini-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+}
+
+.mini-stat {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 8px;
+  padding: 0.45rem 0.5rem;
+  min-width: 0;
+}
+
+.mini-stat span {
+  display: block;
+  font-size: 0.67rem;
+  color: var(--text-muted);
+}
+
+.mini-stat strong {
+  display: block;
+  margin-top: 0.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.77rem;
+  color: var(--cyan);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gate-failure-box {
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  margin-bottom: 0.55rem;
+  background: rgba(251, 113, 133, 0.1);
+  border: 1px solid rgba(251, 113, 133, 0.32);
+  color: #fecdd3;
+}
+
+.ab-case-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.ab-case-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.6rem;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.case-id {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.case-sub {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.case-pill {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 0.16rem 0.46rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pill-improved {
+  background: rgba(16, 185, 129, 0.14);
+  color: #6ee7b7;
+}
+
+.pill-regressed {
+  background: rgba(251, 113, 133, 0.16);
+  color: #fda4af;
+}
+
+.pill-unchanged {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-secondary);
+}
+
+.crc-footer {
+  margin-top: 0.8rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+/* v1.2 MCP Citation Spans, WASM Token-Bucket & W3C OTLP Trace Waterfall */
+.sim-mono-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: #06090f;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.sim-mono-input:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+.rag-hit-body mark {
+  background: rgba(16, 185, 129, 0.24);
+  color: #a7f3d0;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  border-radius: 4px;
+  padding: 0 0.22rem;
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.span-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.span-offset-pill {
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+  padding: 0.12rem 0.42rem;
+  border-radius: 5px;
+  background: rgba(34, 211, 238, 0.09);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  color: #67e8f9;
+}
+
+.v12-toggle-box {
+  display: flex;
+  align-items: center;
+}
+
+.v12-check-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.v12-check-label input[type="checkbox"] {
+  accent-color: var(--rose);
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.waterfall-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.48rem;
+  margin-bottom: 0.8rem;
+}
+
+.wf-row {
+  padding: 0.48rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.wf-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  margin-bottom: 0.3rem;
+}
+
+.wf-name {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.wf-meta {
+  color: var(--emerald);
+}
+
+.wf-meta-err {
+  color: #fda4af;
+}
+
+.wf-track {
+  position: relative;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.13);
+  overflow: hidden;
+}
+
+.wf-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--cyan), var(--emerald));
+}
+
+.wf-bar-err {
+  background: linear-gradient(90deg, var(--amber), var(--rose));
+}
+
+.v12-otlp-box {
+  margin: 0;
+  max-height: 170px;
+  overflow-y: auto;
+  font-size: 0.71rem;
+}
+
 @media (max-width: 980px) {
   .hero-bento,
   .repo-grid,
-  .sim-results-grid {
+  .sim-results-grid,
+  .lab-split-grid {
     grid-template-columns: 1fr;
   }
   .matrix-grid {
@@ -821,12 +1200,19 @@ body {
   .slider-row {
     grid-template-columns: 1fr;
   }
+  .mini-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 640px) {
   .matrix-grid,
-  .kpi-strip {
+  .kpi-strip,
+  .mini-stat-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .lab-sliders-2col {
+    grid-template-columns: 1fr;
   }
   .sim-input-row {
     flex-direction: column;

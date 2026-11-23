@@ -182,24 +182,24 @@
         <article class="bento-card repo-card">
           <div class="repo-top">
             <div>
-              <span class="repo-lang lang-web">ES2022 · Bento UI · Client RAG</span>
+              <span class="repo-lang lang-web">ES2022 + Rust WASM32 · Bento UI</span>
               <h3><a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer">nahianakhtar.github.io</a></h3>
             </div>
             <a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open nahianakhtar.github.io on GitHub">GitHub ↗</a>
           </div>
           <p class="repo-desc">
-            Responsive dark Bento &amp; Terminal engineering showcase executing live client-side <strong>Sparse Top-2 MoE Softmax Gating</strong>
-            and <strong>Okapi BM25 + 256-dim Cosine Reciprocal Rank Fusion</strong> directly in the browser with zero external API calls.
+            Responsive dark Bento &amp; Terminal showcase (<code>v1.2.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
+            <strong>MCP 2025-11-25 Citation Spans</strong>, <strong>Pairwise A/B RAG Diffs</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; OTLP Trace Waterfalls</strong>.
           </p>
           <div class="badge-row">
-            <span class="stack-badge">In-Browser MoE</span>
-            <span class="stack-badge">BM25 + RRF k=60</span>
-            <span class="stack-badge">Zero API Keys</span>
-            <span class="stack-badge">Automated CI Gate</span>
+            <span class="stack-badge">MCP Citation Spans</span>
+            <span class="stack-badge">A/B RAG Diff Gate</span>
+            <span class="stack-badge">Rust WASM32 (33.5 KB)</span>
+            <span class="stack-badge">W3C OTLP Waterfall</span>
           </div>
           <dl class="metric-grid">
             <div><dt>Client Query p95</dt><dd>&lt; 0.80 ms</dd></div>
-            <div><dt>External Network</dt><dd>0 Calls</dd></div>
+            <div><dt>WASM32 P² / Bucket</dt><dd>512 B / 64 B (O(1))</dd></div>
             <div><dt>Competency Matrix</dt><dd>12 Dimensions</dd></div>
             <div><dt>Accessibility</dt><dd>WCAG AA + Keyboard</dd></div>
           </dl>
@@ -207,77 +207,321 @@
       </div>
     </section>
 
-    <!-- Live Interactive In-Browser MoE + Hybrid Search Simulator -->
+    <!-- Live Interactive In-Browser MoE + Hybrid Search + A/B Diff + WASM P² + v1.2 Inspector Simulator -->
     <section id="simulator" class="section-block" aria-labelledby="sim-heading">
       <div class="section-header">
         <div>
-          <span class="section-kicker">INTERACTIVE IN-BROWSER ENGINE · ZERO API KEYS</span>
-          <h2 id="sim-heading">Live Sparse Top-2 MoE Router + BM25/Vector RRF Simulator</h2>
+          <span class="section-kicker">INTERACTIVE IN-BROWSER ENGINE · ES2022 + RUST WASM32 · ZERO API KEYS</span>
+          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.2 Telemetry Lab</h2>
         </div>
         <p class="section-sub">
-          Type any technical query or select a preset below to execute real-time PII redaction, VRAM/SLA-constrained Sparse Top-2 Softmax routing, and Okapi BM25 + Cosine Reciprocal Rank Fusion (<code>k=60</code>) in your browser.
+          Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, or inspect <strong>v1.2 MCP Citation Spans, 64B WASM Token-Buckets &amp; W3C OTLP Trace Waterfalls</strong>.
         </p>
       </div>
 
       <div class="bento-card sim-shell">
-        <div class="sim-controls">
-          <label for="sim-query" class="sim-label">Engineering Query / Prompt</label>
-          <div class="sim-input-row">
-            <input
-              id="sim-query"
-              type="text"
-              value="How does 64-byte cache-line alignment with C11 CRC32C prevent false sharing in telemetry rings?"
-              autocomplete="off"
-              spellcheck="false"
-            />
-            <button id="sim-run-btn" type="button" class="btn-primary">Execute Pipeline</button>
+        <div class="sim-tab-bar" role="tablist" aria-label="Interactive Systems &amp; AI Simulator Modes">
+          <button
+            id="sim-tab-btn-moe"
+            type="button"
+            role="tab"
+            class="sim-tab-btn active"
+            aria-selected="true"
+            aria-controls="sim-pane-moe"
+          >
+            01 · Sparse Top-2 MoE + BM25/Cosine RRF
+          </button>
+          <button
+            id="sim-tab-btn-lab"
+            type="button"
+            role="tab"
+            class="sim-tab-btn"
+            aria-selected="false"
+            aria-controls="sim-pane-lab"
+          >
+            02 · A/B RAG Regression Diff &amp; WASM P² Explorer <span class="tab-new-pill">v1.1</span>
+          </button>
+          <button
+            id="sim-tab-btn-v12"
+            type="button"
+            role="tab"
+            class="sim-tab-btn"
+            aria-selected="false"
+            aria-controls="sim-pane-v12"
+          >
+            03 · MCP Citation Spans, WASM Token-Bucket &amp; OTLP Waterfall <span class="tab-new-pill">v1.2</span>
+          </button>
+        </div>
+
+        <!-- Tab Pane 1: Sparse Top-2 MoE + Hybrid RRF -->
+        <div id="sim-pane-moe" role="tabpanel" aria-labelledby="sim-tab-btn-moe" class="sim-tab-pane">
+          <div class="sim-controls">
+            <label for="sim-query" class="sim-label">Engineering Query / Prompt</label>
+            <div class="sim-input-row">
+              <input
+                id="sim-query"
+                type="text"
+                value="How does 64-byte cache-line alignment with C11 CRC32C prevent false sharing in telemetry rings?"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button id="sim-run-btn" type="button" class="btn-primary">Execute Pipeline</button>
+            </div>
+
+            <div class="preset-bar" role="group" aria-label="Sample Engineering Queries">
+              <button type="button" class="preset-chip" data-query="How does 64-byte cache-line alignment with C11 CRC32C prevent false sharing in telemetry rings?">Rust + C11 FFI Ring</button>
+              <button type="button" class="preset-chip" data-query="Fuse SQLite WAL FTS5 Okapi BM25 rankings with dense cosine vectors via Reciprocal Rank Fusion">Hybrid BM25 + Cosine RRF</button>
+              <button type="button" class="preset-chip" data-query="Stream SSE evaluation metrics with sliding-window token circuit breaker and JSON-Schema tool validation">Node 22 SSE &amp; Breaker</button>
+              <button type="button" class="preset-chip" data-query="Route quantized MoE inference across 6 GiB GPU VRAM budget with KV-cache q8_0 slot reuse">GPU CUDA/Vulkan MoE</button>
+              <button type="button" class="preset-chip" data-query="Verify Black-Scholes PDE convexity and IEEE-754 deterministic pricing invariants">Quant Solver Invariant</button>
+            </div>
+
+            <div class="slider-row">
+              <div class="slider-group">
+                <div class="slider-head">
+                  <label for="sim-vram">Hardware VRAM Budget</label>
+                  <output id="sim-vram-val" for="sim-vram">6.0 GiB</output>
+                </div>
+                <input id="sim-vram" type="range" min="4" max="24" step="1" value="6" />
+              </div>
+              <div class="slider-group">
+                <div class="slider-head">
+                  <label for="sim-sla">Target p95 Latency SLA</label>
+                  <output id="sim-sla-val" for="sim-sla">450 ms</output>
+                </div>
+                <input id="sim-sla" type="range" min="50" max="1500" step="50" value="450" />
+              </div>
+              <div class="sim-telemetry-pill" id="sim-status-bar" aria-live="polite">
+                Ready · 0.00 ms
+              </div>
+            </div>
           </div>
 
-          <div class="preset-bar" role="group" aria-label="Sample Engineering Queries">
-            <button type="button" class="preset-chip" data-query="How does 64-byte cache-line alignment with C11 CRC32C prevent false sharing in telemetry rings?">Rust + C11 FFI Ring</button>
-            <button type="button" class="preset-chip" data-query="Fuse SQLite WAL FTS5 Okapi BM25 rankings with dense cosine vectors via Reciprocal Rank Fusion">Hybrid BM25 + Cosine RRF</button>
-            <button type="button" class="preset-chip" data-query="Stream SSE evaluation metrics with sliding-window token circuit breaker and JSON-Schema tool validation">Node 22 SSE &amp; Breaker</button>
-            <button type="button" class="preset-chip" data-query="Route quantized MoE inference across 6 GiB GPU VRAM budget with KV-cache q8_0 slot reuse">GPU CUDA/Vulkan MoE</button>
-            <button type="button" class="preset-chip" data-query="Verify Black-Scholes PDE convexity and IEEE-754 deterministic pricing invariants">Quant Solver Invariant</button>
-          </div>
+          <div class="sim-results-grid">
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>1. Sparse Top-2 MoE Gating Decision</h3>
+                <span id="sim-guard-badge" class="guard-ok">PII Guard: CLEAN</span>
+              </div>
+              <div id="sim-moe-selected" class="moe-selected-summary"></div>
+              <div id="sim-moe-bars" class="moe-bars" aria-live="polite"></div>
+            </div>
 
-          <div class="slider-row">
-            <div class="slider-group">
-              <div class="slider-head">
-                <label for="sim-vram">Hardware VRAM Budget</label>
-                <output id="sim-vram-val" for="sim-vram">6.0 GiB</output>
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>2. Hybrid RRF Retrieval (<code>BM25 + Cosine, k=60</code>)</h3>
+                <span id="sim-corpus-count" class="corpus-meta">12 Architecture Docs</span>
               </div>
-              <input id="sim-vram" type="range" min="4" max="24" step="1" value="6" />
-            </div>
-            <div class="slider-group">
-              <div class="slider-head">
-                <label for="sim-sla">Target p95 Latency SLA</label>
-                <output id="sim-sla-val" for="sim-sla">450 ms</output>
-              </div>
-              <input id="sim-sla" type="range" min="50" max="1500" step="50" value="450" />
-            </div>
-            <div class="sim-telemetry-pill" id="sim-status-bar" aria-live="polite">
-              Ready · 0.00 ms
+              <div id="sim-rag-results" class="rag-results" aria-live="polite"></div>
             </div>
           </div>
         </div>
 
-        <div class="sim-results-grid">
-          <div class="sim-panel">
-            <div class="panel-header">
-              <h3>1. Sparse Top-2 MoE Gating Decision</h3>
-              <span id="sim-guard-badge" class="guard-ok">PII Guard: CLEAN</span>
-            </div>
-            <div id="sim-moe-selected" class="moe-selected-summary"></div>
-            <div id="sim-moe-bars" class="moe-bars" aria-live="polite"></div>
-          </div>
+        <!-- Tab Pane 2: Pairwise A/B RAG Regression Diff & Rust WASM32 P² Explorer -->
+        <div id="sim-pane-lab" role="tabpanel" aria-labelledby="sim-tab-btn-lab" class="sim-tab-pane" hidden>
+          <div class="lab-split-grid">
+            <!-- Left Panel: Pairwise A/B RAG Regression Diff -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>1. Pairwise A/B Prompt &amp; Chunking Diff Gate</h3>
+                <span id="ab-verdict-badge" class="guard-ok" aria-live="polite">CI GATE: PASS</span>
+              </div>
 
-          <div class="sim-panel">
-            <div class="panel-header">
-              <h3>2. Hybrid RRF Retrieval (<code>BM25 + Cosine, k=60</code>)</h3>
-              <span id="sim-corpus-count" class="corpus-meta">12 Architecture Docs</span>
+              <label for="ab-scenario-select" class="sim-label">Golden Evaluation A/B Candidate Suite</label>
+              <select id="ab-scenario-select" class="sim-select">
+                <option value="hybrid-rrf-upgrade">A/B #1 · Lexical BM25 → Hybrid BM25 + Cosine RRF (k=60) [PASS]</option>
+                <option value="chunk-window-truncation">A/B #2 · 256-Tok Boundary Chunks → 10-Word Truncation [REGRESSION]</option>
+                <option value="prompt-temp-hallucination">A/B #3 · Grounded Prompt (T=0.0) → Unconstrained T=0.9 [PROMPT DRIFT]</option>
+              </select>
+              <p id="ab-scenario-summary" class="lab-desc"></p>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="ab-max-faith-drop">Max Allowed Faithfulness Drop</label>
+                    <output id="ab-max-faith-val" for="ab-max-faith-drop">0.010</output>
+                  </div>
+                  <input id="ab-max-faith-drop" type="range" min="0.005" max="0.150" step="0.005" value="0.010" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="ab-max-reg-cases">Max Allowed Regressed Cases</label>
+                    <output id="ab-max-reg-val" for="ab-max-reg-cases">0 cases</output>
+                  </div>
+                  <input id="ab-max-reg-cases" type="range" min="0" max="6" step="1" value="0" />
+                </div>
+              </div>
+
+              <div class="table-scroll">
+                <table class="lab-table" aria-label="Pairwise A/B RAG Metric Comparison">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Baseline</th>
+                      <th>Candidate</th>
+                      <th>Delta (Δ)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ab-metrics-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="ab-drift-strip" class="mini-stat-grid"></div>
+              <div id="ab-case-list" class="ab-case-list" aria-live="polite"></div>
             </div>
-            <div id="sim-rag-results" class="rag-results" aria-live="polite"></div>
+
+            <!-- Right Panel: Rust wasm32 P² Tail-Quantile & CRC32C Explorer -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>2. Rust <code>wasm32</code> Jain-Chlamtac P² Tail-Quantile Explorer</h3>
+                <span id="p2-engine-badge" class="guard-ok" aria-live="polite">Rust WASM32 · 512 B O(1)</span>
+              </div>
+
+              <label for="p2-dist-select" class="sim-label">Streaming Telemetry Latency Workload</label>
+              <div class="sim-input-row">
+                <select id="p2-dist-select" class="sim-select">
+                  <option value="bimodal-kv-cache">Bimodal KV-Cache Slot Hit (2.6 ms) vs Cold MoE Prefill (78 ms)</option>
+                  <option value="lognormal-rpc">Log-Normal Microservice JSON-RPC 2.0 Dispatch</option>
+                  <option value="pareto-moe-burst">Pareto Heavy-Tail Sparse MoE Offload Queue</option>
+                  <option value="weyl-uniform">Deterministic Weyl Golden-Ratio Sequence [0..1000 ms]</option>
+                </select>
+                <button id="p2-rerun-btn" type="button" class="btn-secondary">Re-Stream</button>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="p2-sample-count">Stream Observations (N)</label>
+                    <output id="p2-sample-val" for="p2-sample-count">40,000 obs</output>
+                  </div>
+                  <input id="p2-sample-count" type="range" min="5000" max="100000" step="5000" value="40000" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="p2-spike-pct">Injected Tail-Spike Rate</label>
+                    <output id="p2-spike-val" for="p2-spike-pct">4%</output>
+                  </div>
+                  <input id="p2-spike-pct" type="range" min="0" max="15" step="1" value="4" />
+                </div>
+              </div>
+
+              <div id="p2-kpi-strip" class="mini-stat-grid"></div>
+
+              <div class="table-scroll">
+                <table class="lab-table" aria-label="P2 Streaming Quantiles vs Exact Sorted Quantiles">
+                  <thead>
+                    <tr>
+                      <th>Quantile</th>
+                      <th>P² O(1) (512 B)</th>
+                      <th>Exact O(N) Sort</th>
+                      <th>Rel. Error</th>
+                    </tr>
+                  </thead>
+                  <tbody id="p2-quantiles-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="p2-quantile-bars" class="moe-bars" aria-live="polite"></div>
+              <div id="p2-crc-footer" class="crc-footer"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Pane 3 (v1.2): MCP 2025-11-25 Citation Spans, C11/WASM Token-Bucket & W3C OTLP Waterfall -->
+        <div id="sim-pane-v12" role="tabpanel" aria-labelledby="sim-tab-btn-v12" class="sim-tab-pane" hidden>
+          <div class="lab-split-grid">
+            <!-- Left Panel: MCP 2025-11-25 Capability Negotiation & FTS5 Citation-Span Inspector -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>1. MCP <code>2025-11-25</code> Capabilities &amp; FTS5 Citation-Span Inspector</h3>
+                <span id="v12-mcp-badge" class="guard-ok" aria-live="polite">MCP 2025-11-25 · READY</span>
+              </div>
+
+              <label for="v12-citation-query" class="sim-label">Grounded RAG Citation Query (XSS &amp; Secret Scrubbed)</label>
+              <div class="sim-input-row">
+                <input
+                  id="v12-citation-query"
+                  type="text"
+                  value="Castagnoli CRC32C 64-byte cache-line SQLite FTS5 Reciprocal Rank Fusion"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button id="v12-run-btn" type="button" class="btn-secondary">Inspect</button>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div>
+                  <label for="v12-proto-select" class="sim-label">Client Requested MCP Version</label>
+                  <select id="v12-proto-select" class="sim-select">
+                    <option value="2025-11-25">2025-11-25 (Latest Spec)</option>
+                    <option value="2025-06-18">2025-06-18 (Compatible)</option>
+                    <option value="2024-11-05">2024-11-05 (Legacy Client)</option>
+                    <option value="2099-01-01">2099-01-01 (Unsupported -&gt; Fallback)</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="v12-traceparent-input" class="sim-label">Inbound W3C <code>traceparent</code></label>
+                  <input
+                    id="v12-traceparent-input"
+                    type="text"
+                    class="sim-mono-input"
+                    value="00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                </div>
+              </div>
+
+              <div id="v12-mcp-kpi" class="mini-stat-grid"></div>
+              <div id="v12-citation-hits" class="rag-results" aria-live="polite"></div>
+              <div id="v12-mcp-resources" class="crc-footer"></div>
+            </div>
+
+            <!-- Right Panel: C11/WASM 64B Rational Token-Bucket, Audit Ring & W3C OTLP Trace Waterfall -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>2. WASM 64B Token-Bucket, Audit Ring &amp; OTLP Waterfall</h3>
+                <span id="v12-bucket-badge" class="guard-ok" aria-live="polite">WASM32 64B · 0 Float Drift</span>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v12-bucket-cap">Burst Capacity (milli-tok)</label>
+                    <output id="v12-bucket-cap-val" for="v12-bucket-cap">5,000</output>
+                  </div>
+                  <input id="v12-bucket-cap" type="range" min="2000" max="10000" step="1000" value="5000" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v12-bucket-refill">Refill Rate (milli-tok/s)</label>
+                    <output id="v12-bucket-refill-val" for="v12-bucket-refill">3,333</output>
+                  </div>
+                  <input id="v12-bucket-refill" type="range" min="1000" max="9000" step="333" value="3333" />
+                </div>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v12-burst-reqs">Simulated Burst Requests</label>
+                    <output id="v12-burst-reqs-val" for="v12-burst-reqs">8 reqs</output>
+                  </div>
+                  <input id="v12-burst-reqs" type="range" min="4" max="16" step="1" value="8" />
+                </div>
+                <div class="v12-toggle-box">
+                  <label class="v12-check-label" for="v12-tamper-toggle">
+                    <input id="v12-tamper-toggle" type="checkbox" />
+                    <span>Inject 1-Bit Audit Ring Payload Flip (<code>-8 CRC32C</code>)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="v12-bucket-kpi" class="mini-stat-grid"></div>
+              <div id="v12-waterfall-list" class="waterfall-list" aria-live="polite"></div>
+              <pre id="v12-otlp-preview" class="terminal-body v12-otlp-box"></pre>
+              <div id="v12-audit-footer" class="crc-footer"></div>
+            </div>
           </div>
         </div>
       </div>

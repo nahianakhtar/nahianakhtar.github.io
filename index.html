@@ -188,18 +188,18 @@
             <a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open nahianakhtar.github.io on GitHub">GitHub ↗</a>
           </div>
           <p class="repo-desc">
-            Responsive dark Bento &amp; Terminal showcase executing live client-side <strong>Sparse Top-2 MoE Softmax Gating</strong>,
-            <strong>BM25 + Cosine RRF</strong>, <strong>Pairwise A/B RAG Regression Diffs</strong>, and <strong>Rust <code>wasm32</code> P² Tail Quantiles</strong> with zero external API calls.
+            Responsive dark Bento &amp; Terminal showcase (<code>v1.2.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
+            <strong>MCP 2025-11-25 Citation Spans</strong>, <strong>Pairwise A/B RAG Diffs</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; OTLP Trace Waterfalls</strong>.
           </p>
           <div class="badge-row">
-            <span class="stack-badge">In-Browser MoE + RRF</span>
+            <span class="stack-badge">MCP Citation Spans</span>
             <span class="stack-badge">A/B RAG Diff Gate</span>
-            <span class="stack-badge">Rust WASM32 P² (28 KB)</span>
-            <span class="stack-badge">Zero API Keys</span>
+            <span class="stack-badge">Rust WASM32 (33.5 KB)</span>
+            <span class="stack-badge">W3C OTLP Waterfall</span>
           </div>
           <dl class="metric-grid">
             <div><dt>Client Query p95</dt><dd>&lt; 0.80 ms</dd></div>
-            <div><dt>WASM32 P² State</dt><dd>512 B (O(1))</dd></div>
+            <div><dt>WASM32 P² / Bucket</dt><dd>512 B / 64 B (O(1))</dd></div>
             <div><dt>Competency Matrix</dt><dd>12 Dimensions</dd></div>
             <div><dt>Accessibility</dt><dd>WCAG AA + Keyboard</dd></div>
           </dl>
@@ -207,15 +207,15 @@
       </div>
     </section>
 
-    <!-- Live Interactive In-Browser MoE + Hybrid Search + A/B Diff + WASM P² Simulator -->
+    <!-- Live Interactive In-Browser MoE + Hybrid Search + A/B Diff + WASM P² + v1.2 Inspector Simulator -->
     <section id="simulator" class="section-block" aria-labelledby="sim-heading">
       <div class="section-header">
         <div>
           <span class="section-kicker">INTERACTIVE IN-BROWSER ENGINE · ES2022 + RUST WASM32 · ZERO API KEYS</span>
-          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B RAG Diff &amp; WASM P² Lab</h2>
+          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.2 Telemetry Lab</h2>
         </div>
         <p class="section-sub">
-          Explore real-time PII redaction, VRAM/SLA Sparse Top-2 routing, and Okapi BM25 + Cosine RRF (<code>k=60</code>), or switch to the <strong>v1.1 A/B RAG Regression Diff &amp; Rust <code>wasm32</code> P² Tail-Quantile Explorer</strong>.
+          Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, or inspect <strong>v1.2 MCP Citation Spans, 64B WASM Token-Buckets &amp; W3C OTLP Trace Waterfalls</strong>.
         </p>
       </div>
 
@@ -240,6 +240,16 @@
             aria-controls="sim-pane-lab"
           >
             02 · A/B RAG Regression Diff &amp; WASM P² Explorer <span class="tab-new-pill">v1.1</span>
+          </button>
+          <button
+            id="sim-tab-btn-v12"
+            type="button"
+            role="tab"
+            class="sim-tab-btn"
+            aria-selected="false"
+            aria-controls="sim-pane-v12"
+          >
+            03 · MCP Citation Spans, WASM Token-Bucket &amp; OTLP Waterfall <span class="tab-new-pill">v1.2</span>
           </button>
         </div>
 
@@ -413,6 +423,104 @@
 
               <div id="p2-quantile-bars" class="moe-bars" aria-live="polite"></div>
               <div id="p2-crc-footer" class="crc-footer"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Pane 3 (v1.2): MCP 2025-11-25 Citation Spans, C11/WASM Token-Bucket & W3C OTLP Waterfall -->
+        <div id="sim-pane-v12" role="tabpanel" aria-labelledby="sim-tab-btn-v12" class="sim-tab-pane" hidden>
+          <div class="lab-split-grid">
+            <!-- Left Panel: MCP 2025-11-25 Capability Negotiation & FTS5 Citation-Span Inspector -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>1. MCP <code>2025-11-25</code> Capabilities &amp; FTS5 Citation-Span Inspector</h3>
+                <span id="v12-mcp-badge" class="guard-ok" aria-live="polite">MCP 2025-11-25 · READY</span>
+              </div>
+
+              <label for="v12-citation-query" class="sim-label">Grounded RAG Citation Query (XSS &amp; Secret Scrubbed)</label>
+              <div class="sim-input-row">
+                <input
+                  id="v12-citation-query"
+                  type="text"
+                  value="Castagnoli CRC32C 64-byte cache-line SQLite FTS5 Reciprocal Rank Fusion"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button id="v12-run-btn" type="button" class="btn-secondary">Inspect</button>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div>
+                  <label for="v12-proto-select" class="sim-label">Client Requested MCP Version</label>
+                  <select id="v12-proto-select" class="sim-select">
+                    <option value="2025-11-25">2025-11-25 (Latest Spec)</option>
+                    <option value="2025-06-18">2025-06-18 (Compatible)</option>
+                    <option value="2024-11-05">2024-11-05 (Legacy Client)</option>
+                    <option value="2099-01-01">2099-01-01 (Unsupported -&gt; Fallback)</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="v12-traceparent-input" class="sim-label">Inbound W3C <code>traceparent</code></label>
+                  <input
+                    id="v12-traceparent-input"
+                    type="text"
+                    class="sim-mono-input"
+                    value="00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                </div>
+              </div>
+
+              <div id="v12-mcp-kpi" class="mini-stat-grid"></div>
+              <div id="v12-citation-hits" class="rag-results" aria-live="polite"></div>
+              <div id="v12-mcp-resources" class="crc-footer"></div>
+            </div>
+
+            <!-- Right Panel: C11/WASM 64B Rational Token-Bucket, Audit Ring & W3C OTLP Trace Waterfall -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>2. WASM 64B Token-Bucket, Audit Ring &amp; OTLP Waterfall</h3>
+                <span id="v12-bucket-badge" class="guard-ok" aria-live="polite">WASM32 64B · 0 Float Drift</span>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v12-bucket-cap">Burst Capacity (milli-tok)</label>
+                    <output id="v12-bucket-cap-val" for="v12-bucket-cap">5,000</output>
+                  </div>
+                  <input id="v12-bucket-cap" type="range" min="2000" max="10000" step="1000" value="5000" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v12-bucket-refill">Refill Rate (milli-tok/s)</label>
+                    <output id="v12-bucket-refill-val" for="v12-bucket-refill">3,333</output>
+                  </div>
+                  <input id="v12-bucket-refill" type="range" min="1000" max="9000" step="333" value="3333" />
+                </div>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v12-burst-reqs">Simulated Burst Requests</label>
+                    <output id="v12-burst-reqs-val" for="v12-burst-reqs">8 reqs</output>
+                  </div>
+                  <input id="v12-burst-reqs" type="range" min="4" max="16" step="1" value="8" />
+                </div>
+                <div class="v12-toggle-box">
+                  <label class="v12-check-label" for="v12-tamper-toggle">
+                    <input id="v12-tamper-toggle" type="checkbox" />
+                    <span>Inject 1-Bit Audit Ring Payload Flip (<code>-8 CRC32C</code>)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="v12-bucket-kpi" class="mini-stat-grid"></div>
+              <div id="v12-waterfall-list" class="waterfall-list" aria-live="polite"></div>
+              <pre id="v12-otlp-preview" class="terminal-body v12-otlp-box"></pre>
+              <div id="v12-audit-footer" class="crc-footer"></div>
             </div>
           </div>
         </div>

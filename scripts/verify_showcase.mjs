@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  decodeEmbeddedWasmBytes,
   inspectMcpCitationSpans,
   instantiateWasmRuntime,
   negotiateMcpCapabilities,
@@ -17,7 +18,10 @@ const html = readFileSync(resolve(root, "index.html"), "utf8");
 const css = readFileSync(resolve(root, "styles.css"), "utf8");
 const js = readFileSync(resolve(root, "app.js"), "utf8");
 const readme = readFileSync(resolve(root, "README.md"), "utf8");
-const wasmBytes = readFileSync(resolve(root, "assets/polyglot_agent_runtime.wasm"));
+const wasmPath = resolve(root, "assets/polyglot_agent_runtime.wasm");
+const embeddedWasmBytes = decodeEmbeddedWasmBytes();
+const wasmBytes = existsSync(wasmPath) ? readFileSync(wasmPath) : embeddedWasmBytes;
+assert.equal(embeddedWasmBytes.byteLength, wasmBytes.byteLength, "Embedded WASM bundle must match .wasm byte length");
 
 assert.ok(html.startsWith("<!DOCTYPE html>"), "index.html must start with <!DOCTYPE html>");
 assert.ok(html.includes("Nahian Akhtar"), "Portfolio owner name missing");

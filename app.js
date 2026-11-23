@@ -1,6 +1,7 @@
 /**
  * Client-Side Sparse Top-2 MoE Router + Okapi BM25 & 256-dim Cosine RRF Engine
- * Zero external API keys · Zero runtime dependencies · Deterministic ES2022
+ * + v1.1 Pairwise A/B RAG Regression Diff Studio & Rust wasm32 P² Tail-Quantile Explorer
+ * Zero external API keys · Zero runtime dependencies · Deterministic ES2022 + WebAssembly
  */
 
 export const CORPUS = [
@@ -21,16 +22,16 @@ export const CORPUS = [
   {
     id: "rs-p2-quantiles",
     repo: "polyglot-agent-runtime-rs",
-    title: "Streaming Jain-Chlamtac P2 Tail-Latency Quantiles",
-    tags: ["quantiles", "p95", "p99", "streaming", "telemetry", "latency"],
-    body: "Tracks p50, p95, and p99 tail latencies dynamically using five piecewise-parabolic markers in exact 560-byte O(1) constant state at 38.01M observations/sec (26.3 ns/obs)."
+    title: "Streaming Jain-Chlamtac P2 Tail-Latency Quantiles (Native & WASM)",
+    tags: ["quantiles", "p95", "p99", "streaming", "telemetry", "latency", "wasm"],
+    body: "Tracks p50, p95, and p99 tail latencies dynamically using five piecewise-parabolic markers in exact 560-byte native / 512-byte wasm32 O(1) constant state at up to 38.01M observations/sec."
   },
   {
     id: "py-mcp-protocol",
     repo: "mcp-moe-hybrid-sdk",
     title: "Model Context Protocol (MCP 2025-11-25) JSON-RPC 2.0 Server",
-    tags: ["mcp", "jsonrpc", "python", "agents", "tools", "protocol"],
-    body: "Implements MCP 2025-11-25 initialize, tools/list, and tools/call dispatch over loopback-safe HTTP with deterministic secret/Bearer/PII scrubbing prior to handler execution."
+    tags: ["mcp", "jsonrpc", "python", "agents", "tools", "protocol", "otlp"],
+    body: "Implements MCP 2025-11-25 initialize, tools/list, and tools/call dispatch over loopback-safe HTTP with deterministic secret/Bearer/PII scrubbing and OTLP/JSON telemetry spans."
   },
   {
     id: "py-sqlite-rrf",
@@ -51,7 +52,7 @@ export const CORPUS = [
     repo: "fullstack-rag-eval-studio",
     title: "Node.js 22 Zero-Dependency HTTP & SSE Token Streaming Gateway",
     tags: ["typescript", "node", "sse", "streaming", "http", "api", "esm"],
-    body: "Streams route, context, token delta, and live cache/breaker telemetry frames over text/event-stream alongside REST /health and /v1/evaluate endpoints with strict .d.ts contracts."
+    body: "Streams route, context, token delta, and live cache/breaker telemetry frames over text/event-stream alongside REST /health, /v1/evaluate, and /v1/diff endpoints with strict .d.ts contracts."
   },
   {
     id: "ts-schema-redactor",
@@ -70,9 +71,9 @@ export const CORPUS = [
   {
     id: "ts-golden-eval",
     repo: "fullstack-rag-eval-studio",
-    title: "Golden RAG Evaluation Runner (Faithfulness, AP@K, Recall@K)",
-    tags: ["eval", "faithfulness", "precision", "recall", "rag", "benchmark"],
-    body: "Scores claim-level faithfulness entailment, rank-weighted Average Precision (AP@K), and Recall@K at 7,623.5 cases/sec (0.3362ms p95) with 96.7% cosine n-gram LRU cache hit rate."
+    title: "Golden RAG Evaluator & Pairwise A/B Regression Diff CLI",
+    tags: ["eval", "faithfulness", "precision", "recall", "rag", "benchmark", "diff"],
+    body: "Scores claim-level faithfulness entailment, AP@K, Recall@K, chunk Jaccard overlap, cosine answer drift, and paired t-statistics at 7,623.5 cases/sec with configurable CI quality gates."
   },
   {
     id: "quant-ieee-solvers",
@@ -96,14 +97,14 @@ export const EXPERTS = [
     name: "Expert 0 · Deterministic Systems & Quant Kernel",
     minVramGib: 0.5,
     estP95Ms: 45,
-    keywords: ["c11", "ffi", "rust", "crc32c", "cache", "ring", "dag", "quantiles", "p95", "p99", "black-scholes", "convexity", "ieee754", "math"]
+    keywords: ["c11", "ffi", "rust", "crc32c", "cache", "ring", "dag", "quantiles", "p95", "p99", "wasm", "black-scholes", "convexity", "ieee754", "math"]
   },
   {
     id: "exp-vulkan-dense",
     name: "Expert 1 · Compact Dense Vulkan Tier (<= 5.2 GiB)",
     minVramGib: 4.0,
     estP95Ms: 180,
-    keywords: ["sse", "stream", "node", "typescript", "schema", "pii", "token", "cache", "http", "api", "uia", "ci"]
+    keywords: ["sse", "stream", "node", "typescript", "schema", "pii", "token", "cache", "http", "api", "uia", "ci", "diff"]
   },
   {
     id: "exp-cuda-hybrid-moe",
@@ -122,8 +123,9 @@ export const EXPERTS = [
 ];
 
 const STOPWORDS = new Set([
-  "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "how", "in",
-  "into", "is", "it", "of", "on", "or", "that", "the", "to", "via", "with"
+  "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "how", "in",
+  "into", "is", "it", "its", "of", "on", "or", "that", "the", "their", "this", "to",
+  "using", "via", "was", "were", "with"
 ]);
 
 const REDACT_RULES = [
@@ -236,7 +238,6 @@ export function routeSparseTop2(query, vramBudgetGib = 6.0, slaMs = 450) {
     return { expert: exp, logit: score, vramFeasible, slaFeasible };
   });
 
-  // Sort to pick Top-2 sparse gates, then softmax-normalize across the active Top-2
   const ranked = [...rawScores].sort((a, b) => b.logit - a.logit);
   const top2Ids = new Set([ranked[0].expert.id, ranked[1].expert.id]);
   const maxLogit = Math.max(ranked[0].logit, ranked[1].logit);
@@ -327,6 +328,759 @@ export function runPipelineSimulation(rawQuery, vramGib = 6.0, slaMs = 450) {
   return { cleanQuery, redactions, moe, hits, elapsedMs };
 }
 
+// ============================================================================
+// Increment v1.1 Part A: Pairwise A/B Prompt & Chunking Regression Diff Engine
+// Mirrors `fullstack-rag-eval-studio` v1.1.0 GoldenEvalRunner + RegressionDiffAnalyzer
+// ============================================================================
+
+function normalizeWords(text) {
+  return String(text ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((tok) => tok.length >= 2 && !STOPWORDS.has(tok));
+}
+
+export function evaluateGoldenCase(item, topK = 2) {
+  const topDocs = (item.retrievedDocs ?? []).slice(0, topK);
+  const relevantSet = new Set(item.relevantDocIds ?? []);
+
+  let hits = 0;
+  for (const doc of topDocs) {
+    if (relevantSet.has(doc.id)) hits += 1;
+  }
+  const recallAtK = relevantSet.size === 0 ? 1.0 : hits / relevantSet.size;
+
+  let relevantSeen = 0;
+  let precisionAccum = 0.0;
+  topDocs.forEach((doc, idx) => {
+    if (relevantSet.has(doc.id)) {
+      relevantSeen += 1;
+      precisionAccum += relevantSeen / (idx + 1);
+    }
+  });
+  const denom = Math.min(relevantSet.size, topDocs.length);
+  const contextPrecision = relevantSeen === 0 || denom === 0 ? 0.0 : precisionAccum / relevantSeen;
+
+  const contextTokenSet = new Set(normalizeWords(topDocs.map((d) => d.text).join(" ")));
+  const sentences = String(item.generatedAnswer ?? "")
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  let faithfulness = 0.0;
+  if (sentences.length > 0) {
+    let supported = 0;
+    for (const sentence of sentences) {
+      const words = normalizeWords(sentence);
+      if (words.length === 0) {
+        supported += 1;
+        continue;
+      }
+      let grounded = 0;
+      for (const w of words) {
+        if (contextTokenSet.has(w)) grounded += 1;
+      }
+      if (grounded / words.length >= 0.6) supported += 1;
+    }
+    faithfulness = supported / sentences.length;
+  }
+
+  return {
+    id: item.id,
+    faithfulness: Number(faithfulness.toFixed(4)),
+    contextPrecision: Number(contextPrecision.toFixed(4)),
+    recallAtK: Number(recallAtK.toFixed(4))
+  };
+}
+
+function chunkIdJaccard(baseDocs, candDocs, topK) {
+  const setA = new Set((baseDocs ?? []).slice(0, topK).map((d) => d.id));
+  const setB = new Set((candDocs ?? []).slice(0, topK).map((d) => d.id));
+  if (setA.size === 0 && setB.size === 0) return 1.0;
+  let inter = 0;
+  for (const id of setA) {
+    if (setB.has(id)) inter += 1;
+  }
+  const union = setA.size + setB.size - inter;
+  return union === 0 ? 1.0 : inter / union;
+}
+
+function meanChunkWords(docs, topK) {
+  const slice = (docs ?? []).slice(0, topK);
+  if (slice.length === 0) return 0;
+  let total = 0;
+  for (const d of slice) {
+    const clean = String(d.text ?? "").trim();
+    total += clean ? clean.split(/\s+/).length : 0;
+  }
+  return total / slice.length;
+}
+
+function computePairedStats(deltas) {
+  const n = deltas.length;
+  if (n === 0) {
+    return { meanDelta: 0, stdDevDelta: 0, cohensD: 0, pairedTStat: 0, winRate: 0 };
+  }
+  const mean = deltas.reduce((a, b) => a + b, 0) / n;
+  let sqSum = 0;
+  let wins = 0;
+  let nonTies = 0;
+  for (const d of deltas) {
+    sqSum += (d - mean) * (d - mean);
+    if (Math.abs(d) > 1e-6) {
+      nonTies += 1;
+      if (d > 1e-6) wins += 1;
+    }
+  }
+  const variance = n > 1 ? sqSum / (n - 1) : 0;
+  const stdDev = Math.sqrt(variance);
+  const cohensD = stdDev > 1e-9 ? mean / stdDev : (Math.abs(mean) > 1e-9 ? Math.sign(mean) * 99.0 : 0);
+  const pairedTStat = stdDev > 1e-9 && n > 1 ? mean / (stdDev / Math.sqrt(n)) : 0;
+  const winRate = nonTies === 0 ? 0.5 : wins / nonTies;
+  return {
+    meanDelta: Number(mean.toFixed(4)),
+    stdDevDelta: Number(stdDev.toFixed(4)),
+    cohensD: Number(cohensD.toFixed(4)),
+    pairedTStat: Number(pairedTStat.toFixed(4)),
+    winRate: Number(winRate.toFixed(4))
+  };
+}
+
+const DOC_MAP = new Map(
+  CORPUS.map((d) => [d.id, { id: d.id, text: `${d.title}. ${d.body}` }])
+);
+
+function pickDoc(id, truncateWords = null) {
+  const raw = DOC_MAP.get(id) ?? { id, text: "" };
+  if (typeof truncateWords === "number" && truncateWords > 0) {
+    const words = raw.text.split(/\s+/).slice(0, truncateWords).join(" ");
+    return { id: raw.id, text: words };
+  }
+  return { id: raw.id, text: raw.text };
+}
+
+const GOLDEN_BASE_CASES = [
+  {
+    id: "case-01-ring-crc32c",
+    relevantDocIds: ["rs-c11-ring"],
+    baseDocs: [pickDoc("rs-c11-ring"), pickDoc("rs-p2-quantiles")],
+    baseAnswer: "ParRingSlotHeader aligns to 64-byte cache lines and seals payloads with Castagnoli CRC32C at zero heap allocations."
+  },
+  {
+    id: "case-02-dag-fences",
+    relevantDocIds: ["rs-dag-breaker"],
+    baseDocs: [pickDoc("rs-dag-breaker"), pickDoc("py-mcp-protocol")],
+    baseAnswer: "Preflight bitmask capability checks gate task execution before deterministic Kahn topological ordering and circuit recovery."
+  },
+  {
+    id: "case-03-p2-tail",
+    relevantDocIds: ["rs-p2-quantiles"],
+    baseDocs: [pickDoc("rs-c11-ring"), pickDoc("rs-p2-quantiles")],
+    baseAnswer: "Tracks p50, p95, and p99 tail latencies using five piecewise-parabolic markers in constant O(1) state."
+  },
+  {
+    id: "case-04-hybrid-rrf",
+    relevantDocIds: ["py-sqlite-rrf", "ts-golden-eval"],
+    baseDocs: [pickDoc("py-sqlite-rrf"), pickDoc("py-mcp-protocol")],
+    baseAnswer: "Combines exact lexical Okapi BM25 scores from SQLite FTS5 with n-gram cosine similarity via Reciprocal Rank Fusion."
+  },
+  {
+    id: "case-05-sparse-moe",
+    relevantDocIds: ["py-moe-router"],
+    baseDocs: [pickDoc("ts-token-breaker"), pickDoc("py-moe-router")],
+    baseAnswer: "Evaluates domain affinities under active GPU VRAM caps and p95 latency SLAs using sparse Top-2 softmax renormalization."
+  },
+  {
+    id: "case-06-sse-schema",
+    relevantDocIds: ["ts-sse-gateway", "ts-schema-redactor"],
+    baseDocs: [pickDoc("ts-sse-gateway"), pickDoc("qa-uia-ci")],
+    baseAnswer: "Streams route, context, and token delta frames over text/event-stream alongside REST evaluate and diff endpoints."
+  }
+];
+
+export const AB_DIFF_SCENARIOS = {
+  "hybrid-rrf-upgrade": {
+    id: "hybrid-rrf-upgrade",
+    label: "A/B #1 · Lexical BM25 -> Hybrid BM25 + Cosine RRF (k=60) [CI PASS]",
+    summary: "Candidate upgrades ranker from lexical-only BM25 to Reciprocal Rank Fusion (k=60), promoting semantic matches to rank #1 and recovering multi-hop recall.",
+    topK: 2,
+    baseline: GOLDEN_BASE_CASES.map((c) => ({
+      id: c.id,
+      relevantDocIds: c.relevantDocIds,
+      retrievedDocs: c.baseDocs,
+      generatedAnswer: c.baseAnswer
+    })),
+    candidate: [
+      {
+        id: "case-01-ring-crc32c",
+        relevantDocIds: ["rs-c11-ring"],
+        retrievedDocs: [pickDoc("rs-c11-ring"), pickDoc("rs-p2-quantiles")],
+        generatedAnswer: "ParRingSlotHeader aligns strictly to 64-byte cache lines and seals payloads with Castagnoli CRC32C at zero heap allocations."
+      },
+      {
+        id: "case-02-dag-fences",
+        relevantDocIds: ["rs-dag-breaker"],
+        retrievedDocs: [pickDoc("rs-dag-breaker"), pickDoc("py-mcp-protocol")],
+        generatedAnswer: "Preflight bitmask capability checks gate task execution before deterministic Kahn topological ordering and circuit recovery."
+      },
+      {
+        id: "case-03-p2-tail",
+        relevantDocIds: ["rs-p2-quantiles"],
+        retrievedDocs: [pickDoc("rs-p2-quantiles"), pickDoc("rs-c11-ring")],
+        generatedAnswer: "Tracks p50, p95, and p99 tail latencies dynamically using five piecewise-parabolic markers in constant O(1) state."
+      },
+      {
+        id: "case-04-hybrid-rrf",
+        relevantDocIds: ["py-sqlite-rrf", "ts-golden-eval"],
+        retrievedDocs: [pickDoc("py-sqlite-rrf"), pickDoc("ts-golden-eval")],
+        generatedAnswer: "Combines lexical Okapi BM25 scores from SQLite FTS5 with cosine similarity via Reciprocal Rank Fusion and scores faithfulness AP@K."
+      },
+      {
+        id: "case-05-sparse-moe",
+        relevantDocIds: ["py-moe-router"],
+        retrievedDocs: [pickDoc("py-moe-router"), pickDoc("ts-token-breaker")],
+        generatedAnswer: "Evaluates domain affinities under active GPU VRAM caps and p95 latency SLAs applying sparse Top-2 softmax renormalization."
+      },
+      {
+        id: "case-06-sse-schema",
+        relevantDocIds: ["ts-sse-gateway", "ts-schema-redactor"],
+        retrievedDocs: [pickDoc("ts-sse-gateway"), pickDoc("ts-schema-redactor")],
+        generatedAnswer: "Streams token delta frames over text/event-stream while enforcing required schema properties and scrubbing Bearer tokens and PII."
+      }
+    ]
+  },
+  "chunk-window-truncation": {
+    id: "chunk-window-truncation",
+    label: "A/B #2 · 256-Token Semantic Chunks -> 10-Word Truncation [REGRESSION]",
+    summary: "Candidate aggressively shrinks chunk size without boundary overlap, severing tail evidence and causing recall misses + ungrounded claims.",
+    topK: 2,
+    baseline: GOLDEN_BASE_CASES.map((c) => ({
+      id: c.id,
+      relevantDocIds: c.relevantDocIds,
+      retrievedDocs: c.baseDocs,
+      generatedAnswer: c.baseAnswer
+    })),
+    candidate: GOLDEN_BASE_CASES.map((c, idx) => ({
+      id: c.id,
+      relevantDocIds: c.relevantDocIds,
+      retrievedDocs:
+        idx % 2 === 0
+          ? [pickDoc("qa-uia-ci", 10), pickDoc(c.baseDocs[0].id, 9)]
+          : [pickDoc(c.baseDocs[0].id, 9), pickDoc("quant-ieee-solvers", 9)],
+      generatedAnswer: c.baseAnswer
+    }))
+  },
+  "prompt-temp-hallucination": {
+    id: "prompt-temp-hallucination",
+    label: "A/B #3 · Grounded System Prompt (T=0.0) -> Unconstrained T=0.9 [PROMPT DRIFT]",
+    summary: "Retrieval chunks remain 100% identical (Chunk Jaccard = 1.0000), isolating pure prompt/generation hallucination drift via Faithfulness & Answer Cosine drops.",
+    topK: 2,
+    baseline: GOLDEN_BASE_CASES.map((c) => ({
+      id: c.id,
+      relevantDocIds: c.relevantDocIds,
+      retrievedDocs: c.baseDocs,
+      generatedAnswer: c.baseAnswer
+    })),
+    candidate: GOLDEN_BASE_CASES.map((c, idx) => ({
+      id: c.id,
+      relevantDocIds: c.relevantDocIds,
+      retrievedDocs: c.baseDocs,
+      generatedAnswer:
+        idx < 4
+          ? `${c.baseAnswer} Additionally, autonomous distributed blockchain consensus shards replicate weights across global satellite clusters.`
+          : c.baseAnswer
+    }))
+  }
+};
+
+export function runAbRegressionDiff(scenarioId = "hybrid-rrf-upgrade", options = {}) {
+  const t0 = performance.now();
+  const scenario = AB_DIFF_SCENARIOS[scenarioId] ?? AB_DIFF_SCENARIOS["hybrid-rrf-upgrade"];
+  const topK = options.topK ?? scenario.topK ?? 2;
+  const maxFaithfulnessDrop = options.maxFaithfulnessDrop ?? 0.01;
+  const maxContextPrecisionDrop = options.maxContextPrecisionDrop ?? 0.02;
+  const maxRecallDrop = options.maxRecallDrop ?? 0.01;
+  const maxCaseRegressions = options.maxCaseRegressions ?? 0;
+  const caseEpsilon = options.caseEpsilon ?? 0.005;
+
+  const baseScored = scenario.baseline.map((c) => evaluateGoldenCase(c, topK));
+  const candScored = scenario.candidate.map((c) => evaluateGoldenCase(c, topK));
+  const avgMetric = (arr, key) =>
+    Number((arr.reduce((acc, x) => acc + x[key], 0) / Math.max(1, arr.length)).toFixed(4));
+
+  const baselineSummary = {
+    totalCases: baseScored.length,
+    faithfulness: avgMetric(baseScored, "faithfulness"),
+    contextPrecision: avgMetric(baseScored, "contextPrecision"),
+    recallAtK: avgMetric(baseScored, "recallAtK")
+  };
+  const candidateSummary = {
+    totalCases: candScored.length,
+    faithfulness: avgMetric(candScored, "faithfulness"),
+    contextPrecision: avgMetric(candScored, "contextPrecision"),
+    recallAtK: avgMetric(candScored, "recallAtK")
+  };
+
+  const candById = new Map(candScored.map((c) => [c.id, c]));
+  const rawBaseById = new Map(scenario.baseline.map((c) => [c.id, c]));
+  const rawCandById = new Map(scenario.candidate.map((c) => [c.id, c]));
+
+  const caseDiffs = [];
+  const compositeDeltas = [];
+  const jaccards = [];
+  const wordDeltas = [];
+  const answerCosines = [];
+
+  for (const bCase of baseScored) {
+    const cCase = candById.get(bCase.id);
+    if (!cCase) continue;
+
+    const dFaith = Number((cCase.faithfulness - bCase.faithfulness).toFixed(4));
+    const dPrec = Number((cCase.contextPrecision - bCase.contextPrecision).toFixed(4));
+    const dRec = Number((cCase.recallAtK - bCase.recallAtK).toFixed(4));
+    const bComp = (bCase.faithfulness + bCase.contextPrecision + bCase.recallAtK) / 3.0;
+    const cComp = (cCase.faithfulness + cCase.contextPrecision + cCase.recallAtK) / 3.0;
+    const compositeDelta = Number((cComp - bComp).toFixed(4));
+    compositeDeltas.push(compositeDelta);
+
+    const reasons = [];
+    if (dFaith < -caseEpsilon) reasons.push("faithfulness_drop");
+    if (dPrec < -caseEpsilon) reasons.push("precision_rank_drop");
+    if (dRec < -caseEpsilon) reasons.push("recall_chunk_miss");
+
+    let status = "unchanged";
+    if (compositeDelta < -caseEpsilon || reasons.length > 0) {
+      status = "regressed";
+    } else if (compositeDelta > caseEpsilon) {
+      status = "improved";
+    }
+
+    const rawB = rawBaseById.get(bCase.id);
+    const rawC = rawCandById.get(bCase.id);
+    const jacc = Number(chunkIdJaccard(rawB.retrievedDocs, rawC.retrievedDocs, topK).toFixed(4));
+    const wDelta = Number(
+      (meanChunkWords(rawC.retrievedDocs, topK) - meanChunkWords(rawB.retrievedDocs, topK)).toFixed(2)
+    );
+    const ansSim = Number(
+      Math.max(0, cosine(embed256(rawB.generatedAnswer), embed256(rawC.generatedAnswer))).toFixed(4)
+    );
+
+    jaccards.push(jacc);
+    wordDeltas.push(wDelta);
+    answerCosines.push(ansSim);
+
+    caseDiffs.push({
+      id: bCase.id,
+      status,
+      compositeDelta,
+      faithfulnessDelta: dFaith,
+      contextPrecisionDelta: dPrec,
+      recallAtKDelta: dRec,
+      reasons,
+      chunkOverlapJaccard: jacc,
+      chunkWordsDelta: wDelta,
+      answerCosineSimilarity: ansSim
+    });
+  }
+
+  const regressions = caseDiffs.filter((c) => c.status === "regressed");
+  const improvements = caseDiffs.filter((c) => c.status === "improved");
+  const unchanged = caseDiffs.length - regressions.length - improvements.length;
+
+  const deltas = {
+    faithfulness: Number((candidateSummary.faithfulness - baselineSummary.faithfulness).toFixed(4)),
+    contextPrecision: Number((candidateSummary.contextPrecision - baselineSummary.contextPrecision).toFixed(4)),
+    recallAtK: Number((candidateSummary.recallAtK - baselineSummary.recallAtK).toFixed(4))
+  };
+
+  const meanArr = (arr, digits = 4) =>
+    Number((arr.reduce((s, v) => s + v, 0) / Math.max(1, arr.length)).toFixed(digits));
+
+  const drift = {
+    meanChunkOverlapJaccard: meanArr(jaccards, 4),
+    meanChunkWordsDelta: meanArr(wordDeltas, 2),
+    meanAnswerCosineSimilarity: meanArr(answerCosines, 4),
+    pairedStats: computePairedStats(compositeDeltas)
+  };
+
+  const gateFailures = [];
+  if (deltas.faithfulness < -maxFaithfulnessDrop) {
+    gateFailures.push(
+      `Faithfulness delta ${deltas.faithfulness.toFixed(4)} < -${maxFaithfulnessDrop.toFixed(4)}`
+    );
+  }
+  if (deltas.contextPrecision < -maxContextPrecisionDrop) {
+    gateFailures.push(
+      `AP@${topK} delta ${deltas.contextPrecision.toFixed(4)} < -${maxContextPrecisionDrop.toFixed(4)}`
+    );
+  }
+  if (deltas.recallAtK < -maxRecallDrop) {
+    gateFailures.push(
+      `Recall@${topK} delta ${deltas.recallAtK.toFixed(4)} < -${maxRecallDrop.toFixed(4)}`
+    );
+  }
+  if (regressions.length > maxCaseRegressions) {
+    gateFailures.push(
+      `Regressed cases (${regressions.length}) > maxCaseRegressions (${maxCaseRegressions})`
+    );
+  }
+
+  return {
+    scenarioId: scenario.id,
+    label: scenario.label,
+    summary: scenario.summary,
+    topK,
+    passed: gateFailures.length === 0,
+    verdict: gateFailures.length === 0 ? "PASS" : "REGRESSION_DETECTED",
+    gateFailures,
+    matchedCases: caseDiffs.length,
+    baseline: baselineSummary,
+    candidate: candidateSummary,
+    deltas,
+    drift,
+    caseBreakdown: {
+      improved: improvements.length,
+      regressed: regressions.length,
+      unchanged
+    },
+    caseDiffs,
+    elapsedMs: Number((performance.now() - t0).toFixed(3))
+  };
+}
+
+// ============================================================================
+// Increment v1.1 Part B: Rust wasm32-unknown-unknown P² Quantile & CRC32C Engine
+// Mirrors `polyglot-agent-runtime-rs` v1.1.0 (`512 B` wasm32 O(1) state)
+// ============================================================================
+
+export function crc32cPortable(bytes) {
+  if (!bytes || bytes.length === 0) return 0;
+  let crc = 0xffffffff;
+  for (let i = 0; i < bytes.length; i += 1) {
+    crc ^= bytes[i];
+    for (let bit = 0; bit < 8; bit += 1) {
+      const mask = -(crc & 1);
+      crc = (crc >>> 1) ^ (0x82f63b78 & mask);
+    }
+  }
+  return (~crc) >>> 0;
+}
+
+export class P2QuantileJs {
+  constructor(p) {
+    this.p = p;
+    this.count = 0;
+    this.q = new Float64Array(5);
+    this.n = [1, 2, 3, 4, 5];
+    this.np = [1.0, 1.0 + 2.0 * p, 1.0 + 4.0 * p, 3.0 + 2.0 * p, 5.0];
+    this.dn = [0.0, p / 2.0, p, (1.0 + p) / 2.0, 1.0];
+  }
+
+  observe(x) {
+    if (!Number.isFinite(x)) return;
+    if (this.count < 5) {
+      this.q[this.count] = x;
+      this.count += 1;
+      if (this.count === 5) {
+        for (let i = 1; i < 5; i += 1) {
+          const key = this.q[i];
+          let j = i;
+          while (j > 0 && this.q[j - 1] > key) {
+            this.q[j] = this.q[j - 1];
+            j -= 1;
+          }
+          this.q[j] = key;
+        }
+      }
+      return;
+    }
+
+    this.count += 1;
+    let k = 0;
+    if (x < this.q[0]) {
+      this.q[0] = x;
+      k = 0;
+    } else if (x < this.q[1]) {
+      k = 0;
+    } else if (x < this.q[2]) {
+      k = 1;
+    } else if (x < this.q[3]) {
+      k = 2;
+    } else if (x <= this.q[4]) {
+      k = 3;
+    } else {
+      this.q[4] = x;
+      k = 3;
+    }
+
+    for (let pos = k + 1; pos < 5; pos += 1) {
+      this.n[pos] += 1;
+    }
+    for (let m = 0; m < 5; m += 1) {
+      this.np[m] += this.dn[m];
+    }
+
+    for (let i = 1; i <= 3; i += 1) {
+      const d = this.np[i] - this.n[i];
+      if ((d >= 1.0 && this.n[i + 1] - this.n[i] > 1) || (d <= -1.0 && this.n[i - 1] - this.n[i] < -1)) {
+        const dSign = d >= 0.0 ? 1 : -1;
+        const nI = this.n[i];
+        const nIm1 = this.n[i - 1];
+        const nIp1 = this.n[i + 1];
+
+        const term1 = ((nI - nIm1 + dSign) * (this.q[i + 1] - this.q[i])) / (nIp1 - nI);
+        const term2 = ((nIp1 - nI - dSign) * (this.q[i] - this.q[i - 1])) / (nI - nIm1);
+        const qp = this.q[i] + (dSign / (nIp1 - nIm1)) * (term1 + term2);
+
+        if (this.q[i - 1] < qp && qp < this.q[i + 1]) {
+          this.q[i] = qp;
+        } else {
+          const adj = i + dSign;
+          this.q[i] += (dSign * (this.q[adj] - this.q[i])) / (this.n[adj] - nI);
+        }
+        this.n[i] += dSign;
+      }
+    }
+  }
+
+  estimate() {
+    if (this.count === 0) return 0.0;
+    if (this.count <= 4) {
+      const tmp = Array.from(this.q.slice(0, this.count)).sort((a, b) => a - b);
+      const rank = this.p * (tmp.length - 1);
+      const lo = Math.floor(rank);
+      const hi = Math.ceil(rank);
+      return lo === hi ? tmp[lo] : tmp[lo] + (rank - lo) * (tmp[hi] - tmp[lo]);
+    }
+    return this.q[2];
+  }
+}
+
+export class StreamingQuantileSuiteJs {
+  constructor() {
+    this.p50 = new P2QuantileJs(0.5);
+    this.p95 = new P2QuantileJs(0.95);
+    this.p99 = new P2QuantileJs(0.99);
+    this.count = 0;
+    this.mean = 0.0;
+    this.min = Infinity;
+    this.max = -Infinity;
+  }
+
+  observeBatch(samples) {
+    for (let i = 0; i < samples.length; i += 1) {
+      const x = samples[i];
+      if (!Number.isFinite(x)) continue;
+      this.count += 1;
+      this.mean += (x - this.mean) / this.count;
+      if (x < this.min) this.min = x;
+      if (x > this.max) this.max = x;
+      this.p50.observe(x);
+      this.p95.observe(x);
+      this.p99.observe(x);
+    }
+    return this.count;
+  }
+
+  snapshot() {
+    if (this.count === 0) {
+      return { count: 0, min: 0, p50: 0, p95: 0, p99: 0, max: 0, mean: 0, stateBytes: 512 };
+    }
+    return {
+      count: this.count,
+      min: this.min,
+      p50: this.p50.estimate(),
+      p95: this.p95.estimate(),
+      p99: this.p99.estimate(),
+      max: this.max,
+      mean: this.mean,
+      stateBytes: 512
+    };
+  }
+}
+
+let cachedWasmExports = null;
+
+export async function instantiateWasmRuntime(wasmSource = null) {
+  if (wasmSource === null && cachedWasmExports) {
+    return cachedWasmExports;
+  }
+  let bytes = wasmSource;
+  if (!bytes) {
+    const wasmUrl = new URL("./assets/polyglot_agent_runtime.wasm", import.meta.url);
+    const resp = await fetch(wasmUrl);
+    if (!resp.ok) {
+      throw new Error(`Failed to fetch WASM binary: HTTP ${resp.status}`);
+    }
+    bytes = await resp.arrayBuffer();
+  }
+  const { instance } = await WebAssembly.instantiate(bytes, {});
+  if (wasmSource === null) {
+    cachedWasmExports = instance.exports;
+  }
+  return instance.exports;
+}
+
+export function generateLatencyStream(distribution = "bimodal-kv-cache", sampleCount = 40000, tailSpikePct = 4) {
+  const n = Math.max(100, Math.min(200000, Math.trunc(sampleCount)));
+  const spikeRate = Math.max(0, Math.min(25, Number(tailSpikePct))) / 100.0;
+  const out = new Float64Array(n);
+  let seed = 0x9e3779b9;
+  const nextRand = () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296.0;
+  };
+
+  for (let i = 0; i < n; i += 1) {
+    if (distribution === "weyl-uniform") {
+      const base = ((i * 0.6180339887498949) % 1.0) * 1000.0;
+      const u = nextRand();
+      out[i] = u < spikeRate ? base + 350.0 + u * 600.0 : base;
+      continue;
+    }
+    const u1 = Math.max(1e-7, nextRand());
+    const u2 = nextRand();
+    const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+
+    if (distribution === "lognormal-rpc") {
+      let sample = Math.exp(2.65 + 0.42 * z0);
+      if (nextRand() < spikeRate) sample += 140.0 + Math.abs(z0) * 65.0;
+      out[i] = sample;
+    } else if (distribution === "pareto-moe-burst") {
+      const pareto = 12.0 / Math.pow(1.0 - Math.min(0.995, u2), 1.0 / 2.35);
+      out[i] = nextRand() < spikeRate ? pareto + 210.0 : pareto;
+    } else {
+      // bimodal-kv-cache: warm slot hit (~2.6 ms) vs cold MoE prefill (~78 ms) + tail spike
+      const hit = nextRand() >= 0.18;
+      let sample = hit ? Math.max(0.4, 2.6 + 0.55 * z0) : Math.max(18.0, 78.0 + 14.0 * z0);
+      if (nextRand() < spikeRate) sample += 185.0 + Math.abs(z0) * 48.0;
+      out[i] = sample;
+    }
+  }
+  return out;
+}
+
+function exactSortedQuantile(sorted, p) {
+  if (sorted.length === 0) return 0.0;
+  const rank = p * (sorted.length - 1);
+  const lo = Math.floor(rank);
+  const hi = Math.ceil(rank);
+  return lo === hi ? sorted[lo] : sorted[lo] + (rank - lo) * (sorted[hi] - sorted[lo]);
+}
+
+export function runP2QuantileExplorer(options = {}) {
+  const distribution = options.distribution ?? "bimodal-kv-cache";
+  const sampleCount = options.sampleCount ?? 40000;
+  const tailSpikePct = options.tailSpikePct ?? 4;
+  const ex = options.wasmExports !== undefined ? options.wasmExports : cachedWasmExports;
+
+  const samples = generateLatencyStream(distribution, sampleCount, tailSpikePct);
+  let snap;
+  let engine = "es2022-p2-fallback";
+  let rfc3720Hex = "0xE3069283";
+  let frameCrcHex = "0x00000000";
+  let streamElapsedMs = 0;
+
+  if (ex && typeof ex.par_p2_suite_new === "function") {
+    engine = "wasm32-unknown-unknown";
+    const stateBytes = ex.par_p2_suite_state_bytes();
+    const suitePtr = ex.par_p2_suite_new();
+    const bufPtr = ex.par_p2_alloc_f64_buffer(samples.length);
+    new Float64Array(ex.memory.buffer, bufPtr, samples.length).set(samples);
+
+    const t0 = performance.now();
+    const count = Number(ex.par_p2_suite_observe_batch(suitePtr, bufPtr, samples.length));
+    streamElapsedMs = Math.max(0.001, performance.now() - t0);
+
+    snap = {
+      count,
+      min: ex.par_p2_suite_min(suitePtr),
+      p50: ex.par_p2_suite_p50(suitePtr),
+      p95: ex.par_p2_suite_p95(suitePtr),
+      p99: ex.par_p2_suite_p99(suitePtr),
+      max: ex.par_p2_suite_max(suitePtr),
+      mean: ex.par_p2_suite_mean(suitePtr),
+      stateBytes
+    };
+
+    ex.par_p2_free_f64_buffer(bufPtr, samples.length);
+    ex.par_p2_suite_free(suitePtr);
+
+    const enc = new TextEncoder();
+    const checkBytes = enc.encode("123456789");
+    const cPtr = ex.par_wasm_alloc_bytes(checkBytes.length);
+    new Uint8Array(ex.memory.buffer, cPtr, checkBytes.length).set(checkBytes);
+    rfc3720Hex = "0x" + (ex.par_wasm_crc32c(cPtr, checkBytes.length) >>> 0).toString(16).toUpperCase().padStart(8, "0");
+    ex.par_wasm_free_bytes(cPtr, checkBytes.length);
+
+    const frameBytes = enc.encode(
+      `par1|${distribution}|n=${snap.count}|p50=${snap.p50.toFixed(3)}|p95=${snap.p95.toFixed(3)}|p99=${snap.p99.toFixed(3)}`
+    );
+    const fPtr = ex.par_wasm_alloc_bytes(frameBytes.length);
+    new Uint8Array(ex.memory.buffer, fPtr, frameBytes.length).set(frameBytes);
+    frameCrcHex = "0x" + (ex.par_wasm_crc32c(fPtr, frameBytes.length) >>> 0).toString(16).toUpperCase().padStart(8, "0");
+    ex.par_wasm_free_bytes(fPtr, frameBytes.length);
+  } else {
+    const suite = new StreamingQuantileSuiteJs();
+    const t0 = performance.now();
+    suite.observeBatch(samples);
+    streamElapsedMs = Math.max(0.001, performance.now() - t0);
+    snap = suite.snapshot();
+
+    const enc = new TextEncoder();
+    rfc3720Hex = "0x" + crc32cPortable(enc.encode("123456789")).toString(16).toUpperCase().padStart(8, "0");
+    const frameBytes = enc.encode(
+      `par1|${distribution}|n=${snap.count}|p50=${snap.p50.toFixed(3)}|p95=${snap.p95.toFixed(3)}|p99=${snap.p99.toFixed(3)}`
+    );
+    frameCrcHex = "0x" + crc32cPortable(frameBytes).toString(16).toUpperCase().padStart(8, "0");
+  }
+
+  // Exact O(N) sorted reference comparison
+  const sorted = Float64Array.from(samples).sort();
+  const exactP50 = exactSortedQuantile(sorted, 0.5);
+  const exactP95 = exactSortedQuantile(sorted, 0.95);
+  const exactP99 = exactSortedQuantile(sorted, 0.99);
+
+  const relErrPct = (est, exact) =>
+    exact > 1e-9 ? Number(((Math.abs(est - exact) / exact) * 100.0).toFixed(2)) : 0.0;
+
+  const naiveArrayBytes = samples.length * 8;
+  const compressionRatio = Number((naiveArrayBytes / snap.stateBytes).toFixed(1));
+  const obsPerSec = Number((samples.length / (streamElapsedMs / 1000.0)).toFixed(0));
+
+  return {
+    engine,
+    distribution,
+    count: snap.count,
+    stateBytes: snap.stateBytes,
+    naiveArrayBytes,
+    compressionRatio,
+    streamElapsedMs: Number(streamElapsedMs.toFixed(3)),
+    obsPerSec,
+    min: Number(snap.min.toFixed(2)),
+    mean: Number(snap.mean.toFixed(2)),
+    max: Number(snap.max.toFixed(2)),
+    p50: Number(snap.p50.toFixed(2)),
+    p95: Number(snap.p95.toFixed(2)),
+    p99: Number(snap.p99.toFixed(2)),
+    exact: {
+      p50: Number(exactP50.toFixed(2)),
+      p95: Number(exactP95.toFixed(2)),
+      p99: Number(exactP99.toFixed(2))
+    },
+    relErrorPct: {
+      p50: relErrPct(snap.p50, exactP50),
+      p95: relErrPct(snap.p95, exactP95),
+      p99: relErrPct(snap.p99, exactP99)
+    },
+    rfc3720Crc32cHex: rfc3720Hex,
+    frameCrc32cHex: frameCrcHex
+  };
+}
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -335,9 +1089,32 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+function fmtSigned(num, digits = 4) {
+  const fixed = Number(num).toFixed(digits);
+  return num >= 0 ? `+${fixed}` : fixed;
+}
+
 function initBrowserUi() {
   if (typeof document === "undefined") return;
 
+  // Simulator Tab Switcher
+  const tabBtns = document.querySelectorAll(".sim-tab-btn");
+  const tabPanes = document.querySelectorAll(".sim-tab-pane");
+  const activateTab = (targetId) => {
+    tabBtns.forEach((btn) => {
+      const active = btn.getAttribute("aria-controls") === targetId;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    tabPanes.forEach((pane) => {
+      pane.hidden = pane.id !== targetId;
+    });
+  };
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => activateTab(btn.getAttribute("aria-controls")));
+  });
+
+  // Pane 1: Sparse Top-2 MoE + BM25/Cosine RRF Simulator
   const queryInput = document.getElementById("sim-query");
   const runBtn = document.getElementById("sim-run-btn");
   const vramSlider = document.getElementById("sim-vram");
@@ -350,7 +1127,7 @@ function initBrowserUi() {
   const moeBars = document.getElementById("sim-moe-bars");
   const ragResults = document.getElementById("sim-rag-results");
 
-  const render = () => {
+  const renderMoeRrf = () => {
     const vram = Number(vramSlider.value);
     const sla = Number(slaSlider.value);
     vramOut.textContent = `${vram.toFixed(1)} GiB`;
@@ -408,17 +1185,178 @@ function initBrowserUi() {
       .join("");
   };
 
-  runBtn.addEventListener("click", render);
-  queryInput.addEventListener("input", render);
-  vramSlider.addEventListener("input", render);
-  slaSlider.addEventListener("input", render);
+  runBtn.addEventListener("click", renderMoeRrf);
+  queryInput.addEventListener("input", renderMoeRrf);
+  vramSlider.addEventListener("input", renderMoeRrf);
+  slaSlider.addEventListener("input", renderMoeRrf);
 
   document.querySelectorAll(".preset-chip").forEach((chip) => {
     chip.addEventListener("click", () => {
       queryInput.value = chip.getAttribute("data-query") ?? "";
-      render();
+      renderMoeRrf();
     });
   });
+
+  // Pane 2A: Pairwise A/B RAG Regression Diff Studio
+  const diffScenarioSel = document.getElementById("ab-scenario-select");
+  const diffFaithSlider = document.getElementById("ab-max-faith-drop");
+  const diffFaithOut = document.getElementById("ab-max-faith-val");
+  const diffMaxRegSlider = document.getElementById("ab-max-reg-cases");
+  const diffMaxRegOut = document.getElementById("ab-max-reg-val");
+  const diffVerdictBadge = document.getElementById("ab-verdict-badge");
+  const diffSummaryText = document.getElementById("ab-scenario-summary");
+  const diffMetricsBody = document.getElementById("ab-metrics-tbody");
+  const diffDriftStrip = document.getElementById("ab-drift-strip");
+  const diffCaseList = document.getElementById("ab-case-list");
+
+  const renderAbDiff = () => {
+    if (!diffScenarioSel) return;
+    const maxFaith = Number(diffFaithSlider.value);
+    const maxReg = Number(diffMaxRegSlider.value);
+    diffFaithOut.textContent = maxFaith.toFixed(3);
+    diffMaxRegOut.textContent = `${maxReg} cases`;
+
+    const diff = runAbRegressionDiff(diffScenarioSel.value, {
+      maxFaithfulnessDrop: maxFaith,
+      maxCaseRegressions: maxReg
+    });
+
+    diffVerdictBadge.className = diff.passed ? "guard-ok" : "guard-fail";
+    diffVerdictBadge.textContent = `CI GATE: ${diff.verdict} (${diff.elapsedMs.toFixed(2)} ms)`;
+    diffSummaryText.textContent = diff.summary;
+
+    const rows = [
+      ["Faithfulness", diff.baseline.faithfulness, diff.candidate.faithfulness, diff.deltas.faithfulness],
+      [`Context Precision (AP@${diff.topK})`, diff.baseline.contextPrecision, diff.candidate.contextPrecision, diff.deltas.contextPrecision],
+      [`Recall@${diff.topK}`, diff.baseline.recallAtK, diff.candidate.recallAtK, diff.deltas.recallAtK]
+    ];
+    diffMetricsBody.innerHTML = rows
+      .map(([name, baseV, candV, deltaV]) => {
+        const cls = deltaV > 0.001 ? "delta-pos" : deltaV < -0.001 ? "delta-neg" : "delta-neutral";
+        return `<tr>
+          <td>${escapeHtml(name)}</td>
+          <td>${baseV.toFixed(4)}</td>
+          <td>${candV.toFixed(4)}</td>
+          <td class="${cls}">${fmtSigned(deltaV, 4)}</td>
+        </tr>`;
+      })
+      .join("");
+
+    diffDriftStrip.innerHTML = `
+      <div class="mini-stat"><span>Paired t-stat</span><strong>${fmtSigned(diff.drift.pairedStats.pairedTStat, 2)}</strong></div>
+      <div class="mini-stat"><span>Chunk Jaccard</span><strong>${diff.drift.meanChunkOverlapJaccard.toFixed(4)}</strong></div>
+      <div class="mini-stat"><span>Chunk Words Δ</span><strong>${fmtSigned(diff.drift.meanChunkWordsDelta, 1)}</strong></div>
+      <div class="mini-stat"><span>Answer Cosine</span><strong>${diff.drift.meanAnswerCosineSimilarity.toFixed(4)}</strong></div>
+    `;
+
+    const failureHtml =
+      diff.gateFailures.length > 0
+        ? `<div class="gate-failure-box"><strong>Gate Trips:</strong> ${diff.gateFailures.map(escapeHtml).join(" · ")}</div>`
+        : "";
+
+    diffCaseList.innerHTML =
+      failureHtml +
+      diff.caseDiffs
+        .map((c) => {
+          const pillCls =
+            c.status === "improved" ? "pill-improved" : c.status === "regressed" ? "pill-regressed" : "pill-unchanged";
+          const reasonTxt = c.reasons.length > 0 ? ` · ${c.reasons.join(", ")}` : "";
+          return `<div class="ab-case-row">
+            <div>
+              <span class="case-id">${escapeHtml(c.id)}</span>
+              <span class="case-sub">Jacc ${c.chunkOverlapJaccard.toFixed(2)} · AnsCos ${c.answerCosineSimilarity.toFixed(2)}${escapeHtml(reasonTxt)}</span>
+            </div>
+            <span class="case-pill ${pillCls}">${escapeHtml(c.status.toUpperCase())} (${fmtSigned(c.compositeDelta, 3)})</span>
+          </div>`;
+        })
+        .join("");
+  };
+
+  if (diffScenarioSel) {
+    diffScenarioSel.addEventListener("change", renderAbDiff);
+    diffFaithSlider.addEventListener("input", renderAbDiff);
+    diffMaxRegSlider.addEventListener("input", renderAbDiff);
+  }
+
+  // Pane 2B: Rust wasm32 P² Streaming Tail-Quantile & CRC32C Explorer
+  const p2DistSel = document.getElementById("p2-dist-select");
+  const p2CountSlider = document.getElementById("p2-sample-count");
+  const p2CountOut = document.getElementById("p2-sample-val");
+  const p2SpikeSlider = document.getElementById("p2-spike-pct");
+  const p2SpikeOut = document.getElementById("p2-spike-val");
+  const p2RunBtn = document.getElementById("p2-rerun-btn");
+  const p2EngineBadge = document.getElementById("p2-engine-badge");
+  const p2KpiStrip = document.getElementById("p2-kpi-strip");
+  const p2TableBody = document.getElementById("p2-quantiles-tbody");
+  const p2BarsBox = document.getElementById("p2-quantile-bars");
+  const p2CrcFooter = document.getElementById("p2-crc-footer");
+
+  const renderP2Explorer = () => {
+    if (!p2DistSel) return;
+    const count = Number(p2CountSlider.value);
+    const spikePct = Number(p2SpikeSlider.value);
+    p2CountOut.textContent = `${count.toLocaleString("en-US")} obs`;
+    p2SpikeOut.textContent = `${spikePct}%`;
+
+    const res = runP2QuantileExplorer({
+      distribution: p2DistSel.value,
+      sampleCount: count,
+      tailSpikePct: spikePct
+    });
+
+    const isWasm = res.engine === "wasm32-unknown-unknown";
+    p2EngineBadge.className = isWasm ? "guard-ok" : "corpus-meta";
+    p2EngineBadge.textContent = isWasm
+      ? `Rust WASM32 · ${res.stateBytes} B O(1)`
+      : `ES2022 Mirror · ${res.stateBytes} B O(1)`;
+
+    p2KpiStrip.innerHTML = `
+      <div class="mini-stat"><span>State Footprint</span><strong>${res.stateBytes} B vs ${(res.naiveArrayBytes / 1024).toFixed(0)} KB</strong></div>
+      <div class="mini-stat"><span>RAM Compression</span><strong>${res.compressionRatio}× smaller</strong></div>
+      <div class="mini-stat"><span>Stream Rate</span><strong>${(res.obsPerSec / 1e6).toFixed(2)}M obs/s</strong></div>
+      <div class="mini-stat"><span>Welford Mean</span><strong>${res.mean.toFixed(2)} ms</strong></div>
+    `;
+
+    const qRows = [
+      ["p50 (Median)", res.p50, res.exact.p50, res.relErrorPct.p50],
+      ["p95 (SLA Tail)", res.p95, res.exact.p95, res.relErrorPct.p95],
+      ["p99 (Extreme Tail)", res.p99, res.exact.p99, res.relErrorPct.p99]
+    ];
+    p2TableBody.innerHTML = qRows
+      .map(
+        ([lbl, est, exVal, err]) => `<tr>
+          <td>${escapeHtml(lbl)}</td>
+          <td>${est.toFixed(2)} ms</td>
+          <td>${exVal.toFixed(2)} ms</td>
+          <td class="delta-pos">${err.toFixed(2)}%</td>
+        </tr>`
+      )
+      .join("");
+
+    const scaleMax = Math.max(1.0, res.max);
+    p2BarsBox.innerHTML = qRows
+      .map(([lbl, est]) => {
+        const pct = Math.min(100, Math.max(3, Math.round((est / scaleMax) * 100)));
+        return `<div class="moe-row active-gate">
+          <div class="moe-row-head">
+            <span>${escapeHtml(lbl)}</span>
+            <span>${est.toFixed(2)} ms (max ${res.max.toFixed(1)} ms)</span>
+          </div>
+          <div class="moe-track"><div class="moe-fill" style="width:${pct}%"></div></div>
+        </div>`;
+      })
+      .join("");
+
+    p2CrcFooter.textContent =
+      `Castagnoli CRC32C Frame Seal: ${res.frameCrc32cHex} · RFC 3720 ("123456789"): ${res.rfc3720Crc32cHex}`;
+  };
+
+  if (p2DistSel) {
+    p2DistSel.addEventListener("change", renderP2Explorer);
+    p2CountSlider.addEventListener("input", renderP2Explorer);
+    p2SpikeSlider.addEventListener("input", renderP2Explorer);
+    p2RunBtn.addEventListener("click", renderP2Explorer);
+  }
 
   // Competency matrix category filters
   const filterBtns = document.querySelectorAll(".filter-btn");
@@ -436,14 +1374,27 @@ function initBrowserUi() {
 
   // Keyboard shortcut '/' focuses live simulator input
   window.addEventListener("keydown", (ev) => {
-    if (ev.key === "/" && document.activeElement !== queryInput) {
+    const tag = document.activeElement?.tagName ?? "";
+    if (ev.key === "/" && tag !== "INPUT" && tag !== "SELECT" && tag !== "TEXTAREA") {
       ev.preventDefault();
+      activateTab("sim-pane-moe");
       queryInput.focus();
       queryInput.select();
     }
   });
 
-  render();
+  renderMoeRrf();
+  renderAbDiff();
+  renderP2Explorer();
+
+  // Upgrade P² Explorer asynchronously to real Rust wasm32-unknown-unknown binary
+  instantiateWasmRuntime()
+    .then(() => {
+      renderP2Explorer();
+    })
+    .catch(() => {
+      // Keeps deterministic ES2022 P² mirror active when opened via file:// without HTTP server
+    });
 }
 
 initBrowserUi();

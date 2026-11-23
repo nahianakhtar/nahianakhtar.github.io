@@ -1,0 +1,26 @@
+name: Portfolio Showcase HTML/JS & Simulator Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-site:
+    name: Validate Syntax, Links & Live Client Simulator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check ES2022 module syntax
+        run: node --check app.js
+
+      - name: Verify showcase links, 12-dim matrix & MoE/RRF simulator
+        run: node scripts/verify_showcase.mjs

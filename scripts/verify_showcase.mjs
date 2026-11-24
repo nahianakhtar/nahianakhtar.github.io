@@ -53,6 +53,7 @@ const requiredRepoLinks = [
   "https://github.com/nahianakhtar/mcp-moe-hybrid-sdk",
   "https://github.com/nahianakhtar/polyglot-agent-runtime-rs",
   "https://github.com/nahianakhtar/fullstack-rag-eval-studio",
+  "https://github.com/nahianakhtar/zero-to-code-systems-lab",
   "https://github.com/nahianakhtar/nahianakhtar.github.io"
 ];
 for (const link of requiredRepoLinks) {

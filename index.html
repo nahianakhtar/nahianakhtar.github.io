@@ -188,13 +188,13 @@
             <a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open nahianakhtar.github.io on GitHub">GitHub ↗</a>
           </div>
           <p class="repo-desc">
-            Responsive dark Bento &amp; Terminal showcase (<code>v1.2.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
-            <strong>MCP 2025-11-25 Citation Spans</strong>, <strong>Pairwise A/B RAG Diffs</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; OTLP Trace Waterfalls</strong>.
+            Responsive dark Bento &amp; Terminal showcase (<code>v1.3.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
+            <strong>Streamable MCP JSON-RPC 2.0 Batch/SSE</strong>, <strong>Pairwise A/B RAG Diffs</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; W3C CRC32C Lineage</strong>.
           </p>
           <div class="badge-row">
-            <span class="stack-badge">MCP Citation Spans</span>
+            <span class="stack-badge">Streamable MCP Batch/SSE</span>
             <span class="stack-badge">A/B RAG Diff Gate</span>
-            <span class="stack-badge">Rust WASM32 (33.5 KB)</span>
+            <span class="stack-badge">Rust WASM32 (40.9 KB)</span>
             <span class="stack-badge">W3C OTLP Waterfall</span>
           </div>
           <dl class="metric-grid">
@@ -239,7 +239,7 @@
       <div class="section-header">
         <div>
           <span class="section-kicker">INTERACTIVE IN-BROWSER ENGINE · ES2022 + RUST WASM32 · ZERO API KEYS</span>
-          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.2 Telemetry Lab</h2>
+          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.3 Streamable MCP Lab</h2>
         </div>
         <p class="section-sub">
           Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, or inspect <strong>v1.2 MCP Citation Spans, 64B WASM Token-Buckets &amp; W3C OTLP Trace Waterfalls</strong>.
@@ -277,6 +277,16 @@
             aria-controls="sim-pane-v12"
           >
             03 · MCP Citation Spans, WASM Token-Bucket &amp; OTLP Waterfall <span class="tab-new-pill">v1.2</span>
+          </button>
+          <button
+            id="sim-tab-btn-v13"
+            type="button"
+            role="tab"
+            class="sim-tab-btn"
+            aria-selected="false"
+            aria-controls="sim-pane-v13"
+          >
+            04 · Streamable MCP Batch/SSE &amp; Cross-Lang CRC32C Lineage <span class="tab-new-pill">v1.3</span>
           </button>
         </div>
 
@@ -548,6 +558,131 @@
               <div id="v12-waterfall-list" class="waterfall-list" aria-live="polite"></div>
               <pre id="v12-otlp-preview" class="terminal-body v12-otlp-box"></pre>
               <div id="v12-audit-footer" class="crc-footer"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Tab Pane 4 (v1.3): Streamable MCP Batch/SSE & Cross-Language W3C CRC32C Lineage Lab -->
+        <div id="sim-pane-v13" role="tabpanel" aria-labelledby="sim-tab-btn-v13" class="sim-tab-pane" hidden>
+          <div class="lab-split-grid">
+            <!-- Left Panel: MCP 2025-11-25 Streamable HTTP Batch & SSE Dispatcher -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>1. MCP <code>2025-11-25</code> Streamable HTTP Batch &amp; SSE Dispatcher</h3>
+                <span id="v13-http-badge" class="guard-ok" aria-live="polite">HTTP 200 · JSON-RPC</span>
+              </div>
+
+              <label for="v13-batch-scenario" class="sim-label">Streamable HTTP JSON-RPC 2.0 Payload Scenario</label>
+              <select id="v13-batch-scenario" class="sim-select">
+                <option value="mixed-pipeline-batch">Batch #1 · Mixed Initialize + Notification + 2 Tool Calls + Resource [200 OK]</option>
+                <option value="notifications-only-202">Batch #2 · Notifications-Only Lifecycle Batch [202 Accepted]</option>
+                <option value="oversized-batch-dos-guard">Batch #3 · 10-Item Batch vs maxBatchSize DoS Guard [400 / -32600]</option>
+                <option value="ratelimit-429-burst">Batch #4 · Token Burst vs Sliding-Window Rate Limiter [429 / -32029]</option>
+              </select>
+              <p id="v13-scenario-summary" class="lab-desc"></p>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v13-max-batch">Max Batch Size Guard</label>
+                    <output id="v13-max-batch-val" for="v13-max-batch">8 items</output>
+                  </div>
+                  <input id="v13-max-batch" type="range" min="2" max="16" step="1" value="8" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v13-token-budget">Sliding-Window Budget</label>
+                    <output id="v13-token-budget-val" for="v13-token-budget">1,200 tok</output>
+                  </div>
+                  <input id="v13-token-budget" type="range" min="400" max="2400" step="100" value="1200" />
+                </div>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div class="v12-toggle-box">
+                  <label class="v12-check-label" for="v13-sse-toggle">
+                    <input id="v13-sse-toggle" type="checkbox" />
+                    <span>Frame via <code>Accept: text/event-stream</code> SSE</span>
+                  </label>
+                </div>
+                <div class="v12-toggle-box">
+                  <label class="v12-check-label" for="v13-tamper-toggle">
+                    <input id="v13-tamper-toggle" type="checkbox" />
+                    <span>Flip 1 Bit in Traced Audit Ring (<code>-8 CRC32C</code>)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="v13-batch-kpi" class="mini-stat-grid"></div>
+              <pre id="v13-wire-preview" class="terminal-body v12-otlp-box"></pre>
+              <div id="v13-batch-footer" class="crc-footer"></div>
+            </div>
+
+            <!-- Right Panel: Cross-Language C11/Rust/WASM/Python/Node CRC32C Child-Span Lineage Verifier -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>2. Cross-Language W3C <code>CRC32C</code> Child-Span Lineage Verifier</h3>
+                <span id="v13-lineage-badge" class="guard-ok" aria-live="polite">WASM32 32B · 3/3 Vectors Match</span>
+              </div>
+
+              <label for="v13-parent-tp" class="sim-label">Parent W3C <code>traceparent</code> (55-Byte Lowercase Wire Header)</label>
+              <input
+                id="v13-parent-tp"
+                type="text"
+                class="sim-mono-input"
+                value="00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+                autocomplete="off"
+                spellcheck="false"
+              />
+
+              <div style="margin-top: 0.7rem">
+                <label for="v13-span-label" class="sim-label">Deterministic Operation Label</label>
+                <div class="sim-input-row">
+                  <input
+                    id="v13-span-label"
+                    type="text"
+                    value="mcp.tools.call/rag_query"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                  <button id="v13-derive-btn" type="button" class="btn-secondary">Derive</button>
+                </div>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v13-step-seq">DAG / Batch Step Sequence</label>
+                    <output id="v13-step-seq-val" for="v13-step-seq">seq=1</output>
+                  </div>
+                  <input id="v13-step-seq" type="range" min="0" max="16" step="1" value="1" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v13-agent-id">Capability Agent ID</label>
+                    <output id="v13-agent-id-val" for="v13-agent-id">agent=1</output>
+                  </div>
+                  <input id="v13-agent-id" type="range" min="1" max="16" step="1" value="1" />
+                </div>
+              </div>
+
+              <div id="v13-lineage-kpi" class="mini-stat-grid"></div>
+              <pre id="v13-derived-box" class="terminal-body v12-otlp-box"></pre>
+
+              <div class="table-scroll" style="margin-top: 0.75rem">
+                <table class="lab-table" aria-label="Canonical Cross-Language W3C CRC32C Vectors">
+                  <thead>
+                    <tr>
+                      <th>Step / Agent / Label</th>
+                      <th>C11 / Py / Node</th>
+                      <th>WASM32 Live</th>
+                      <th>Parity</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v13-vectors-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="v13-lineage-footer" class="crc-footer"></div>
             </div>
           </div>
         </div>

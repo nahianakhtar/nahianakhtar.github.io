@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  CANONICAL_TRACE_VECTORS,
   decodeEmbeddedWasmBytes,
+  deriveChildTraceparent,
+  dispatchMcpStreamableBatch,
   inspectMcpCitationSpans,
   instantiateWasmRuntime,
   negotiateMcpCapabilities,
@@ -10,7 +13,8 @@ import {
   runAbRegressionDiff,
   runP2QuantileExplorer,
   runPipelineSimulation,
-  runTokenBucketAndOtlpInspector
+  runTokenBucketAndOtlpInspector,
+  verifyCrossLanguageTraceVectors
 } from "../app.js";
 
 const root = resolve(import.meta.dirname, "..");
@@ -28,6 +32,7 @@ assert.ok(html.includes("Nahian Akhtar"), "Portfolio owner name missing");
 assert.ok(html.includes("New York, NY"), "Location badge missing");
 assert.ok(html.includes("sim-tab-btn-lab"), "v1.1 A/B RAG Diff & WASM P2 tab missing");
 assert.ok(html.includes("sim-tab-btn-v12"), "v1.2 MCP Citation Spans, WASM Token-Bucket & OTLP Waterfall tab missing");
+assert.ok(html.includes("sim-tab-btn-v13"), "v1.3 Streamable MCP Batch/SSE & Cross-Lang CRC32C Lineage tab missing");
 
 // Zero-leak repository check
 const forbiddenLeakPatterns = [
@@ -201,7 +206,54 @@ const v12Tamper = runTokenBucketAndOtlpInspector({
 assert.equal(v12Tamper.tamperDetected, true, "1-bit payload flip in WASM audit ring must trigger -8 CRC32C");
 assert.equal(v12Tamper.auditVerifyCode, -8);
 
-// 5. Measure warm 100-query p50 / p95 client simulator latency
+// 5. Headless verification of v1.3 Streamable MCP Batch/SSE & Cross-Language W3C CRC32C Lineage
+assert.equal(wasmBytes.byteLength, 41925, "v1.3.0 WASM binary must equal 41,925 bytes");
+assert.equal(wasmExports.par_trace_context_bytes(), 32, "WASM ParTraceContext must equal 32 bytes");
+
+const vecWasm = verifyCrossLanguageTraceVectors({ wasmExports });
+const vecJs = verifyCrossLanguageTraceVectors({ wasmExports: null });
+assert.equal(vecWasm.engine, "wasm32-unknown-unknown");
+assert.equal(vecWasm.allMatched, true, "All 3 canonical C11/Rust/WASM/Python/Node traceparent vectors must match");
+assert.equal(vecJs.allMatched, true, "ES2022 CRC32C child-span mirror must match all 3 canonical vectors");
+assert.equal(CANONICAL_TRACE_VECTORS.length, 3);
+assert.equal(deriveChildTraceparent("00-4BF92F3577B34DA6A3CE929D0E0E4736-00f067aa0ba902b7-01", { wasmExports }), null);
+assert.equal(deriveChildTraceparent("00-00000000000000000000000000000000-00f067aa0ba902b7-01", { wasmExports }), null);
+
+const batchMixed = dispatchMcpStreamableBatch("mixed-pipeline-batch", {
+  acceptSse: true,
+  wasmExports
+});
+assert.equal(batchMixed.engine, "wasm32-unknown-unknown");
+assert.equal(batchMixed.httpStatus, 200);
+assert.equal(batchMixed.inboundCount, 5);
+assert.equal(batchMixed.notificationsElided, 1);
+assert.equal(batchMixed.responseCount, 4);
+assert.equal(batchMixed.tracedAuditCorrelatedSlots, 4);
+assert.ok(batchMixed.redactionsTotal >= 1, "Expected Bearer secret redaction inside batch tool call");
+assert.ok(batchMixed.sseWire.includes("event: message\ndata: "), "Expected SSE framing when acceptSse=true");
+
+const batchTampered = dispatchMcpStreamableBatch("mixed-pipeline-batch", {
+  injectTracedTamper: true,
+  wasmExports
+});
+assert.equal(batchTampered.tamperDetected, true);
+assert.equal(batchTampered.tracedAuditCorrelatedSlots, -8);
+
+const batch202 = dispatchMcpStreamableBatch("notifications-only-202", { wasmExports });
+assert.equal(batch202.httpStatus, 202);
+assert.equal(batch202.body, null);
+assert.equal(batch202.notificationsElided, 2);
+
+const batch400 = dispatchMcpStreamableBatch("oversized-batch-dos-guard", { maxBatchSize: 8, wasmExports });
+assert.equal(batch400.httpStatus, 400);
+assert.equal(batch400.body.error.code, -32600);
+
+const batch429 = dispatchMcpStreamableBatch("ratelimit-429-burst", { windowTokenBudget: 1200, wasmExports });
+assert.equal(batch429.httpStatus, 429);
+assert.equal(batch429.body.error.code, -32029);
+assert.ok(Number(batch429.headers["Retry-After"]) >= 1);
+
+// 6. Measure warm 100-query p50 / p95 client simulator latency
 const simLatencies = [];
 const sampleQueries = [
   "64-byte cache-line C11 CRC32C telemetry ring",
@@ -226,7 +278,10 @@ console.log(
   JSON.stringify(
     {
       site: "nahianakhtar.github.io",
-      version: "1.2.0",
+      version: "1.3.0",
+      wasmTraceContextBytes: vecWasm.traceContextBytes,
+      crossLangTraceVectorsMatched: vecWasm.vectors.length,
+      v13BatchCorrelatedSlots: batchMixed.tracedAuditCorrelatedSlots,
       verifiedRepoLinks: requiredRepoLinks.length,
       competencyCards: cardMatches.length,
       wasmBinaryBytes: wasmBytes.byteLength,

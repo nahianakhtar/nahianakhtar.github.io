@@ -1187,6 +1187,14 @@ body {
   font-size: 0.71rem;
 }
 
+/* v1.4 JSON-Schema Draft 2020-12 & Cooperative Cancellation Lab */
+.sim-mono-textarea {
+  resize: vertical;
+  min-height: 96px;
+  line-height: 1.45;
+  display: block;
+}
+
 @media (max-width: 980px) {
   .hero-bento,
   .repo-grid,

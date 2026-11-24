@@ -4,7 +4,7 @@
 [![Architecture](https://img.shields.io/badge/UI-Dark%20Bento%20%2B%20Terminal-cyan.svg)](index.html)
 [![Engine](https://img.shields.io/badge/Client%20Engine-Sparse%20MoE%20%2B%20RRF%20%2B%20A%2FB%20Diff%20%2B%20Rust%20WASM32-brightgreen.svg)](app.js)
 
-Live interactive engineering portfolio and client-side Applied AI & Systems showcase (**v1.3.0**) for **Nahian Akhtar - Systems, Polyglot SDK & Applied AI Engineer (New York, NY)**.
+Live interactive engineering portfolio and client-side Applied AI & Systems showcase (**v1.4.0**) for **Nahian Akhtar - Systems, Polyglot SDK & Applied AI Engineer (New York, NY)**.
 
 ---
 
@@ -21,9 +21,13 @@ Live interactive engineering portfolio and client-side Applied AI & Systems show
    - **Streamable HTTP JSON-RPC 2.0 Batching & SSE Framing**: Evaluates mixed request/notification arrays (JSON-RPC 2.0 §6 notification elision, `202 Accepted` notification batches, `400 / -32600` `maxBatchSize` DoS guard, non-penalizing `429 / -32029` `SlidingWindowTokenRateLimiter` with `Retry-After`, and `Accept: text/event-stream` SSE framing) while sealing traced `256B` `CapabilityAuditRing` slots correlated by 16-byte binary `trace_id` (`par_audit_ring_count_trace`).
    - **5-Runtime Bit-Identical Castagnoli `CRC32C` Child-Span Lineage**: Executes `par_wasm_trace_derive_child` (`32B` 16B-aligned `ParTraceContext`) in WebAssembly linear memory alongside an ES2022 mirror, proving bit-for-bit `span_id` parity across ISO C11, Rust 2021, `wasm32`, Python 3.12 (`mcp-moe-hybrid-sdk`), and Node.js 22 (`fullstack-rag-eval-studio`).
 
+5. **Mode 05 (`v1.4`) - JSON-Schema Draft `2020-12` `outputSchema` `structuredContent` & Cooperative `notifications/cancelled` Lab**:
+   - **Zero-Dependency JSON-Schema Draft `2020-12` Contract Gate**: Enforces strict `boolean` vs `integer`/`number` separation, `prefixItems` + `items: false` closed tuples, `allOf`/`anyOf`/`oneOf`/`not` composition, `-32602` `inputSchema` rejection, and `-32603` post-condition `outputSchema` drift protection across MCP `structuredContent` payloads.
+   - **Cooperative `notifications/cancelled` Registry & Pre-Arrival Tombstones**: Evaluates `AbortController`-backed `CancellationToken` lifecycles with pre-arrival tombstones (`202 Accepted` out-of-order stream abort), `initialize` immunity, strict `int` vs `string` `requestId` isolation, sibling batch elision, and traced `256B` WASM `CapabilityAuditRing` cancellation slots.
+
 ---
 
-## Featured Flagship Repositories (`v1.3.0` Parity)
+## Featured Flagship Repositories (`v1.4.0` Parity)
 
 | Repository | Stack | Highlighted Empirical Metrics |
 | :--- | :--- | :--- |

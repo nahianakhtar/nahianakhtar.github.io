@@ -188,7 +188,7 @@
             <a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open nahianakhtar.github.io on GitHub">GitHub ↗</a>
           </div>
           <p class="repo-desc">
-            Responsive dark Bento &amp; Terminal showcase (<code>v1.3.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
+            Responsive dark Bento &amp; Terminal showcase (<code>v1.4.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
             <strong>Streamable MCP JSON-RPC 2.0 Batch/SSE</strong>, <strong>Pairwise A/B RAG Diffs</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; W3C CRC32C Lineage</strong>.
           </p>
           <div class="badge-row">
@@ -239,7 +239,7 @@
       <div class="section-header">
         <div>
           <span class="section-kicker">INTERACTIVE IN-BROWSER ENGINE · ES2022 + RUST WASM32 · ZERO API KEYS</span>
-          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.3 Streamable MCP Lab</h2>
+          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.4 MCP Contract Lab</h2>
         </div>
         <p class="section-sub">
           Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, or inspect <strong>v1.2 MCP Citation Spans, 64B WASM Token-Buckets &amp; W3C OTLP Trace Waterfalls</strong>.
@@ -287,6 +287,16 @@
             aria-controls="sim-pane-v13"
           >
             04 · Streamable MCP Batch/SSE &amp; Cross-Lang CRC32C Lineage <span class="tab-new-pill">v1.3</span>
+          </button>
+          <button
+            id="sim-tab-btn-v14"
+            type="button"
+            role="tab"
+            class="sim-tab-btn"
+            aria-selected="false"
+            aria-controls="sim-pane-v14"
+          >
+            05 · JSON-Schema 2020-12 structuredContent &amp; Cancellation <span class="tab-new-pill">v1.4</span>
           </button>
         </div>
 
@@ -683,6 +693,110 @@
               </div>
 
               <div id="v13-lineage-footer" class="crc-footer"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Tab Pane 5 (v1.4): JSON-Schema Draft 2020-12 outputSchema structuredContent & Cooperative Cancellation Lab -->
+        <div id="sim-pane-v14" role="tabpanel" aria-labelledby="sim-tab-btn-v14" class="sim-tab-pane" hidden>
+          <div class="lab-split-grid">
+            <!-- Left Panel: MCP 2025-11-25 outputSchema structuredContent & notifications/cancelled Inspector -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>1. MCP <code>outputSchema</code> <code>structuredContent</code> &amp; <code>notifications/cancelled</code></h3>
+                <span id="v14-cancel-badge" class="guard-ok" aria-live="polite">HTTP 200 · structuredContent</span>
+              </div>
+
+              <label for="v14-cancel-scenario" class="sim-label">MCP 2025-11-25 Contract &amp; Cancellation Scenario</label>
+              <select id="v14-cancel-scenario" class="sim-select">
+                <option value="structured-output-and-batch-cancel">Scenario #1 · Structured Output + Sibling Batch Cancellation Elision [200 OK]</option>
+                <option value="prearrival-tombstone-202-abort">Scenario #2 · Pre-Arrival Tombstone Out-of-Order Abort [202 Accepted]</option>
+                <option value="initialize-immunity-and-id-isolation">Scenario #3 · initialize Immunity + int(42) vs str(&quot;42&quot;) ID Isolation [200 OK]</option>
+                <option value="input-32602-and-output-32603-breach">Scenario #4 · Draft 2020-12 Input (-32602) &amp; Output Drift (-32603) Guard [JSON-RPC Err]</option>
+              </select>
+              <p id="v14-scenario-summary" class="lab-desc"></p>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v14-max-tombstones">Max Pre-Arrival Tombstones</label>
+                    <output id="v14-max-tombstones-val" for="v14-max-tombstones">64 slots</output>
+                  </div>
+                  <input id="v14-max-tombstones" type="range" min="4" max="128" step="4" value="64" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v14-tombstone-ttl">Tombstone TTL Window</label>
+                    <output id="v14-tombstone-ttl-val" for="v14-tombstone-ttl">30,000 ms</output>
+                  </div>
+                  <input id="v14-tombstone-ttl" type="range" min="5000" max="60000" step="5000" value="30000" />
+                </div>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div class="v12-toggle-box">
+                  <label class="v12-check-label" for="v14-drift-toggle">
+                    <input id="v14-drift-toggle" type="checkbox" />
+                    <span>Inject Handler <code>outputSchema</code> Drift (<code>-32603</code>)</span>
+                  </label>
+                </div>
+                <div class="v12-toggle-box">
+                  <label class="v12-check-label" for="v14-sse-toggle">
+                    <input id="v14-sse-toggle" type="checkbox" />
+                    <span>Frame via <code>Accept: text/event-stream</code> SSE</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="v14-cancel-kpi" class="mini-stat-grid"></div>
+              <pre id="v14-wire-preview" class="terminal-body v12-otlp-box"></pre>
+              <div id="v14-cancel-footer" class="crc-footer"></div>
+            </div>
+
+            <!-- Right Panel: Interactive JSON-Schema Draft 2020-12 Contract & Tuple Validator -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>2. JSON-Schema Draft <code>2020-12</code> Live Contract Validator</h3>
+                <span id="v14-schema-badge" class="guard-ok" aria-live="polite">DRAFT 2020-12 · VALID</span>
+              </div>
+
+              <label for="v14-schema-preset" class="sim-label">Draft 2020-12 Contract Preset (<code>prefixItems</code>, <code>oneOf</code>, Strict <code>bool</code>/<code>int</code>)</label>
+              <div class="sim-input-row">
+                <select id="v14-schema-preset" class="sim-select">
+                  <option value="valid-rag-structured-output">Preset #1 · MCP rag_hybrid_search structuredContent + [p50,p95,p99] Tuple [VALID]</option>
+                  <option value="invalid-bool-as-integer">Preset #2 · Strict boolean (true) Rejected for integer topK [INVALID · type]</option>
+                  <option value="invalid-tuple-overflow">Preset #3 · prefixItems [num,num,num] + items:false 4th Element [INVALID · items]</option>
+                  <option value="invalid-oneof-collision">Preset #4 · oneOf Exclusive Routing Mode Matched 2 Subschemas [INVALID · oneOf]</option>
+                </select>
+                <button id="v14-validate-btn" type="button" class="btn-secondary">Validate</button>
+              </div>
+
+              <div style="margin-top: 0.7rem">
+                <label for="v14-instance-json" class="sim-label">Editable JSON Candidate Payload (Validated Zero-Dep in Browser)</label>
+                <textarea
+                  id="v14-instance-json"
+                  rows="5"
+                  class="sim-mono-input sim-mono-textarea"
+                  spellcheck="false"
+                ></textarea>
+              </div>
+
+              <div id="v14-schema-kpi" class="mini-stat-grid" style="margin-top: 0.75rem"></div>
+              <pre id="v14-schema-box" class="terminal-body v12-otlp-box"></pre>
+
+              <div class="table-scroll" style="margin-top: 0.75rem">
+                <table class="lab-table" aria-label="JSON-Schema Draft 2020-12 Validation Violations">
+                  <thead>
+                    <tr>
+                      <th>JSONPath</th>
+                      <th>Keyword</th>
+                      <th>Contract Diagnostic</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v14-violations-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="v14-schema-footer" class="crc-footer"></div>
             </div>
           </div>
         </div>

@@ -3,6 +3,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   CANONICAL_TRACE_VECTORS,
+  CancellationToken,
+  JsonSchema2020Validator,
+  MCP_V14_TOOL_CONTRACTS,
+  RequestCancellationRegistry,
   decodeEmbeddedWasmBytes,
   deriveChildTraceparent,
   dispatchMcpStreamableBatch,
@@ -14,6 +18,8 @@ import {
   runP2QuantileExplorer,
   runPipelineSimulation,
   runTokenBucketAndOtlpInspector,
+  runMcpV14ContractAndCancellationLab,
+  validateJsonSchema2020Preset,
   verifyCrossLanguageTraceVectors
 } from "../app.js";
 
@@ -253,6 +259,97 @@ assert.equal(batch429.httpStatus, 429);
 assert.equal(batch429.body.error.code, -32029);
 assert.ok(Number(batch429.headers["Retry-After"]) >= 1);
 
+// 5B. Headless verification of v1.4 JSON-Schema Draft 2020-12 & Cooperative Cancellation Lab
+assert.ok(html.includes("sim-tab-btn-v14"), "v1.4 JSON-Schema 2020-12 & Cancellation tab missing");
+assert.equal(
+  JsonSchema2020Validator.isValid(true, { type: "integer" }),
+  false,
+  "Draft 2020-12 must never accept boolean true as integer"
+);
+assert.equal(
+  JsonSchema2020Validator.isValid(true, { type: "number" }),
+  false,
+  "Draft 2020-12 must never accept boolean true as number"
+);
+assert.equal(
+  JsonSchema2020Validator.isValid([0.12, 0.42, 0.68], {
+    type: "array",
+    prefixItems: [{ type: "number" }, { type: "number" }, { type: "number" }],
+    items: false
+  }),
+  true
+);
+assert.equal(
+  JsonSchema2020Validator.isValid([0.12, 0.42, 0.68, 1.5], {
+    type: "array",
+    prefixItems: [{ type: "number" }, { type: "number" }, { type: "number" }],
+    items: false
+  }),
+  false,
+  "prefixItems + items:false closed tuple must reject 4th element"
+);
+
+const presetValid = validateJsonSchema2020Preset("valid-rag-structured-output");
+assert.equal(presetValid.valid, true);
+const presetBoolInvalid = validateJsonSchema2020Preset("invalid-bool-as-integer");
+assert.equal(presetBoolInvalid.valid, false);
+assert.equal(presetBoolInvalid.violations[0].keyword, "type");
+const presetTupleInvalid = validateJsonSchema2020Preset("invalid-tuple-overflow");
+assert.equal(presetTupleInvalid.valid, false);
+assert.equal(presetTupleInvalid.violations[0].keyword, "items");
+const presetOneOfInvalid = validateJsonSchema2020Preset("invalid-oneof-collision");
+assert.equal(presetOneOfInvalid.valid, false);
+assert.equal(presetOneOfInvalid.violations[0].keyword, "oneOf");
+
+let fakeClock = 1000;
+const cancelReg = new RequestCancellationRegistry({
+  maxTombstones: 4,
+  tombstoneTtlMs: 5000,
+  nowFn: () => fakeClock
+});
+assert.equal(cancelReg.cancel("42", "Bearer secretTok123456789 cancel string").status, "recorded_prearrival_tombstone");
+const int42Tok = cancelReg.begin(42);
+assert.equal(int42Tok.isCancelled, false, "String '42' tombstone must not cancel integer 42");
+const str42Tok = cancelReg.begin("42");
+assert.equal(str42Tok.isCancelled, true, "String '42' tombstone must cancel string '42'");
+assert.ok(!str42Tok.reason.includes("secretTok123456789"), "Cancellation reason must scrub Bearer token");
+cancelReg.finish(42, int42Tok);
+
+cancelReg.cancel(1, "Try cancel initialize");
+const initTok = cancelReg.begin(1, { nonCancellable: true });
+assert.equal(initTok.isCancelled, false, "initialize nonCancellable token must ignore tombstone");
+assert.equal(cancelReg.cancel(1, "In-flight cancel initialize").status, "non_cancellable");
+cancelReg.finish(1, initTok);
+assert.equal(cancelReg.snapshot().ignoredNonCancellable, 2);
+
+const v14Batch = runMcpV14ContractAndCancellationLab("structured-output-and-batch-cancel", { wasmExports });
+assert.equal(v14Batch.engine, "wasm32-unknown-unknown");
+assert.equal(v14Batch.httpStatus, 200);
+assert.equal(v14Batch.notificationsElided, 1);
+assert.equal(v14Batch.cancelledElided, 1);
+assert.equal(v14Batch.responseCount, 2);
+assert.equal(v14Batch.structuredOutputsValidated, 1);
+assert.ok(v14Batch.body[1].result.structuredContent.primaryExpert.length > 2);
+assert.equal(v14Batch.tracedAuditCorrelatedSlots, 3);
+
+const v14Tombstone202 = runMcpV14ContractAndCancellationLab("prearrival-tombstone-202-abort", { wasmExports });
+assert.equal(v14Tombstone202.httpStatus, 202);
+assert.equal(v14Tombstone202.body, null);
+assert.equal(v14Tombstone202.cancelledElided, 1);
+
+const v14Immunity = runMcpV14ContractAndCancellationLab("initialize-immunity-and-id-isolation", { wasmExports });
+assert.equal(v14Immunity.httpStatus, 200);
+assert.equal(v14Immunity.responseCount, 2, "Expected initialize(1) and integer(42) to succeed while string('42') is elided");
+assert.equal(v14Immunity.cancelledElided, 1);
+assert.equal(v14Immunity.registrySnapshot.ignoredNonCancellable, 1);
+
+const v14Breach = runMcpV14ContractAndCancellationLab("input-32602-and-output-32603-breach", { wasmExports });
+assert.equal(v14Breach.httpStatus, 200);
+assert.equal(v14Breach.inputSchemaRejections, 1);
+assert.equal(v14Breach.outputSchemaBreaches, 1);
+assert.equal(v14Breach.body[0].error.code, -32602);
+assert.equal(v14Breach.body[1].error.code, -32603);
+
 // 6. Measure warm 100-query p50 / p95 client simulator latency
 const simLatencies = [];
 const sampleQueries = [
@@ -278,7 +375,9 @@ console.log(
   JSON.stringify(
     {
       site: "nahianakhtar.github.io",
-      version: "1.3.0",
+      version: "1.4.0",
+      v14StructuredValidated: v14Batch.structuredOutputsValidated,
+      v14CancelledElided: v14Batch.cancelledElided,
       wasmTraceContextBytes: vecWasm.traceContextBytes,
       crossLangTraceVectorsMatched: vecWasm.vectors.length,
       v13BatchCorrelatedSlots: batchMixed.tracedAuditCorrelatedSlots,

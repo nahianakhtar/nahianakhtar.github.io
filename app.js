@@ -3,6 +3,7 @@
  * + v1.1 Pairwise A/B RAG Regression Diff Studio & Rust wasm32 P² Tail-Quantile Explorer
  * + v1.2 MCP 2025-11-25 Citation-Span, C11/WASM 64B Token-Bucket & W3C OTLP Trace Waterfall Inspector
  * + v1.3 MCP 2025-11-25 Streamable HTTP Batch/SSE Lab & Cross-Language W3C CRC32C Child-Span Lineage
+ * + v1.4 JSON-Schema Draft 2020-12 outputSchema structuredContent & Cooperative notifications/cancelled Lab
  * Zero external API keys · Zero runtime dependencies · Deterministic ES2022 + WebAssembly
  */
 
@@ -2959,6 +2960,1232 @@ export function dispatchMcpStreamableBatch(scenarioOrPayload = "mixed-pipeline-b
   };
 }
 
+// ============================================================================
+// v1.4 JSON-Schema Draft 2020-12 Validator, outputSchema structuredContent
+// & Cooperative notifications/cancelled Tombstone / Batch-Elision Engine
+// ============================================================================
+
+function jsonDeepEqual(a, b) {
+  if (typeof a === "boolean" || typeof b === "boolean") {
+    return typeof a === "boolean" && typeof b === "boolean" && a === b;
+  }
+  if (typeof a === "number" || typeof b === "number") {
+    return (
+      typeof a === "number" &&
+      typeof b === "number" &&
+      Number.isFinite(a) &&
+      Number.isFinite(b) &&
+      a === b
+    );
+  }
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+      return false;
+    }
+    for (let i = 0; i < a.length; i += 1) {
+      if (!jsonDeepEqual(a[i], b[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  if (a !== null && b !== null && typeof a === "object" && typeof b === "object") {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    if (keysA.length !== keysB.length) {
+      return false;
+    }
+    for (const k of keysA) {
+      if (!Object.prototype.hasOwnProperty.call(b, k) || !jsonDeepEqual(a[k], b[k])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return a === b;
+}
+
+export class JsonSchema2020Validator {
+  static SCHEMA_URI = "https://json-schema.org/draft/2020-12/schema";
+  static MAX_DEPTH = 32;
+
+  static matchesSingleType(instance, expected) {
+    switch (expected) {
+      case "null":
+        return instance === null;
+      case "boolean":
+        return typeof instance === "boolean";
+      case "integer":
+        return typeof instance === "number" && Number.isInteger(instance);
+      case "number":
+        return typeof instance === "number" && Number.isFinite(instance);
+      case "string":
+        return typeof instance === "string";
+      case "array":
+        return Array.isArray(instance);
+      case "object":
+        return instance !== null && typeof instance === "object" && !Array.isArray(instance);
+      default:
+        return false;
+    }
+  }
+
+  static describeType(instance) {
+    if (instance === null) return "null";
+    if (Array.isArray(instance)) return "array";
+    return typeof instance;
+  }
+
+  static isValid(instance, schema) {
+    return JsonSchema2020Validator.validate(instance, schema).length === 0;
+  }
+
+  static validate(instance, schema, options = {}) {
+    const path = options.path ?? "$";
+    const depth = options.depth ?? 0;
+    if (depth > JsonSchema2020Validator.MAX_DEPTH) {
+      return [
+        {
+          path,
+          keyword: "maxDepth",
+          message: `Validation depth exceeded max ${JsonSchema2020Validator.MAX_DEPTH}`
+        }
+      ];
+    }
+    if (typeof schema === "boolean") {
+      return schema ? [] : [{ path, keyword: "booleanSchema", message: "Schema is false" }];
+    }
+    if (schema === null || typeof schema !== "object" || Array.isArray(schema)) {
+      return [{ path, keyword: "schema", message: "Invalid schema definition" }];
+    }
+
+    const violations = [];
+
+    if ("type" in schema && schema.type !== undefined) {
+      const allowedTypes = Array.isArray(schema.type) ? schema.type : [schema.type];
+      if (!allowedTypes.some((t) => JsonSchema2020Validator.matchesSingleType(instance, t))) {
+        violations.push({
+          path,
+          keyword: "type",
+          message: `Expected type ${allowedTypes.join(" | ")}, got ${JsonSchema2020Validator.describeType(instance)}`
+        });
+        return violations;
+      }
+    }
+
+    if ("const" in schema && !jsonDeepEqual(instance, schema.const)) {
+      violations.push({
+        path,
+        keyword: "const",
+        message: `Value must equal ${JSON.stringify(schema.const)}`
+      });
+    }
+
+    if (Array.isArray(schema.enum) && !schema.enum.some((opt) => jsonDeepEqual(instance, opt))) {
+      violations.push({
+        path,
+        keyword: "enum",
+        message: `Value must be one of ${JSON.stringify(schema.enum)}`
+      });
+    }
+
+    if (JsonSchema2020Validator.matchesSingleType(instance, "number")) {
+      if (typeof schema.minimum === "number" && instance < schema.minimum) {
+        violations.push({ path, keyword: "minimum", message: `Value ${instance} < minimum ${schema.minimum}` });
+      }
+      if (typeof schema.maximum === "number" && instance > schema.maximum) {
+        violations.push({ path, keyword: "maximum", message: `Value ${instance} > maximum ${schema.maximum}` });
+      }
+      if (typeof schema.exclusiveMinimum === "number" && instance <= schema.exclusiveMinimum) {
+        violations.push({
+          path,
+          keyword: "exclusiveMinimum",
+          message: `Value ${instance} <= exclusiveMinimum ${schema.exclusiveMinimum}`
+        });
+      }
+      if (typeof schema.exclusiveMaximum === "number" && instance >= schema.exclusiveMaximum) {
+        violations.push({
+          path,
+          keyword: "exclusiveMaximum",
+          message: `Value ${instance} >= exclusiveMaximum ${schema.exclusiveMaximum}`
+        });
+      }
+      if (typeof schema.multipleOf === "number" && schema.multipleOf > 0) {
+        const quotient = instance / schema.multipleOf;
+        if (Math.abs(quotient - Math.round(quotient)) > 1e-9) {
+          violations.push({
+            path,
+            keyword: "multipleOf",
+            message: `Value ${instance} is not a multiple of ${schema.multipleOf}`
+          });
+        }
+      }
+    }
+
+    if (typeof instance === "string") {
+      if (typeof schema.minLength === "number" && instance.length < schema.minLength) {
+        violations.push({
+          path,
+          keyword: "minLength",
+          message: `String length ${instance.length} < minLength ${schema.minLength}`
+        });
+      }
+      if (typeof schema.maxLength === "number" && instance.length > schema.maxLength) {
+        violations.push({
+          path,
+          keyword: "maxLength",
+          message: `String length ${instance.length} > maxLength ${schema.maxLength}`
+        });
+      }
+      if (typeof schema.pattern === "string" && !(new RegExp(schema.pattern).test(instance))) {
+        violations.push({
+          path,
+          keyword: "pattern",
+          message: `String does not match pattern ${JSON.stringify(schema.pattern)}`
+        });
+      }
+    }
+
+    if (Array.isArray(instance)) {
+      if (typeof schema.minItems === "number" && instance.length < schema.minItems) {
+        violations.push({
+          path,
+          keyword: "minItems",
+          message: `Array length ${instance.length} < minItems ${schema.minItems}`
+        });
+      }
+      if (typeof schema.maxItems === "number" && instance.length > schema.maxItems) {
+        violations.push({
+          path,
+          keyword: "maxItems",
+          message: `Array length ${instance.length} > maxItems ${schema.maxItems}`
+        });
+      }
+      if (schema.uniqueItems === true) {
+        let dup = false;
+        for (let i = 0; i < instance.length && !dup; i += 1) {
+          for (let j = i + 1; j < instance.length; j += 1) {
+            if (jsonDeepEqual(instance[i], instance[j])) {
+              dup = true;
+              break;
+            }
+          }
+        }
+        if (dup) {
+          violations.push({ path, keyword: "uniqueItems", message: "Array items must be unique" });
+        }
+      }
+
+      let prefixLen = 0;
+      if (Array.isArray(schema.prefixItems)) {
+        prefixLen = schema.prefixItems.length;
+        for (let idx = 0; idx < prefixLen && idx < instance.length; idx += 1) {
+          violations.push(
+            ...JsonSchema2020Validator.validate(instance[idx], schema.prefixItems[idx], {
+              path: `${path}[${idx}]`,
+              depth: depth + 1
+            })
+          );
+        }
+      }
+
+      if ("items" in schema && schema.items !== undefined) {
+        if (schema.items === false && instance.length > prefixLen) {
+          violations.push({
+            path: `${path}[${prefixLen}]`,
+            keyword: "items",
+            message: `Additional array items beyond index ${prefixLen - 1} are not allowed`
+          });
+        } else if (schema.items !== true && schema.items !== false) {
+          for (let idx = prefixLen; idx < instance.length; idx += 1) {
+            violations.push(
+              ...JsonSchema2020Validator.validate(instance[idx], schema.items, {
+                path: `${path}[${idx}]`,
+                depth: depth + 1
+              })
+            );
+          }
+        }
+      }
+    }
+
+    if (instance !== null && typeof instance === "object" && !Array.isArray(instance)) {
+      const definedEntries = Object.entries(instance).filter(([, v]) => v !== undefined);
+      if (typeof schema.minProperties === "number" && definedEntries.length < schema.minProperties) {
+        violations.push({
+          path,
+          keyword: "minProperties",
+          message: `Object has ${definedEntries.length} properties, minProperties is ${schema.minProperties}`
+        });
+      }
+      if (typeof schema.maxProperties === "number" && definedEntries.length > schema.maxProperties) {
+        violations.push({
+          path,
+          keyword: "maxProperties",
+          message: `Object has ${definedEntries.length} properties, maxProperties is ${schema.maxProperties}`
+        });
+      }
+      if (Array.isArray(schema.required)) {
+        for (const reqKey of schema.required) {
+          if (!(reqKey in instance) || instance[reqKey] === undefined) {
+            violations.push({
+              path: `${path}.${reqKey}`,
+              keyword: "required",
+              message: `Missing required property '${reqKey}'`
+            });
+          }
+        }
+      }
+      const props =
+        schema.properties !== null && typeof schema.properties === "object" && !Array.isArray(schema.properties)
+          ? schema.properties
+          : {};
+      const addl = "additionalProperties" in schema ? schema.additionalProperties : true;
+      for (const [k, v] of definedEntries) {
+        const childPath = `${path}.${k}`;
+        if (Object.prototype.hasOwnProperty.call(props, k)) {
+          violations.push(
+            ...JsonSchema2020Validator.validate(v, props[k], { path: childPath, depth: depth + 1 })
+          );
+        } else if (addl === false) {
+          violations.push({
+            path: childPath,
+            keyword: "additionalProperties",
+            message: `Additional property '${k}' is not allowed`
+          });
+        } else if (addl !== true && addl !== undefined) {
+          violations.push(
+            ...JsonSchema2020Validator.validate(v, addl, { path: childPath, depth: depth + 1 })
+          );
+        }
+      }
+    }
+
+    if (Array.isArray(schema.allOf)) {
+      for (const sub of schema.allOf) {
+        violations.push(...JsonSchema2020Validator.validate(instance, sub, { path, depth: depth + 1 }));
+      }
+    }
+
+    if (Array.isArray(schema.anyOf)) {
+      const okAny = schema.anyOf.some(
+        (sub) => JsonSchema2020Validator.validate(instance, sub, { path, depth: depth + 1 }).length === 0
+      );
+      if (!okAny) {
+        violations.push({
+          path,
+          keyword: "anyOf",
+          message: "Instance did not match any subschema in anyOf"
+        });
+      }
+    }
+
+    if (Array.isArray(schema.oneOf)) {
+      let matches = 0;
+      for (const sub of schema.oneOf) {
+        if (JsonSchema2020Validator.validate(instance, sub, { path, depth: depth + 1 }).length === 0) {
+          matches += 1;
+        }
+      }
+      if (matches !== 1) {
+        violations.push({
+          path,
+          keyword: "oneOf",
+          message: `Expected exactly 1 matching subschema in oneOf, matched ${matches}`
+        });
+      }
+    }
+
+    if ("not" in schema && schema.not !== undefined) {
+      if (JsonSchema2020Validator.validate(instance, schema.not, { path, depth: depth + 1 }).length === 0) {
+        violations.push({
+          path,
+          keyword: "not",
+          message: "Instance matched forbidden 'not' schema"
+        });
+      }
+    }
+
+    return violations;
+  }
+
+  validate(instance, schema, options = {}) {
+    return JsonSchema2020Validator.validate(instance, schema, options);
+  }
+
+  isValid(instance, schema) {
+    return JsonSchema2020Validator.isValid(instance, schema);
+  }
+}
+
+export class RequestCancelledError extends Error {
+  constructor(requestId, reason = "Cancelled by client") {
+    super(`Request ${JSON.stringify(requestId)} cancelled: ${reason}`);
+    this.name = "RequestCancelledError";
+    this.requestId = requestId;
+    this.reason = reason;
+  }
+}
+
+export class CancellationToken {
+  #requestId;
+  #nonCancellable;
+  #controller = new AbortController();
+  #cancelled = false;
+  #reason = "";
+
+  constructor(requestId = null, options = {}) {
+    this.#requestId = requestId;
+    this.#nonCancellable = options.nonCancellable === true;
+  }
+
+  get requestId() {
+    return this.#requestId;
+  }
+
+  get nonCancellable() {
+    return this.#nonCancellable;
+  }
+
+  get isCancelled() {
+    return this.#cancelled;
+  }
+
+  get reason() {
+    return this.#reason;
+  }
+
+  get signal() {
+    return this.#controller.signal;
+  }
+
+  cancel(reason = "Cancelled by client") {
+    if (this.#nonCancellable || this.#cancelled) {
+      return false;
+    }
+    const clean = redactQuery(String(reason || "Cancelled by client").trim().slice(0, 256)).cleanQuery || "Cancelled by client";
+    this.#cancelled = true;
+    this.#reason = clean;
+    this.#controller.abort(new RequestCancelledError(this.#requestId, clean));
+    return true;
+  }
+
+  throwIfCancelled() {
+    if (this.#cancelled) {
+      throw new RequestCancelledError(this.#requestId, this.#reason || "Cancelled by client");
+    }
+  }
+
+  onCancel(listener) {
+    if (typeof listener !== "function") {
+      return () => {};
+    }
+    if (this.#cancelled) {
+      listener(this.#reason);
+      return () => {};
+    }
+    const handler = () => listener(this.#reason);
+    this.#controller.signal.addEventListener("abort", handler, { once: true });
+    return () => this.#controller.signal.removeEventListener("abort", handler);
+  }
+}
+
+export class RequestCancellationRegistry {
+  #maxTombstones;
+  #tombstoneTtlMs;
+  #nowFn;
+  #inflight = new Map();
+  #preCancelled = new Map();
+  #notificationsReceived = 0;
+  #cancelledCount = 0;
+  #ignoredNonCancellable = 0;
+
+  constructor(options = {}) {
+    this.#maxTombstones = Math.max(1, Math.trunc(Number(options.maxTombstones ?? 64)));
+    this.#tombstoneTtlMs = Math.max(100, Math.trunc(Number(options.tombstoneTtlMs ?? 30000)));
+    this.#nowFn = options.nowFn ?? (() => Date.now());
+  }
+
+  static normalizeKey(requestId) {
+    if (requestId === null || requestId === undefined || typeof requestId === "boolean") {
+      return null;
+    }
+    if (typeof requestId === "number") {
+      if (!Number.isFinite(requestId)) return null;
+      return { key: `num:${requestId}`, id: requestId };
+    }
+    if (typeof requestId === "string") {
+      const trimmed = requestId.slice(0, 256);
+      return trimmed.length > 0 ? { key: `str:${trimmed}`, id: trimmed } : null;
+    }
+    return null;
+  }
+
+  #pruneTombstones(now) {
+    const cutoff = now - this.#tombstoneTtlMs;
+    for (const [k, entry] of this.#preCancelled.entries()) {
+      if (entry.ts <= cutoff) {
+        this.#preCancelled.delete(k);
+      } else {
+        break;
+      }
+    }
+  }
+
+  begin(requestId, options = {}) {
+    const norm = RequestCancellationRegistry.normalizeKey(requestId);
+    const nonCancellable = options.nonCancellable === true;
+    const token = new CancellationToken(norm ? norm.id : null, { nonCancellable });
+    if (!norm) {
+      return token;
+    }
+    const now = this.#nowFn();
+    this.#pruneTombstones(now);
+    if (!nonCancellable && this.#preCancelled.has(norm.key)) {
+      const tomb = this.#preCancelled.get(norm.key);
+      this.#preCancelled.delete(norm.key);
+      if (token.cancel(tomb.reason)) {
+        this.#cancelledCount += 1;
+      }
+      return token;
+    }
+    if (nonCancellable && this.#preCancelled.has(norm.key)) {
+      this.#preCancelled.delete(norm.key);
+      this.#ignoredNonCancellable += 1;
+    }
+    this.#inflight.set(norm.key, token);
+    return token;
+  }
+
+  finish(requestId, token = null) {
+    const norm = RequestCancellationRegistry.normalizeKey(requestId);
+    if (!norm) return;
+    const current = this.#inflight.get(norm.key);
+    if (current && (token === null || current === token)) {
+      this.#inflight.delete(norm.key);
+    }
+  }
+
+  cancel(requestId, reason = "Cancelled by client") {
+    this.#notificationsReceived += 1;
+    const now = this.#nowFn();
+    this.#pruneTombstones(now);
+    const norm = RequestCancellationRegistry.normalizeKey(requestId);
+    if (!norm) {
+      return { cancelled: false, status: "invalid_request_id" };
+    }
+    const cleanReason =
+      redactQuery(String(reason || "Cancelled by client").trim().slice(0, 256)).cleanQuery || "Cancelled by client";
+    const active = this.#inflight.get(norm.key);
+    if (active) {
+      if (active.nonCancellable) {
+        this.#ignoredNonCancellable += 1;
+        return { cancelled: false, status: "non_cancellable" };
+      }
+      if (active.cancel(cleanReason)) {
+        this.#cancelledCount += 1;
+      }
+      return { cancelled: true, status: "cancelled_inflight", reason: active.reason };
+    }
+
+    if (this.#preCancelled.has(norm.key)) {
+      this.#preCancelled.delete(norm.key);
+    }
+    this.#preCancelled.set(norm.key, { ts: now, reason: cleanReason });
+    while (this.#preCancelled.size > this.#maxTombstones) {
+      const oldestKey = this.#preCancelled.keys().next().value;
+      if (oldestKey === undefined) break;
+      this.#preCancelled.delete(oldestKey);
+    }
+    return { cancelled: true, status: "recorded_prearrival_tombstone", reason: cleanReason };
+  }
+
+  snapshot() {
+    const now = this.#nowFn();
+    this.#pruneTombstones(now);
+    return {
+      inflightRequests: this.#inflight.size,
+      pendingTombstones: this.#preCancelled.size,
+      notificationsReceived: this.#notificationsReceived,
+      cancelledCount: this.#cancelledCount,
+      ignoredNonCancellable: this.#ignoredNonCancellable
+    };
+  }
+}
+
+export const MCP_V14_TOOL_CONTRACTS = Object.freeze({
+  moe_route_query: {
+    name: "moe_route_query",
+    inputSchema: {
+      $schema: JsonSchema2020Validator.SCHEMA_URI,
+      type: "object",
+      required: ["prompt"],
+      additionalProperties: false,
+      properties: {
+        prompt: { type: "string", minLength: 3, maxLength: 512 },
+        vramGib: { type: "number", minimum: 2, maximum: 80 },
+        slaMs: { type: "integer", minimum: 25, maximum: 5000 }
+      }
+    },
+    outputSchema: {
+      $schema: JsonSchema2020Validator.SCHEMA_URI,
+      type: "object",
+      required: ["primaryExpert", "secondaryExpert", "redactions", "childSpanId"],
+      additionalProperties: false,
+      properties: {
+        primaryExpert: { type: "string", minLength: 2 },
+        secondaryExpert: { type: "string", minLength: 2 },
+        redactions: { type: "integer", minimum: 0 },
+        childSpanId: { type: "string", pattern: "^[0-9a-f]{16}$" }
+      }
+    }
+  },
+  rag_hybrid_search: {
+    name: "rag_hybrid_search",
+    inputSchema: {
+      $schema: JsonSchema2020Validator.SCHEMA_URI,
+      type: "object",
+      required: ["query"],
+      additionalProperties: false,
+      properties: {
+        query: { type: "string", minLength: 2, maxLength: 512 },
+        topK: { type: "integer", minimum: 1, maximum: 5 }
+      }
+    },
+    outputSchema: {
+      $schema: JsonSchema2020Validator.SCHEMA_URI,
+      type: "object",
+      required: ["hits", "quantilesMsTuple", "redactions", "childSpanId"],
+      additionalProperties: false,
+      properties: {
+        hits: {
+          type: "array",
+          minItems: 1,
+          maxItems: 5,
+          items: {
+            type: "object",
+            required: ["id", "rrf", "spans"],
+            additionalProperties: false,
+            properties: {
+              id: { type: "string", minLength: 2 },
+              rrf: { type: "number", minimum: 0 },
+              spans: { type: "integer", minimum: 0 }
+            }
+          }
+        },
+        quantilesMsTuple: {
+          type: "array",
+          prefixItems: [
+            { type: "number", minimum: 0 },
+            { type: "number", minimum: 0 },
+            { type: "number", minimum: 0 }
+          ],
+          items: false,
+          minItems: 3
+        },
+        redactions: { type: "integer", minimum: 0 },
+        childSpanId: { type: "string", pattern: "^[0-9a-f]{16}$" }
+      }
+    }
+  }
+});
+
+export const V14_SCHEMA_PRESETS = Object.freeze({
+  "valid-rag-structured-output": {
+    id: "valid-rag-structured-output",
+    label: "Preset #1 · MCP rag_hybrid_search structuredContent + [p50,p95,p99] Tuple [VALID]",
+    schema: MCP_V14_TOOL_CONTRACTS.rag_hybrid_search.outputSchema,
+    instance: {
+      hits: [
+        { id: "rs-c11-ring", rrf: 0.0328, spans: 3 },
+        { id: "py-sqlite-rrf", rrf: 0.0315, spans: 2 }
+      ],
+      quantilesMsTuple: [0.126, 0.422, 0.681],
+      redactions: 1,
+      childSpanId: "a49d126176b13490"
+    }
+  },
+  "invalid-bool-as-integer": {
+    id: "invalid-bool-as-integer",
+    label: "Preset #2 · Strict boolean (true) Rejected for integer topK [INVALID · type]",
+    schema: MCP_V14_TOOL_CONTRACTS.rag_hybrid_search.inputSchema,
+    instance: {
+      query: "SQLite WAL FTS5 BM25 Reciprocal Rank Fusion",
+      topK: true
+    }
+  },
+  "invalid-tuple-overflow": {
+    id: "invalid-tuple-overflow",
+    label: "Preset #3 · prefixItems [num,num,num] + items:false 4th Element [INVALID · items]",
+    schema: MCP_V14_TOOL_CONTRACTS.rag_hybrid_search.outputSchema,
+    instance: {
+      hits: [{ id: "rs-c11-ring", rrf: 0.0328, spans: 3 }],
+      quantilesMsTuple: [0.126, 0.422, 0.681, 1.95],
+      redactions: 0,
+      childSpanId: "a49d126176b13490"
+    }
+  },
+  "invalid-oneof-collision": {
+    id: "invalid-oneof-collision",
+    label: "Preset #4 · oneOf Exclusive Routing Mode Matched 2 Subschemas [INVALID · oneOf]",
+    schema: {
+      $schema: JsonSchema2020Validator.SCHEMA_URI,
+      type: "object",
+      oneOf: [
+        { required: ["gpuSlot"] },
+        { required: ["cpuFallbackThreads"] }
+      ],
+      properties: {
+        gpuSlot: { type: "integer", minimum: 0 },
+        cpuFallbackThreads: { type: "integer", minimum: 1 }
+      },
+      additionalProperties: false
+    },
+    instance: {
+      gpuSlot: 0,
+      cpuFallbackThreads: 6
+    }
+  }
+});
+
+export function validateJsonSchema2020Preset(
+  presetId = "valid-rag-structured-output",
+  customInstanceJson = null
+) {
+  const t0 = performance.now();
+  const preset = V14_SCHEMA_PRESETS[presetId] ?? V14_SCHEMA_PRESETS["valid-rag-structured-output"];
+  let parsedInstance = preset.instance;
+  if (typeof customInstanceJson === "string" && customInstanceJson.trim().length > 0) {
+    try {
+      parsedInstance = JSON.parse(customInstanceJson);
+    } catch (err) {
+      return {
+        presetId: preset.id,
+        schemaUri: JsonSchema2020Validator.SCHEMA_URI,
+        valid: false,
+        parseError: String(err.message || "Invalid JSON syntax"),
+        violations: [
+          {
+            path: "$",
+            keyword: "jsonParse",
+            message: String(err.message || "Invalid JSON syntax")
+          }
+        ],
+        schema: preset.schema,
+        instance: null,
+        elapsedMs: Number((performance.now() - t0).toFixed(3))
+      };
+    }
+  }
+  const violations = JsonSchema2020Validator.validate(parsedInstance, preset.schema);
+  return {
+    presetId: preset.id,
+    schemaUri: JsonSchema2020Validator.SCHEMA_URI,
+    valid: violations.length === 0,
+    parseError: null,
+    violations,
+    schema: preset.schema,
+    instance: parsedInstance,
+    elapsedMs: Number((performance.now() - t0).toFixed(3))
+  };
+}
+
+export const MCP_V14_CANCEL_SCENARIOS = Object.freeze({
+  "structured-output-and-batch-cancel": {
+    id: "structured-output-and-batch-cancel",
+    summary:
+      "4-item Streamable HTTP batch: notifications/cancelled tombstones sibling 'req-slow-rag' before dispatch, eliding both notification and cancelled sibling while emitting Draft 2020-12 validated structuredContent on active tools.",
+    payload: [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: { protocolVersion: "2025-11-25", clientInfo: { name: "subvenyx-v14-lab", version: "1.4.0" } }
+      },
+      {
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: "req-slow-rag", reason: "User superseded query Bearer secretCancelToken999111" }
+      },
+      {
+        jsonrpc: "2.0",
+        id: "req-fast-moe",
+        method: "tools/call",
+        params: {
+          name: "moe_route_query",
+          arguments: { prompt: "Route C11 CRC32C ring + SQLite WAL FTS5 hybrid RRF", vramGib: 6.0, slaMs: 450 }
+        }
+      },
+      {
+        jsonrpc: "2.0",
+        id: "req-slow-rag",
+        method: "tools/call",
+        params: {
+          name: "rag_hybrid_search",
+          arguments: { query: "Superseded slow deep-archive scan", topK: 3 }
+        }
+      }
+    ]
+  },
+  "prearrival-tombstone-202-abort": {
+    id: "prearrival-tombstone-202-abort",
+    summary:
+      "Out-of-order stream: notifications/cancelled records a pre-arrival tombstone for 'req-900', and when tools/call 'req-900' arrives, execution aborts with HTTP 202 Accepted (empty body, 0 wasted retrieval).",
+    preCancel: [{ requestId: "req-900", reason: "Client tab navigated away" }],
+    payload: {
+      jsonrpc: "2.0",
+      id: "req-900",
+      method: "tools/call",
+      params: {
+        name: "rag_hybrid_search",
+        arguments: { query: "Castagnoli CRC32C SQLite FTS5 citation offsets", topK: 2 }
+      }
+    }
+  },
+  "initialize-immunity-and-id-isolation": {
+    id: "initialize-immunity-and-id-isolation",
+    summary:
+      "Protocol safety proof: notifications/cancelled targeting initialize (id: 1) is ignored per MCP lifecycle rules, and cancelling string id '42' leaves integer id 42 completely untouched.",
+    payload: [
+      {
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: 1, reason: "Attempted initialize abort (must ignore)" }
+      },
+      {
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: "42", reason: "Cancel string requestId '42' only" }
+      },
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: { protocolVersion: "2025-11-25" }
+      },
+      {
+        jsonrpc: "2.0",
+        id: 42,
+        method: "tools/call",
+        params: {
+          name: "rag_hybrid_search",
+          arguments: { query: "64-byte cache-line C11 CRC32C ring", topK: 2 }
+        }
+      },
+      {
+        jsonrpc: "2.0",
+        id: "42",
+        method: "tools/call",
+        params: {
+          name: "rag_hybrid_search",
+          arguments: { query: "Cancelled string-keyed duplicate", topK: 2 }
+        }
+      }
+    ]
+  },
+  "input-32602-and-output-32603-breach": {
+    id: "input-32602-and-output-32603-breach",
+    summary:
+      "Dual-boundary Draft 2020-12 contract enforcement: rejects boolean topK=true with JSON-RPC -32602 (inputSchema) and blocks malformed handler outputSchema drift with -32603 before client serialization.",
+    forceOutputDriftOnSecondCall: true,
+    payload: [
+      {
+        jsonrpc: "2.0",
+        id: "bad-input-bool",
+        method: "tools/call",
+        params: {
+          name: "rag_hybrid_search",
+          arguments: { query: "SQLite WAL FTS5", topK: true }
+        }
+      },
+      {
+        jsonrpc: "2.0",
+        id: "drifted-output-tuple",
+        method: "tools/call",
+        params: {
+          name: "rag_hybrid_search",
+          arguments: { query: "SQLite WAL FTS5 Reciprocal Rank Fusion", topK: 2 }
+        }
+      }
+    ]
+  }
+});
+
+export function runMcpV14ContractAndCancellationLab(
+  scenarioOrPayload = "structured-output-and-batch-cancel",
+  options = {}
+) {
+  const t0 = performance.now();
+  const scenarioObj =
+    typeof scenarioOrPayload === "string"
+      ? MCP_V14_CANCEL_SCENARIOS[scenarioOrPayload] ??
+        MCP_V14_CANCEL_SCENARIOS["structured-output-and-batch-cancel"]
+      : null;
+  const rawPayload = scenarioObj ? scenarioObj.payload : scenarioOrPayload;
+  const isBatch = Array.isArray(rawPayload);
+  const items = isBatch ? rawPayload : [rawPayload];
+
+  const maxTombstones = Math.max(1, Math.min(512, Math.trunc(Number(options.maxTombstones ?? 64))));
+  const tombstoneTtlMs = Math.max(100, Math.trunc(Number(options.tombstoneTtlMs ?? 30000)));
+  const injectOutputDrift = Boolean(options.injectOutputDrift);
+  const acceptSse = Boolean(options.acceptSse);
+  const agentId = Math.max(1, Math.min(255, Math.trunc(Number(options.agentId ?? 4))));
+  const ex = options.wasmExports !== undefined ? options.wasmExports : cachedWasmExports;
+
+  const rawTp = String(
+    options.traceparent ?? "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+  ).trim();
+  const inboundValid = STRICT_W3C_LOWER_RE.test(rawTp) && parseW3cTraceparent(rawTp) !== null;
+  const effectiveParentTp = inboundValid
+    ? rawTp
+    : `00-${deterministicHex(`v14:${rawTp}`, 32)}-${deterministicHex(`v14:sp:${rawTp}`, 16)}-01`;
+  const effectiveTraceId = effectiveParentTp.slice(3, 35);
+
+  let virtualNowMs = 1_000_000;
+  const registry = new RequestCancellationRegistry({
+    maxTombstones,
+    tombstoneTtlMs,
+    nowFn: () => virtualNowMs
+  });
+
+  const preCancels = [
+    ...(scenarioObj?.preCancel ?? []),
+    ...(Array.isArray(options.preCancel) ? options.preCancel : [])
+  ];
+  for (const pc of preCancels) {
+    registry.cancel(pc.requestId, pc.reason ?? "Pre-arrival cancellation");
+    virtualNowMs += 5;
+  }
+
+  // Pass 1: Process notifications upfront in batch so sibling notifications/cancelled take immediate effect
+  let notificationsElided = 0;
+  for (const item of items) {
+    if (isJsonRpcNotification(item)) {
+      notificationsElided += 1;
+      if (item.method === "notifications/cancelled") {
+        const p = item.params && typeof item.params === "object" ? item.params : {};
+        registry.cancel(p.requestId, p.reason ?? "Cancelled in batch");
+      }
+      virtualNowMs += 2;
+    }
+  }
+
+  const responses = [];
+  const otlpSpans = [];
+  let cancelledElided = 0;
+  let structuredOutputsValidated = 0;
+  let inputSchemaRejections = 0;
+  let outputSchemaBreaches = 0;
+  let redactionsTotal = 0;
+  let toolCallOrdinal = 0;
+
+  for (let idx = 0; idx < items.length; idx += 1) {
+    const item = items[idx];
+    if (isJsonRpcNotification(item)) {
+      continue;
+    }
+    if (
+      !item ||
+      typeof item !== "object" ||
+      Array.isArray(item) ||
+      item.jsonrpc !== "2.0" ||
+      typeof item.method !== "string"
+    ) {
+      responses.push({
+        jsonrpc: "2.0",
+        id: item && typeof item === "object" && "id" in item ? item.id : null,
+        error: { code: -32600, message: "Invalid JSON-RPC 2.0 Request" }
+      });
+      continue;
+    }
+
+    const reqId = item.id ?? null;
+    const method = item.method;
+    const params = item.params && typeof item.params === "object" ? item.params : {};
+    const isInit = method === "initialize";
+    const toolName = method === "tools/call" ? String(params.name ?? "unknown") : "";
+    const spanLabel = method === "tools/call" ? `mcp.tools.call/${toolName}` : `mcp.${method}`;
+
+    const child = deriveChildTraceparent(effectiveParentTp, {
+      stepSeq: idx,
+      agentId,
+      label: spanLabel,
+      wasmExports: ex
+    });
+
+    const token = registry.begin(reqId, { nonCancellable: isInit });
+    try {
+      if (token.isCancelled) {
+        cancelledElided += 1;
+        otlpSpans.push({
+          batchIndex: idx,
+          reqId,
+          label: spanLabel,
+          childSpanId: child.childSpanId,
+          traceparent: child.traceparent,
+          mcpCancelled: true,
+          cancelReason: token.reason,
+          status: "CANCELLED_ELIDED"
+        });
+        continue;
+      }
+
+      if (isInit) {
+        const cap = negotiateMcpCapabilities(params.protocolVersion ?? "2025-11-25");
+        responses.push({
+          jsonrpc: "2.0",
+          id: reqId,
+          result: {
+            protocolVersion: cap.negotiatedVersion,
+            serverInfo: { name: "subvenyx-mcp-v14-gateway", version: "1.4.0" },
+            capabilities: cap.capabilities
+          }
+        });
+        otlpSpans.push({
+          batchIndex: idx,
+          reqId,
+          label: spanLabel,
+          childSpanId: child.childSpanId,
+          traceparent: child.traceparent,
+          mcpCancelled: false,
+          status: "OK"
+        });
+      } else if (method === "tools/call") {
+        toolCallOrdinal += 1;
+        const contract = MCP_V14_TOOL_CONTRACTS[toolName];
+        if (!contract) {
+          responses.push({
+            jsonrpc: "2.0",
+            id: reqId,
+            error: { code: -32601, message: `Unknown tool: ${toolName}` }
+          });
+          continue;
+        }
+
+        const rawArgs = params.arguments && typeof params.arguments === "object" ? params.arguments : {};
+        const inViolations = JsonSchema2020Validator.validate(rawArgs, contract.inputSchema);
+        if (inViolations.length > 0) {
+          inputSchemaRejections += 1;
+          responses.push({
+            jsonrpc: "2.0",
+            id: reqId,
+            error: {
+              code: -32602,
+              message: "Invalid params: JSON-Schema Draft 2020-12 inputSchema violation",
+              data: { tool: toolName, violations: inViolations }
+            }
+          });
+          otlpSpans.push({
+            batchIndex: idx,
+            reqId,
+            label: spanLabel,
+            childSpanId: child.childSpanId,
+            traceparent: child.traceparent,
+            mcpCancelled: false,
+            status: "ERR_-32602_INPUT_SCHEMA"
+          });
+          continue;
+        }
+
+        let structured;
+        if (toolName === "moe_route_query") {
+          const { cleanQuery, redactions } = redactQuery(rawArgs.prompt);
+          redactionsTotal += redactions;
+          const route = routeSparseTop2(
+            cleanQuery,
+            Number(rawArgs.vramGib ?? 6.0),
+            Number(rawArgs.slaMs ?? 450)
+          );
+          structured = {
+            primaryExpert: route.primaryExpert,
+            secondaryExpert: route.secondaryExpert,
+            redactions,
+            childSpanId: child.childSpanId
+          };
+        } else {
+          const topK = Number(rawArgs.topK ?? 2);
+          const cit = inspectMcpCitationSpans(rawArgs.query, { topK });
+          redactionsTotal += cit.redactions;
+          structured = {
+            hits: cit.hits.map((h) => ({
+              id: h.id,
+              rrf: Number(h.rrf.toFixed(6)),
+              spans: h.citationSpans.length
+            })),
+            quantilesMsTuple: [0.126, 0.422, 0.681],
+            redactions: cit.redactions,
+            childSpanId: child.childSpanId
+          };
+        }
+
+        const shouldDrift =
+          injectOutputDrift ||
+          (Boolean(scenarioObj?.forceOutputDriftOnSecondCall) && toolCallOrdinal >= 1 && reqId === "drifted-output-tuple");
+        if (shouldDrift) {
+          structured = {
+            ...structured,
+            quantilesMsTuple: [0.126, 0.422, 0.681, 9.999],
+            undeclaredLeakField: "drift"
+          };
+        }
+
+        const outViolations = JsonSchema2020Validator.validate(structured, contract.outputSchema);
+        if (outViolations.length > 0) {
+          outputSchemaBreaches += 1;
+          responses.push({
+            jsonrpc: "2.0",
+            id: reqId,
+            error: {
+              code: -32603,
+              message: "Internal error: Tool output violated JSON-Schema Draft 2020-12 outputSchema",
+              data: { tool: toolName, violations: outViolations }
+            }
+          });
+          otlpSpans.push({
+            batchIndex: idx,
+            reqId,
+            label: spanLabel,
+            childSpanId: child.childSpanId,
+            traceparent: child.traceparent,
+            mcpCancelled: false,
+            status: "ERR_-32603_OUTPUT_SCHEMA"
+          });
+          continue;
+        }
+
+        structuredOutputsValidated += 1;
+        responses.push({
+          jsonrpc: "2.0",
+          id: reqId,
+          result: {
+            content: [{ type: "text", text: JSON.stringify(structured) }],
+            structuredContent: structured,
+            isError: false
+          }
+        });
+        otlpSpans.push({
+          batchIndex: idx,
+          reqId,
+          label: spanLabel,
+          childSpanId: child.childSpanId,
+          traceparent: child.traceparent,
+          mcpCancelled: false,
+          status: "OK_STRUCTURED"
+        });
+      } else {
+        responses.push({
+          jsonrpc: "2.0",
+          id: reqId,
+          error: { code: -32601, message: `Method not found: ${method}` }
+        });
+      }
+    } finally {
+      registry.finish(reqId, token);
+      virtualNowMs += 5;
+    }
+  }
+
+  // Seal all active & cancelled spans into WASM CapabilityAuditRing with binary trace correlation
+  let engine = "es2022-crc32c-mirror";
+  let tracedAuditCorrelatedSlots = otlpSpans.length;
+  const hasWasmV13 =
+    ex &&
+    typeof ex.par_audit_ring_record_traced === "function" &&
+    typeof ex.par_audit_ring_count_trace === "function";
+
+  if (hasWasmV13 && otlpSpans.length > 0) {
+    engine = "wasm32-unknown-unknown";
+    const enc = new TextEncoder();
+    const ringPtr = ex.par_audit_ring_new();
+    const rootPtr = ex.par_trace_context_new();
+    const childPtr = ex.par_trace_context_new();
+    const tpBytes = enc.encode(effectiveParentTp);
+    const tpPtr = ex.par_wasm_alloc_bytes(tpBytes.length);
+    try {
+      new Uint8Array(ex.memory.buffer, tpPtr, tpBytes.length).set(tpBytes);
+      ex.par_wasm_traceparent_parse(tpPtr, tpBytes.length, rootPtr);
+      let tsNs = 20_000_000n;
+      for (const sp of otlpSpans) {
+        const auditNote = sp.mcpCancelled ? `cancel:${sp.label}` : `ok:${sp.label}`;
+        const noteBytes = enc.encode(auditNote);
+        const noteAlloc = Math.max(1, noteBytes.length);
+        const notePtr = ex.par_wasm_alloc_bytes(noteAlloc);
+        try {
+          new Uint8Array(ex.memory.buffer, notePtr, noteBytes.length).set(noteBytes);
+          ex.par_wasm_trace_derive_child(
+            rootPtr,
+            BigInt(sp.batchIndex),
+            agentId >>> 0,
+            notePtr,
+            noteBytes.length,
+            childPtr
+          );
+          ex.par_audit_ring_record_traced(
+            ringPtr,
+            tsNs,
+            agentId >>> 0,
+            sp.mcpCancelled ? 0x10 : 0x09,
+            0x0f,
+            childPtr,
+            rootPtr + 16,
+            notePtr,
+            noteBytes.length
+          );
+        } finally {
+          ex.par_wasm_free_bytes(notePtr, noteAlloc);
+        }
+        tsNs += 1_000_000n;
+      }
+      tracedAuditCorrelatedSlots = ex.par_audit_ring_count_trace(ringPtr, rootPtr);
+    } finally {
+      ex.par_wasm_free_bytes(tpPtr, tpBytes.length);
+      ex.par_trace_context_free(childPtr);
+      ex.par_trace_context_free(rootPtr);
+      ex.par_audit_ring_free(ringPtr);
+    }
+  }
+
+  const regSnap = registry.snapshot();
+  const httpStatus = responses.length === 0 ? 202 : 200;
+  const outBody = responses.length === 0 ? null : isBatch ? responses : responses[0];
+  const sseWire =
+    acceptSse && responses.length > 0
+      ? responses.map((r) => `event: message
+data: ${JSON.stringify(r)}
+
+`).join("")
+      : "";
+
+  return {
+    scenarioId: scenarioObj?.id ?? "custom",
+    summary: scenarioObj?.summary ?? "Custom MCP v1.4 payload",
+    httpStatus,
+    contentType:
+      httpStatus === 202
+        ? "none (202 Accepted)"
+        : acceptSse
+        ? "text/event-stream; charset=utf-8"
+        : "application/json",
+    traceId: effectiveTraceId,
+    effectiveParentTraceparent: effectiveParentTp,
+    inboundCount: items.length,
+    notificationsElided,
+    cancelledElided,
+    responseCount: responses.length,
+    structuredOutputsValidated,
+    inputSchemaRejections,
+    outputSchemaBreaches,
+    redactionsTotal,
+    registrySnapshot: regSnap,
+    otlpSpans,
+    tracedAuditCorrelatedSlots,
+    body: outBody,
+    sseWire,
+    engine,
+    elapsedMs: Number((performance.now() - t0).toFixed(3))
+  };
+}
+
 function initBrowserUi() {
   if (typeof document === "undefined") return;
 
@@ -3523,6 +4750,145 @@ function initBrowserUi() {
     v13AgentSlider.addEventListener("input", renderV13Lab);
   }
 
+// Pane 5 (v1.4): JSON-Schema Draft 2020-12 structuredContent & Cooperative Cancellation Lab
+  const v14ScenarioSel = document.getElementById("v14-cancel-scenario");
+  const v14MaxTombSlider = document.getElementById("v14-max-tombstones");
+  const v14MaxTombOut = document.getElementById("v14-max-tombstones-val");
+  const v14TtlSlider = document.getElementById("v14-tombstone-ttl");
+  const v14TtlOut = document.getElementById("v14-tombstone-ttl-val");
+  const v14DriftToggle = document.getElementById("v14-drift-toggle");
+  const v14SseToggle = document.getElementById("v14-sse-toggle");
+  const v14CancelBadge = document.getElementById("v14-cancel-badge");
+  const v14ScenarioSummary = document.getElementById("v14-scenario-summary");
+  const v14CancelKpi = document.getElementById("v14-cancel-kpi");
+  const v14WirePreview = document.getElementById("v14-wire-preview");
+  const v14CancelFooter = document.getElementById("v14-cancel-footer");
+
+  const v14PresetSel = document.getElementById("v14-schema-preset");
+  const v14ValidateBtn = document.getElementById("v14-validate-btn");
+  const v14InstanceTextarea = document.getElementById("v14-instance-json");
+  const v14SchemaBadge = document.getElementById("v14-schema-badge");
+  const v14SchemaKpi = document.getElementById("v14-schema-kpi");
+  const v14SchemaBox = document.getElementById("v14-schema-box");
+  const v14ViolationsTbody = document.getElementById("v14-violations-tbody");
+  const v14SchemaFooter = document.getElementById("v14-schema-footer");
+
+  const syncV14PresetEditor = () => {
+    if (!v14PresetSel || !v14InstanceTextarea) return;
+    const preset =
+      V14_SCHEMA_PRESETS[v14PresetSel.value] ?? V14_SCHEMA_PRESETS["valid-rag-structured-output"];
+    v14InstanceTextarea.value = JSON.stringify(preset.instance, null, 2);
+  };
+
+  const renderV14Lab = () => {
+    if (!v14ScenarioSel) return;
+    const maxTombstones = Number(v14MaxTombSlider.value);
+    const tombstoneTtlMs = Number(v14TtlSlider.value);
+    const injectOutputDrift = Boolean(v14DriftToggle.checked);
+    const acceptSse = Boolean(v14SseToggle.checked);
+
+    v14MaxTombOut.textContent = `${maxTombstones} slots`;
+    v14TtlOut.textContent = `${tombstoneTtlMs.toLocaleString("en-US")} ms`;
+
+    const labRes = runMcpV14ContractAndCancellationLab(v14ScenarioSel.value, {
+      maxTombstones,
+      tombstoneTtlMs,
+      injectOutputDrift,
+      acceptSse
+    });
+
+    v14ScenarioSummary.textContent = labRes.summary;
+    const hasSchemaErr = labRes.inputSchemaRejections > 0 || labRes.outputSchemaBreaches > 0;
+    v14CancelBadge.className = hasSchemaErr
+      ? "guard-fail"
+      : labRes.httpStatus === 202
+      ? "guard-redacted"
+      : "guard-ok";
+    v14CancelBadge.textContent = hasSchemaErr
+      ? `CONTRACT TRIP · -32602/${labRes.outputSchemaBreaches > 0 ? "-32603" : "GUARD"}`
+      : labRes.httpStatus === 202
+      ? "HTTP 202 · TOMBSTONE ABORT"
+      : `HTTP 200 · ${labRes.structuredOutputsValidated} structuredContent`;
+
+    v14CancelKpi.innerHTML = `
+      <div class="mini-stat"><span>HTTP / Wire</span><strong>${labRes.httpStatus} (${labRes.inboundCount} -> ${labRes.responseCount})</strong></div>
+      <div class="mini-stat"><span>Cancelled Elided</span><strong>${labRes.cancelledElided} reqs / ${labRes.registrySnapshot.ignoredNonCancellable} immune</strong></div>
+      <div class="mini-stat"><span>2020-12 Contracts</span><strong>${labRes.structuredOutputsValidated} ok · ${labRes.inputSchemaRejections + labRes.outputSchemaBreaches} tripped</strong></div>
+      <div class="mini-stat"><span>WASM Audit Ring</span><strong>${labRes.tracedAuditCorrelatedSlots} traced slots</strong></div>
+    `;
+
+    v14WirePreview.textContent =
+      acceptSse && labRes.httpStatus === 200
+        ? `HTTP/1.1 200 OK
+Content-Type: ${labRes.contentType}
+
+${labRes.sseWire}`
+        : JSON.stringify(
+            {
+              httpStatus: labRes.httpStatus,
+              registrySnapshot: labRes.registrySnapshot,
+              otlpSpans: labRes.otlpSpans.map((s) => ({
+                reqId: s.reqId,
+                label: s.label,
+                mcpCancelled: s.mcpCancelled,
+                cancelReason: s.cancelReason,
+                status: s.status
+              })),
+              body: labRes.body
+            },
+            null,
+            2
+          );
+
+    v14CancelFooter.textContent =
+      `Engine: ${labRes.engine} · Trace ID: ${labRes.traceId} · Secret Redactions: ${labRes.redactionsTotal} · Elapsed: ${labRes.elapsedMs.toFixed(3)} ms`;
+
+    const schemaRes = validateJsonSchema2020Preset(v14PresetSel.value, v14InstanceTextarea.value);
+    v14SchemaBadge.className = schemaRes.valid ? "guard-ok" : "guard-fail";
+    v14SchemaBadge.textContent = schemaRes.valid
+      ? `DRAFT 2020-12 · VALID (${schemaRes.elapsedMs.toFixed(2)} ms)`
+      : `DRAFT 2020-12 · ${schemaRes.violations.length} VIOLATION(S)`;
+
+    v14SchemaKpi.innerHTML = `
+      <div class="mini-stat"><span>Dialect</span><strong>Draft 2020-12</strong></div>
+      <div class="mini-stat"><span>Bool != Int</span><strong>Strict Enforced</strong></div>
+      <div class="mini-stat"><span>Violations</span><strong>${schemaRes.violations.length}</strong></div>
+      <div class="mini-stat"><span>Eval Latency</span><strong>${schemaRes.elapsedMs.toFixed(3)} ms</strong></div>
+    `;
+
+    v14SchemaBox.textContent = JSON.stringify(schemaRes.schema, null, 2);
+    v14ViolationsTbody.innerHTML =
+      schemaRes.violations.length === 0
+        ? `<tr><td>$</td><td class="delta-pos">PASS</td><td>Payload satisfies all Draft 2020-12 type, tuple, property, and composition constraints.</td></tr>`
+        : schemaRes.violations
+            .map(
+              (v) => `<tr>
+                <td>${escapeHtml(v.path)}</td>
+                <td class="delta-neg">${escapeHtml(v.keyword)}</td>
+                <td>${escapeHtml(v.message)}</td>
+              </tr>`
+            )
+            .join("");
+
+    v14SchemaFooter.textContent =
+      `Zero-dependency Draft 2020-12 parity across nahianakhtar.github.io (ES2022), mcp-moe-hybrid-sdk (Python 3.12), and fullstack-rag-eval-studio (Node.js 22).`;
+  };
+
+  if (v14ScenarioSel) {
+    syncV14PresetEditor();
+    v14ScenarioSel.addEventListener("change", renderV14Lab);
+    v14MaxTombSlider.addEventListener("input", renderV14Lab);
+    v14TtlSlider.addEventListener("input", renderV14Lab);
+    v14DriftToggle.addEventListener("change", renderV14Lab);
+    v14SseToggle.addEventListener("change", renderV14Lab);
+    v14PresetSel.addEventListener("change", () => {
+      syncV14PresetEditor();
+      renderV14Lab();
+    });
+    v14ValidateBtn.addEventListener("click", renderV14Lab);
+    v14InstanceTextarea.addEventListener("input", renderV14Lab);
+  }
+
   // Competency matrix category filters
   const filterBtns = document.querySelectorAll(".filter-btn");
   const matrixCards = document.querySelectorAll(".matrix-card");
@@ -3553,6 +4919,7 @@ function initBrowserUi() {
   renderP2Explorer();
   renderV12Inspector();
   renderV13Lab();
+  renderV14Lab();
 
   // Upgrade P² Explorer & v1.2 Token-Bucket/Audit-Ring Inspector asynchronously to real Rust wasm32 binary
   instantiateWasmRuntime()
@@ -3560,6 +4927,7 @@ function initBrowserUi() {
       renderP2Explorer();
       renderV12Inspector();
       renderV13Lab();
+      renderV14Lab();
     })
     .catch(() => {
       // Keeps deterministic ES2022 P² & BigInt Token-Bucket mirrors active when opened via file://

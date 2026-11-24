@@ -188,7 +188,7 @@
             <a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open nahianakhtar.github.io on GitHub">GitHub ↗</a>
           </div>
           <p class="repo-desc">
-            Responsive dark Bento &amp; Terminal showcase (<code>v1.4.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
+            Responsive dark Bento &amp; Terminal showcase (<code>v1.5.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
             <strong>Streamable MCP JSON-RPC 2.0 Batch/SSE</strong>, <strong>Pairwise A/B RAG Diffs</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; W3C CRC32C Lineage</strong>.
           </p>
           <div class="badge-row">
@@ -239,7 +239,7 @@
       <div class="section-header">
         <div>
           <span class="section-kicker">INTERACTIVE IN-BROWSER ENGINE · ES2022 + RUST WASM32 · ZERO API KEYS</span>
-          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.4 MCP Contract Lab</h2>
+          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.5 MCP Protocol Lab</h2>
         </div>
         <p class="section-sub">
           Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, or inspect <strong>v1.2 MCP Citation Spans, 64B WASM Token-Buckets &amp; W3C OTLP Trace Waterfalls</strong>.
@@ -297,6 +297,16 @@
             aria-controls="sim-pane-v14"
           >
             05 · JSON-Schema 2020-12 structuredContent &amp; Cancellation <span class="tab-new-pill">v1.4</span>
+          </button>
+          <button
+            id="sim-tab-btn-v15"
+            type="button"
+            role="tab"
+            class="sim-tab-btn"
+            aria-selected="false"
+            aria-controls="sim-pane-v15"
+          >
+            06 · MCP Cursor Tamper, Completions &amp; Subscriptions <span class="tab-new-pill">v1.5</span>
           </button>
         </div>
 
@@ -797,6 +807,130 @@
               </div>
 
               <div id="v14-schema-footer" class="crc-footer"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Pane 6 (v1.5): MCP 2025-11-25 16B CRC32C Cursor Codec, completion/complete & Subscriptions Lab -->
+        <div id="sim-pane-v15" role="tabpanel" aria-labelledby="sim-tab-btn-v15" class="sim-tab-pane" hidden>
+          <div class="lab-split-grid">
+            <!-- Left Panel: 16B C11/Rust/WASM/Python/Node CRC32C Cursor Codec & Tamper Matrix -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>1. 16-Byte <code>CRC32C</code> Cursor Codec &amp; 128-Bit Tamper Matrix</h3>
+                <span id="v15-cursor-badge" class="guard-ok" aria-live="polite">0xF70B1A24 · PAR_OK</span>
+              </div>
+
+              <label for="v15-cursor-scenario" class="sim-label">MCP 2025-11-25 Pagination &amp; Tamper Scenario</label>
+              <select id="v15-cursor-scenario" class="sim-select">
+                <option value="canonical-valid">Scenario #1 · Canonical Vector (scope=2, off=50, snap=0xE3069283) [0 · PAR_OK]</option>
+                <option value="bitflip-seal-tamper">Scenario #2 · Single-Bit Wire Flip + 128-Bit Sweep [-17 · PAR_ERR_CURSOR_SEAL]</option>
+                <option value="cross-scope-replay">Scenario #3 · Cross-Endpoint Replay (tools/list → resources/list) [-15 · PAR_ERR_CURSOR_SCOPE]</option>
+                <option value="snapshot-epoch-drift">Scenario #4 · Mid-Pagination rag_upsert_document Drift [-16 · PAR_ERR_CURSOR_SNAPSHOT]</option>
+                <option value="noncanonical-b64-tail">Scenario #5 · RFC 4648 §5 Non-Canonical 22nd Sextet Bits [-13 · PAR_ERR_CURSOR_B64]</option>
+              </select>
+              <p id="v15-cursor-summary" class="lab-desc"></p>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v15-page-size">Resources Page Size</label>
+                    <output id="v15-page-size-val" for="v15-page-size">3 items/page</output>
+                  </div>
+                  <input id="v15-page-size" type="range" min="2" max="6" step="1" value="3" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v15-flip-bit">Tamper Bit-Flip Index (0..127)</label>
+                    <output id="v15-flip-bit-val" for="v15-flip-bit">Bit #37</output>
+                  </div>
+                  <input id="v15-flip-bit" type="range" min="0" max="127" step="1" value="37" />
+                </div>
+              </div>
+
+              <div id="v15-cursor-kpi" class="mini-stat-grid" style="margin-top: 0.75rem"></div>
+              <pre id="v15-cursor-wire-box" class="terminal-body v12-otlp-box"></pre>
+
+              <div class="table-scroll" style="margin-top: 0.75rem">
+                <table class="lab-table" aria-label="Cross-Runtime MCP Cursor Codec Verification Matrix">
+                  <thead>
+                    <tr>
+                      <th>Guard Check</th>
+                      <th>Cursor / Probe</th>
+                      <th>Code</th>
+                      <th>5-Runtime Verdict</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v15-cursor-vectors-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="v15-cursor-footer" class="crc-footer"></div>
+            </div>
+
+            <!-- Right Panel: completion/complete, resources/subscribe, RFC 5424 logging/setLevel & ToolAnnotations -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>2. <code>completion/complete</code>, Subscriptions &amp; RFC 5424 Logging</h3>
+                <span id="v15-sub-badge" class="guard-ok" aria-live="polite">SUBSCRIBED · WARNING</span>
+              </div>
+
+              <div class="lab-sliders-2col">
+                <div>
+                  <label for="v15-complete-target" class="sim-label">Completion Reference Target</label>
+                  <select id="v15-complete-target" class="sim-select">
+                    <option value="resource-doc-id">ref/resource · vault://documents/{doc_id}</option>
+                    <option value="prompt-rag-query">ref/prompt · grounded_rag_answer (query)</option>
+                    <option value="prompt-runbook-pii">ref/prompt · tenant_runbook (PII Scrub Guard)</option>
+                    <option value="resource-115-cap">ref/resource · 115-Item Cap (&lt;= 100 · hasMore)</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="v15-log-level" class="sim-label">RFC 5424 <code>logging/setLevel</code></label>
+                  <select id="v15-log-level" class="sim-select">
+                    <option value="debug">0 · debug</option>
+                    <option value="info">1 · info</option>
+                    <option value="notice">2 · notice</option>
+                    <option value="warning" selected>3 · warning</option>
+                    <option value="error">4 · error</option>
+                    <option value="critical">5 · critical</option>
+                    <option value="alert">6 · alert</option>
+                    <option value="emergency">7 · emergency</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="margin-top: 0.65rem">
+                <label for="v15-complete-prefix" class="sim-label">Autocomplete Prefix (<code>argument.value</code> · Auto-Redacted)</label>
+                <input id="v15-complete-prefix" type="text" class="sim-mono-input" value="rs-" spellcheck="false" />
+              </div>
+
+              <div class="v12-toggle-box" style="margin-top: 0.65rem">
+                <label class="v12-check-label" for="v15-mutate-sub-toggle">
+                  <input id="v15-mutate-sub-toggle" type="checkbox" checked />
+                  <span>Emit subscribed <code>rag_upsert_document</code> + PII-scrubbed RFC 5424 log stream</span>
+                </label>
+              </div>
+
+              <div id="v15-sub-kpi" class="mini-stat-grid" style="margin-top: 0.75rem"></div>
+              <pre id="v15-sub-outbox" class="terminal-body v12-otlp-box"></pre>
+
+              <div class="table-scroll" style="margin-top: 0.75rem">
+                <table class="lab-table" aria-label="MCP 2025-11-25 ToolAnnotations Safety Matrix">
+                  <thead>
+                    <tr>
+                      <th>Tool</th>
+                      <th>readOnly</th>
+                      <th>destructive</th>
+                      <th>idempotent</th>
+                      <th>openWorld</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v15-annotations-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="v15-sub-footer" class="crc-footer"></div>
             </div>
           </div>
         </div>

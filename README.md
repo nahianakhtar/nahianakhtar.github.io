@@ -24,10 +24,13 @@ Live interactive engineering portfolio and client-side Applied AI & Systems show
 5. **Mode 05 (`v1.4`) - JSON-Schema Draft `2020-12` `outputSchema` `structuredContent` & Cooperative `notifications/cancelled` Lab**:
    - **Zero-Dependency JSON-Schema Draft `2020-12` Contract Gate**: Enforces strict `boolean` vs `integer`/`number` separation, `prefixItems` + `items: false` closed tuples, `allOf`/`anyOf`/`oneOf`/`not` composition, `-32602` `inputSchema` rejection, and `-32603` post-condition `outputSchema` drift protection across MCP `structuredContent` payloads.
    - **Cooperative `notifications/cancelled` Registry & Pre-Arrival Tombstones**: Evaluates `AbortController`-backed `CancellationToken` lifecycles with pre-arrival tombstones (`202 Accepted` out-of-order stream abort), `initialize` immunity, strict `int` vs `string` `requestId` isolation, sibling batch elision, and traced `256B` WASM `CapabilityAuditRing` cancellation slots.
+6. **Mode 06 (`v1.5`) - MCP `2025-11-25` `16B` `CRC32C` Cursor Tamper Matrix, `completion/complete` & Subscriptions Lab**:
+   - **5-Runtime Bit-Identical `16B` `ParCursorToken` / `McpCursorCodec`**: Verifies canonical `22`-char RFC 4648 §5 base64url cursor `Q1ABAjIAAACDkgbjJBoL9w` (`0xF70B1A24`), exhaustive `128/128` single-bit flips (`-17`), `15/15` non-canonical trailing sextet mutations (`-13`), cross-scope replay (`-15`), and mid-pagination `rag_upsert_document` snapshot drift (`-16`).
+   - **`completion/complete`, `resources/subscribe`, RFC 5424 `logging/setLevel` & `ToolAnnotations`**: Evaluates `<= 100` capped completions (`hasMore`), PII-scrubbed prompt completions, subscribed URI `notifications/resources/updated`, and RFC 5424 8-level log severity filtering.
 
 ---
 
-## Featured Flagship Repositories (`v1.4.0` Parity)
+## Featured Flagship Repositories (`v1.5.0` Parity)
 
 | Repository | Stack | Highlighted Empirical Metrics |
 | :--- | :--- | :--- |

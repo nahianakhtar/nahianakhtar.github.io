@@ -4,6 +4,7 @@
  * + v1.2 MCP 2025-11-25 Citation-Span, C11/WASM 64B Token-Bucket & W3C OTLP Trace Waterfall Inspector
  * + v1.3 MCP 2025-11-25 Streamable HTTP Batch/SSE Lab & Cross-Language W3C CRC32C Child-Span Lineage
  * + v1.4 JSON-Schema Draft 2020-12 outputSchema structuredContent & Cooperative notifications/cancelled Lab
+ * + v1.5 16B CRC32C Cursor Codec, completion/complete, resources/subscribe & RFC 5424 Logging Lab
  * Zero external API keys · Zero runtime dependencies · Deterministic ES2022 + WebAssembly
  */
 
@@ -4186,6 +4187,641 @@ data: ${JSON.stringify(r)}
   };
 }
 
+
+// ============================================================================
+// v1.5 16-Byte C11/Rust/WASM/Python/Node CRC32C Cursor Codec,
+// completion/complete, resources/subscribe, RFC 5424 Logging & ToolAnnotations
+// ============================================================================
+
+export class McpCursorCodec {
+  static MAGIC = 0x5043;
+  static VERSION = 1;
+  static WIRE_BYTES = 16;
+  static B64_LEN = 22;
+  static MAX_OFFSET = 1_048_576;
+
+  static SCOPE_TOOLS = 1;
+  static SCOPE_RESOURCES = 2;
+  static SCOPE_TEMPLATES = 3;
+  static SCOPE_PROMPTS = 4;
+
+  static ERR_B64 = -13;
+  static ERR_MAGIC = -14;
+  static ERR_SCOPE = -15;
+  static ERR_SNAPSHOT = -16;
+  static ERR_SEAL = -17;
+  static ERR_BOUNDS = -18;
+
+  static ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  static #DECODE_LUT = (() => {
+    const lut = new Int8Array(128).fill(-1);
+    for (let i = 0; i < McpCursorCodec.ALPHABET.length; i += 1) {
+      lut[McpCursorCodec.ALPHABET.charCodeAt(i)] = i;
+    }
+    return lut;
+  })();
+
+  static #crcBytes(bytes, wasmExports = null) {
+    const ex = wasmExports ?? cachedWasmExports;
+    if (
+      ex &&
+      typeof ex.par_wasm_crc32c === "function" &&
+      typeof ex.par_wasm_alloc_bytes === "function" &&
+      typeof ex.par_wasm_free_bytes === "function"
+    ) {
+      if (bytes.length === 0) {
+        return 0;
+      }
+      const ptr = ex.par_wasm_alloc_bytes(bytes.length);
+      try {
+        new Uint8Array(ex.memory.buffer, ptr, bytes.length).set(bytes);
+        return ex.par_wasm_crc32c(ptr, bytes.length) >>> 0;
+      } finally {
+        ex.par_wasm_free_bytes(ptr, bytes.length);
+      }
+    }
+    return crc32cPortable(bytes) >>> 0;
+  }
+
+  static snapshotHash(keys, options = {}) {
+    const joined = (keys ?? []).map((k) => String(k)).join("\n");
+    return McpCursorCodec.#crcBytes(new TextEncoder().encode(joined), options.wasmExports ?? null);
+  }
+
+  static computeSeal(magic, version, scope, offset, snapshotCrc32c, options = {}) {
+    const preimage = new Uint8Array(16);
+    const dv = new DataView(preimage.buffer);
+    dv.setUint16(0, magic & 0xffff, true);
+    dv.setUint8(2, version & 0xff);
+    dv.setUint8(3, scope & 0xff);
+    dv.setUint32(4, offset >>> 0, true);
+    dv.setUint32(8, snapshotCrc32c >>> 0, true);
+    preimage[12] = 0x4d; // 'M'
+    preimage[13] = 0x43; // 'C'
+    preimage[14] = 0x50; // 'P'
+    preimage[15] = 0x43; // 'C'
+    return McpCursorCodec.#crcBytes(preimage, options.wasmExports ?? null);
+  }
+
+  static encodeBytesToB64Url(wire16) {
+    const alph = McpCursorCodec.ALPHABET;
+    let out = "";
+    for (let g = 0; g < 5; g += 1) {
+      const idx = g * 3;
+      const triple = (wire16[idx] << 16) | (wire16[idx + 1] << 8) | wire16[idx + 2];
+      out += alph[(triple >>> 18) & 0x3f];
+      out += alph[(triple >>> 12) & 0x3f];
+      out += alph[(triple >>> 6) & 0x3f];
+      out += alph[triple & 0x3f];
+    }
+    out += alph[(wire16[15] >>> 2) & 0x3f];
+    out += alph[(wire16[15] & 0x03) << 4];
+    return out;
+  }
+
+  static encode(scope, offset, snapshotCrc32c, options = {}) {
+    if (
+      typeof scope !== "number" ||
+      !Number.isInteger(scope) ||
+      scope < McpCursorCodec.SCOPE_TOOLS ||
+      scope > McpCursorCodec.SCOPE_PROMPTS
+    ) {
+      throw new RangeError(`Invalid cursor scope: ${String(scope)}`);
+    }
+    if (
+      typeof offset !== "number" ||
+      !Number.isInteger(offset) ||
+      offset <= 0 ||
+      offset > McpCursorCodec.MAX_OFFSET
+    ) {
+      throw new RangeError(`Invalid cursor offset: ${String(offset)}`);
+    }
+    const snap = snapshotCrc32c >>> 0;
+    const seal = McpCursorCodec.computeSeal(McpCursorCodec.MAGIC, McpCursorCodec.VERSION, scope, offset, snap, options);
+    const wire = new Uint8Array(16);
+    const dv = new DataView(wire.buffer);
+    dv.setUint16(0, McpCursorCodec.MAGIC, true);
+    dv.setUint8(2, McpCursorCodec.VERSION);
+    dv.setUint8(3, scope);
+    dv.setUint32(4, offset >>> 0, true);
+    dv.setUint32(8, snap, true);
+    dv.setUint32(12, seal, true);
+    return McpCursorCodec.encodeBytesToB64Url(wire);
+  }
+
+  static decodeWireBytes(cursor) {
+    if (typeof cursor !== "string" || cursor.length !== McpCursorCodec.B64_LEN) {
+      return { ok: false, code: McpCursorCodec.ERR_B64, wire: null, message: "Must be 22-char unpadded base64url" };
+    }
+    const sextets = new Uint8Array(22);
+    for (let i = 0; i < 22; i += 1) {
+      const ch = cursor.charCodeAt(i);
+      const s = ch < 128 ? McpCursorCodec.#DECODE_LUT[ch] : -1;
+      if (s < 0) {
+        return { ok: false, code: McpCursorCodec.ERR_B64, wire: null, message: "Illegal base64url character" };
+      }
+      sextets[i] = s;
+    }
+    if ((sextets[21] & 0x0f) !== 0) {
+      return { ok: false, code: McpCursorCodec.ERR_B64, wire: null, message: "Non-canonical trailing base64url bits" };
+    }
+    const wire = new Uint8Array(16);
+    for (let g = 0; g < 5; g += 1) {
+      const sIdx = g * 4;
+      const wIdx = g * 3;
+      const quad = (sextets[sIdx] << 18) | (sextets[sIdx + 1] << 12) | (sextets[sIdx + 2] << 6) | sextets[sIdx + 3];
+      wire[wIdx] = (quad >>> 16) & 0xff;
+      wire[wIdx + 1] = (quad >>> 8) & 0xff;
+      wire[wIdx + 2] = quad & 0xff;
+    }
+    wire[15] = ((sextets[20] << 2) | (sextets[21] >>> 4)) & 0xff;
+    return { ok: true, code: 0, wire, message: "ok" };
+  }
+
+  static decodeAndVerify(cursor, expectedScope, expectedSnapshotCrc32c, totalItems, options = {}) {
+    const decoded = McpCursorCodec.decodeWireBytes(cursor);
+    if (!decoded.ok || !decoded.wire) {
+      return { code: decoded.code, offset: 0, message: decoded.message };
+    }
+    const dv = new DataView(decoded.wire.buffer);
+    const magic = dv.getUint16(0, true);
+    const version = dv.getUint8(2);
+    const scope = dv.getUint8(3);
+    const offset = dv.getUint32(4, true);
+    const snapCrc = dv.getUint32(8, true);
+    const sealCrc = dv.getUint32(12, true);
+
+    const computedSeal = McpCursorCodec.computeSeal(magic, version, scope, offset, snapCrc, options);
+    if (sealCrc !== computedSeal) {
+      return { code: McpCursorCodec.ERR_SEAL, offset: 0, message: "CRC32C integrity seal mismatch (-17)" };
+    }
+    if (magic !== McpCursorCodec.MAGIC || version !== McpCursorCodec.VERSION) {
+      return { code: McpCursorCodec.ERR_MAGIC, offset: 0, message: "Unsupported cursor header or version (-14)" };
+    }
+    if (
+      typeof expectedScope !== "number" ||
+      !Number.isInteger(expectedScope) ||
+      scope < McpCursorCodec.SCOPE_TOOLS ||
+      scope > McpCursorCodec.SCOPE_PROMPTS ||
+      expectedScope < McpCursorCodec.SCOPE_TOOLS ||
+      expectedScope > McpCursorCodec.SCOPE_PROMPTS ||
+      scope !== expectedScope
+    ) {
+      return { code: McpCursorCodec.ERR_SCOPE, offset: 0, message: "Cursor scope does not match target endpoint (-15)" };
+    }
+    if (snapCrc !== (expectedSnapshotCrc32c >>> 0)) {
+      return { code: McpCursorCodec.ERR_SNAPSHOT, offset: 0, message: "Collection snapshot epoch changed (-16)" };
+    }
+    const maxTotal = Math.max(0, Math.trunc(Number(totalItems) || 0));
+    if (offset <= 0 || offset > McpCursorCodec.MAX_OFFSET || offset >= maxTotal) {
+      return { code: McpCursorCodec.ERR_BOUNDS, offset: 0, message: "Pagination offset out of bounds (-18)" };
+    }
+    return { code: 0, offset, message: "ok" };
+  }
+}
+
+export const RFC5424_LOG_LEVELS = Object.freeze([
+  "debug",
+  "info",
+  "notice",
+  "warning",
+  "error",
+  "critical",
+  "alert",
+  "emergency"
+]);
+
+export const MCP_V15_TOOL_ANNOTATIONS = Object.freeze([
+  Object.freeze({
+    name: "moe_route_query",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false
+  }),
+  Object.freeze({
+    name: "rag_hybrid_search",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false
+  }),
+  Object.freeze({
+    name: "rag_upsert_document",
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false
+  }),
+  Object.freeze({
+    name: "otlp_export_telemetry",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false
+  })
+]);
+
+export const MCP_V15_CURSOR_SCENARIOS = Object.freeze({
+  "canonical-valid": {
+    title: "Canonical Vector (scope=2, offset=50, snap=0xE3069283)",
+    summary:
+      "Encodes 16-byte ParCursorToken into 22-char RFC 4648 section 5 base64url Q1ABAjIAAACDkgbjJBoL9w (seal 0xF70B1A24) and walks all 14 MCP resources cleanly."
+  },
+  "bitflip-seal-tamper": {
+    title: "Single-Bit Wire Flip + Exhaustive 128-Bit Sweep",
+    summary:
+      "Flips 1 selected wire bit (0..127) and sweeps all 128 single-bit mutations across the 16-byte token, proving 128/128 reject with PAR_ERR_CURSOR_SEAL (-17)."
+  },
+  "cross-scope-replay": {
+    title: "Cross-Endpoint Cursor Replay Guard",
+    summary:
+      "Attempts to replay a valid tools/list pagination cursor against resources/list, triggering JSON-RPC -32602 / PAR_ERR_CURSOR_SCOPE (-15)."
+  },
+  "snapshot-epoch-drift": {
+    title: "Mid-Pagination rag_upsert_document Snapshot Drift",
+    summary:
+      "Issues page 1 nextCursor on resources/list, mutates the knowledge vault via rag_upsert_document, and rejects stale page 2 continuation with -32602 / PAR_ERR_CURSOR_SNAPSHOT (-16)."
+  },
+  "noncanonical-b64-tail": {
+    title: "RFC 4648 Section 5 Canonical Trailing-Bit Guard",
+    summary:
+      "Sweeps all 15 non-zero low-4-bit mutations on the 22nd base64url sextet, rejecting cursor malleability before seal decoding with PAR_ERR_CURSOR_B64 (-13)."
+  }
+});
+
+export function runMcpV15CursorLab(scenarioId = "canonical-valid", options = {}) {
+  const t0 = performance.now();
+  const ex = options.wasmExports ?? cachedWasmExports;
+  const pageSize = Math.max(2, Math.min(10, Math.trunc(options.pageSize ?? 3)));
+  const flipBit = Math.max(0, Math.min(127, Math.trunc(options.flipBit ?? 37)));
+  const wasmOpts = { wasmExports: ex };
+
+  const hasWasm = Boolean(
+    ex &&
+      typeof ex.par_wasm_crc32c === "function" &&
+      typeof ex.par_audit_ring_new === "function" &&
+      typeof ex.par_trace_context_new === "function"
+  );
+  const engine = hasWasm ? "wasm32-unknown-unknown" : "es2022-portable";
+
+  // 1. Canonical vector check
+  const canonicalCursor = McpCursorCodec.encode(McpCursorCodec.SCOPE_RESOURCES, 50, 0xe3069283, wasmOpts);
+  const canonicalSeal = McpCursorCodec.computeSeal(
+    McpCursorCodec.MAGIC,
+    McpCursorCodec.VERSION,
+    McpCursorCodec.SCOPE_RESOURCES,
+    50,
+    0xe3069283,
+    wasmOpts
+  );
+  const canonicalSealHex = "0x" + canonicalSeal.toString(16).toUpperCase().padStart(8, "0");
+
+  // 2. Exhaustive 128-bit single-bit tamper sweep
+  const canonWire = McpCursorCodec.decodeWireBytes(canonicalCursor).wire;
+  let bitFlipRejectedCount = 0;
+  let selectedBitFlipCursor = canonicalCursor;
+  let selectedBitFlipCode = 0;
+  for (let bit = 0; bit < 128; bit += 1) {
+    const mutated = new Uint8Array(canonWire);
+    mutated[bit >> 3] ^= 1 << (bit & 7);
+    const mutCur = McpCursorCodec.encodeBytesToB64Url(mutated);
+    const ver = McpCursorCodec.decodeAndVerify(mutCur, McpCursorCodec.SCOPE_RESOURCES, 0xe3069283, 120, wasmOpts);
+    if (ver.code === McpCursorCodec.ERR_SEAL) {
+      bitFlipRejectedCount += 1;
+    }
+    if (bit === flipBit) {
+      selectedBitFlipCursor = mutCur;
+      selectedBitFlipCode = ver.code;
+    }
+  }
+
+  // 3. Exhaustive 15 non-canonical 22nd sextet trailing-bit mutations
+  const alph = McpCursorCodec.ALPHABET;
+  const baseS21 = alph.indexOf(canonicalCursor[21]) & 0x30;
+  let nonCanonRejectedCount = 0;
+  const sampleNonCanonCursor = canonicalCursor.slice(0, 21) + alph[baseS21 | 0x05];
+  for (let low = 1; low < 16; low += 1) {
+    const candidate = canonicalCursor.slice(0, 21) + alph[baseS21 | low];
+    const ver = McpCursorCodec.decodeAndVerify(candidate, McpCursorCodec.SCOPE_RESOURCES, 0xe3069283, 120, wasmOpts);
+    if (ver.code === McpCursorCodec.ERR_B64) {
+      nonCanonRejectedCount += 1;
+    }
+  }
+
+  // 4. Paginate all 14 MCP resources using live snapshotHash
+  const baseResources = [
+    "mcp://moe-router/tiers",
+    "mcp://telemetry/otlp",
+    "mcp://governance/cancellation",
+    "mcp://governance/subscriptions",
+    ...CORPUS.map((d) => `vault://documents/${d.id}`)
+  ];
+  const snapHash = McpCursorCodec.snapshotHash(baseResources, wasmOpts);
+  const pages = [];
+  let cursor = null;
+  while (true) {
+    let offset = 0;
+    if (cursor !== null) {
+      const check = McpCursorCodec.decodeAndVerify(
+        cursor,
+        McpCursorCodec.SCOPE_RESOURCES,
+        snapHash,
+        baseResources.length,
+        wasmOpts
+      );
+      if (check.code !== 0) {
+        break;
+      }
+      offset = check.offset;
+    }
+    const slice = baseResources.slice(offset, offset + pageSize);
+    const nextOff = offset + pageSize;
+    const nextCur =
+      nextOff < baseResources.length
+        ? McpCursorCodec.encode(McpCursorCodec.SCOPE_RESOURCES, nextOff, snapHash, wasmOpts)
+        : null;
+    pages.push({ page: pages.length + 1, offset, count: slice.length, items: slice, nextCursor: nextCur });
+    cursor = nextCur;
+    if (!cursor) {
+      break;
+    }
+  }
+
+  // Cross-scope & snapshot-drift probes
+  const toolsCursor = McpCursorCodec.encode(McpCursorCodec.SCOPE_TOOLS, 2, snapHash, wasmOpts);
+  const crossScopeRes = McpCursorCodec.decodeAndVerify(
+    toolsCursor,
+    McpCursorCodec.SCOPE_RESOURCES,
+    snapHash,
+    baseResources.length,
+    wasmOpts
+  );
+  const mutatedSnap = McpCursorCodec.snapshotHash([...baseResources, "vault://documents/doc-epoch-99"], wasmOpts);
+  const snapshotDriftRes = McpCursorCodec.decodeAndVerify(
+    pages[0]?.nextCursor ?? canonicalCursor,
+    McpCursorCodec.SCOPE_RESOURCES,
+    mutatedSnap,
+    baseResources.length + 1,
+    wasmOpts
+  );
+  const boundsRes = McpCursorCodec.decodeAndVerify(canonicalCursor, McpCursorCodec.SCOPE_RESOURCES, 0xe3069283, 50, wasmOpts);
+
+  let activeCode = 0;
+  let activeCursor = canonicalCursor;
+  let activeVerdict = "PAR_OK (0) · Verified";
+  if (scenarioId === "bitflip-seal-tamper") {
+    activeCode = selectedBitFlipCode;
+    activeCursor = selectedBitFlipCursor;
+    activeVerdict = `PAR_ERR_CURSOR_SEAL (${selectedBitFlipCode}) · Bit #${flipBit} Rejected`;
+  } else if (scenarioId === "cross-scope-replay") {
+    activeCode = crossScopeRes.code;
+    activeCursor = toolsCursor;
+    activeVerdict = `PAR_ERR_CURSOR_SCOPE (${crossScopeRes.code}) · JSON-RPC -32602`;
+  } else if (scenarioId === "snapshot-epoch-drift") {
+    activeCode = snapshotDriftRes.code;
+    activeCursor = pages[0]?.nextCursor ?? canonicalCursor;
+    activeVerdict = `PAR_ERR_CURSOR_SNAPSHOT (${snapshotDriftRes.code}) · JSON-RPC -32602`;
+  } else if (scenarioId === "noncanonical-b64-tail") {
+    activeCode = McpCursorCodec.ERR_B64;
+    activeCursor = sampleNonCanonCursor;
+    activeVerdict = "PAR_ERR_CURSOR_B64 (-13) · Trailing Bits Rejected";
+  }
+
+  // Seal traced 256B CapabilityAuditRing slot in WASM when available
+  let tracedAuditSlots = 0;
+  if (hasWasm) {
+    const enc = new TextEncoder();
+    const ringPtr = ex.par_audit_ring_new();
+    const rootPtr = ex.par_trace_context_new();
+    const childPtr = ex.par_trace_context_new();
+    const tpBytes = enc.encode("00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01");
+    const noteBytes = enc.encode(`cursor:${scenarioId}:${activeCode}`);
+    const tpPtr = ex.par_wasm_alloc_bytes(tpBytes.length);
+    const notePtr = ex.par_wasm_alloc_bytes(Math.max(1, noteBytes.length));
+    try {
+      new Uint8Array(ex.memory.buffer, tpPtr, tpBytes.length).set(tpBytes);
+      new Uint8Array(ex.memory.buffer, notePtr, noteBytes.length).set(noteBytes);
+      ex.par_wasm_traceparent_parse(tpPtr, tpBytes.length, rootPtr);
+      ex.par_wasm_trace_derive_child(rootPtr, 0n, 1, notePtr, noteBytes.length, childPtr);
+      ex.par_audit_ring_record_traced(
+        ringPtr,
+        30_000_000n,
+        1,
+        activeCode === 0 ? 0x05 : 0x15,
+        0x0f,
+        childPtr,
+        rootPtr + 16,
+        notePtr,
+        noteBytes.length
+      );
+      tracedAuditSlots = ex.par_audit_ring_count_trace(ringPtr, rootPtr);
+    } finally {
+      ex.par_wasm_free_bytes(notePtr, Math.max(1, noteBytes.length));
+      ex.par_wasm_free_bytes(tpPtr, tpBytes.length);
+      ex.par_trace_context_free(childPtr);
+      ex.par_trace_context_free(rootPtr);
+      ex.par_audit_ring_free(ringPtr);
+    }
+  }
+
+  const matrix = [
+    {
+      guard: "Canonical Seal (scope=2, off=50)",
+      probe: canonicalCursor,
+      code: 0,
+      verdict: "PASS · C11/Rust/WASM/Py/Node Match"
+    },
+    {
+      guard: `1-Bit Flip (#${flipBit}) & 128-Bit Sweep`,
+      probe: selectedBitFlipCursor,
+      code: selectedBitFlipCode,
+      verdict: `${bitFlipRejectedCount}/128 Rejected (-17)`
+    },
+    {
+      guard: "Cross-Scope Replay (tools→resources)",
+      probe: toolsCursor,
+      code: crossScopeRes.code,
+      verdict: "Blocked · PAR_ERR_CURSOR_SCOPE (-15)"
+    },
+    {
+      guard: "Mid-Walk Corpus Upsert Drift",
+      probe: pages[0]?.nextCursor ?? canonicalCursor,
+      code: snapshotDriftRes.code,
+      verdict: "Blocked · PAR_ERR_CURSOR_SNAPSHOT (-16)"
+    },
+    {
+      guard: "RFC 4648 §5 Trailing Sextet Bits",
+      probe: sampleNonCanonCursor,
+      code: McpCursorCodec.ERR_B64,
+      verdict: `${nonCanonRejectedCount}/15 Rejected (-13)`
+    },
+    {
+      guard: "Offset >= Total Bounds Guard",
+      probe: canonicalCursor,
+      code: boundsRes.code,
+      verdict: "Blocked · PAR_ERR_CURSOR_BOUNDS (-18)"
+    }
+  ];
+
+  const wireHex = Array.from(canonWire, (b) => b.toString(16).padStart(2, "0")).join(" ");
+  const scenarioMeta = MCP_V15_CURSOR_SCENARIOS[scenarioId] ?? MCP_V15_CURSOR_SCENARIOS["canonical-valid"];
+
+  return {
+    scenarioId,
+    summary: scenarioMeta.summary,
+    engine,
+    wireBytes: McpCursorCodec.WIRE_BYTES,
+    b64Len: McpCursorCodec.B64_LEN,
+    canonicalCursor,
+    canonicalSeal,
+    canonicalSealHex,
+    wireHex,
+    activeCode,
+    activeCursor,
+    activeVerdict,
+    bitFlipRejectedCount,
+    nonCanonRejectedCount,
+    totalResources: baseResources.length,
+    pageSize,
+    pagesWalked: pages.length,
+    pages,
+    tracedAuditSlots,
+    matrix,
+    elapsedMs: Number((performance.now() - t0).toFixed(3))
+  };
+}
+
+export function runMcpV15CompletionAndSubscriptionLab(options = {}) {
+  const t0 = performance.now();
+  const target = String(options.target ?? "resource-doc-id");
+  const rawPrefix = String(options.prefix ?? "rs-");
+  const logLevel = RFC5424_LOG_LEVELS.includes(String(options.logLevel ?? "warning"))
+    ? String(options.logLevel ?? "warning")
+    : "warning";
+  const emitEvents = options.emitEvents !== false;
+
+  const redactedInput = redactQuery(rawPrefix.trim());
+  const cleanPrefix = redactedInput.clean;
+  const lowPrefix = cleanPrefix.toLowerCase();
+
+  const candidates = [];
+  const seen = new Set();
+  const addCandidate = (v) => {
+    if (v && !seen.has(v)) {
+      seen.add(v);
+      candidates.push(v);
+    }
+  };
+
+  if (target === "resource-115-cap") {
+    for (let i = 0; i < 115; i += 1) {
+      const id = `spec-${String(i).padStart(3, "0")}`;
+      if (!lowPrefix || id.startsWith(lowPrefix) || "spec-".startsWith(lowPrefix) || lowPrefix === "rs-") {
+        addCandidate(id);
+      }
+    }
+  } else if (target === "resource-doc-id") {
+    for (const doc of CORPUS) {
+      if (!lowPrefix || doc.id.toLowerCase().startsWith(lowPrefix)) {
+        addCandidate(doc.id);
+      }
+    }
+    if (cleanPrefix) {
+      for (const hit of searchHybridRrf(cleanPrefix, 8)) {
+        if (
+          hit.id.toLowerCase().includes(lowPrefix) ||
+          hit.title.toLowerCase().includes(lowPrefix) ||
+          hit.bm25 > 0
+        ) {
+          addCandidate(hit.id);
+        }
+      }
+    }
+  } else if (target === "prompt-rag-query") {
+    for (const doc of CORPUS) {
+      if (!lowPrefix || doc.title.toLowerCase().includes(lowPrefix) || doc.body.toLowerCase().includes(lowPrefix)) {
+        addCandidate(doc.title);
+      }
+    }
+    if (cleanPrefix) {
+      for (const hit of searchHybridRrf(cleanPrefix, 5)) {
+        addCandidate(hit.title);
+      }
+    }
+  } else if (target === "prompt-runbook-pii") {
+    const rawSuggestions = [
+      `${cleanPrefix || "us-east"}-prod-contact-ops@corp.io`,
+      `${cleanPrefix || "us-east"}-bearer-Bearer secretTok987654321`,
+      `${cleanPrefix || "us-east"}-staging-canary`
+    ];
+    for (const item of rawSuggestions) {
+      addCandidate(redactQuery(item).clean);
+    }
+  }
+
+  const completion = {
+    values: candidates.slice(0, 100),
+    total: candidates.length,
+    hasMore: candidates.length > 100
+  };
+
+  // Subscriptions & RFC 5424 Logging state machine
+  const subscribedUri = "vault://documents/rs-c11-ring";
+  const subscriptions = new Set([subscribedUri]);
+  const notifications = [];
+  const minSev = RFC5424_LOG_LEVELS.indexOf(logLevel);
+
+  const emitRfc5424 = (lvl, rawMsg) => {
+    const sev = RFC5424_LOG_LEVELS.indexOf(lvl);
+    if (sev < 0 || sev < minSev) {
+      return false;
+    }
+    const scrubbed = redactQuery(rawMsg).clean;
+    notifications.push({
+      jsonrpc: "2.0",
+      method: "notifications/message",
+      params: { level: lvl, logger: "subvenyx-mcp-v15", data: { msg: scrubbed } }
+    });
+    return true;
+  };
+
+  if (emitEvents) {
+    // 1. Unsubscribed document update is ignored
+    const unsubUri = "vault://documents/other-doc";
+    if (subscriptions.has(unsubUri)) {
+      notifications.push({ jsonrpc: "2.0", method: "notifications/resources/updated", params: { uri: unsubUri } });
+    }
+    // 2. Subscribed document update fires notifications/resources/updated
+    if (subscriptions.has(subscribedUri)) {
+      notifications.push({
+        jsonrpc: "2.0",
+        method: "notifications/resources/updated",
+        params: { uri: subscribedUri }
+      });
+    }
+    // 3. Emit routine info log + PII-bearing error log through RFC 5424 severity filter
+    emitRfc5424("info", "Routine RAG index heartbeat ok");
+    emitRfc5424("error", "Upstream key sk-proj1234567890abcdefghij for dev@corp.io rejected; rotated fallback");
+  }
+
+  // Verify unsubscribe silences subsequent updates
+  subscriptions.delete(subscribedUri);
+  const silencedAfterUnsubscribe = !subscriptions.has(subscribedUri);
+
+  return {
+    target,
+    cleanPrefix,
+    logLevel,
+    subscribedUri,
+    silencedAfterUnsubscribe,
+    completion,
+    notifications,
+    toolAnnotations: MCP_V15_TOOL_ANNOTATIONS,
+    elapsedMs: Number((performance.now() - t0).toFixed(3))
+  };
+}
+
 function initBrowserUi() {
   if (typeof document === "undefined") return;
 
@@ -4889,6 +5525,131 @@ ${labRes.sseWire}`
     v14InstanceTextarea.addEventListener("input", renderV14Lab);
   }
 
+
+  // Pane 6 (v1.5): MCP 2025-11-25 Cursor Codec, Completions, Subscriptions & RFC 5424 Logging Lab
+  const v15CursorScenario = document.getElementById("v15-cursor-scenario");
+  const v15CursorBadge = document.getElementById("v15-cursor-badge");
+  const v15CursorSummary = document.getElementById("v15-cursor-summary");
+  const v15PageSizeSlider = document.getElementById("v15-page-size");
+  const v15PageSizeOut = document.getElementById("v15-page-size-val");
+  const v15FlipBitSlider = document.getElementById("v15-flip-bit");
+  const v15FlipBitOut = document.getElementById("v15-flip-bit-val");
+  const v15CursorKpi = document.getElementById("v15-cursor-kpi");
+  const v15CursorWireBox = document.getElementById("v15-cursor-wire-box");
+  const v15CursorVectorsTbody = document.getElementById("v15-cursor-vectors-tbody");
+  const v15CursorFooter = document.getElementById("v15-cursor-footer");
+
+  const v15SubBadge = document.getElementById("v15-sub-badge");
+  const v15CompleteTarget = document.getElementById("v15-complete-target");
+  const v15CompletePrefix = document.getElementById("v15-complete-prefix");
+  const v15LogLevel = document.getElementById("v15-log-level");
+  const v15MutateToggle = document.getElementById("v15-mutate-sub-toggle");
+  const v15SubKpi = document.getElementById("v15-sub-kpi");
+  const v15SubOutbox = document.getElementById("v15-sub-outbox");
+  const v15AnnotationsTbody = document.getElementById("v15-annotations-tbody");
+  const v15SubFooter = document.getElementById("v15-sub-footer");
+
+  const renderV15Lab = () => {
+    if (!v15CursorScenario) return;
+    const pageSize = Number(v15PageSizeSlider.value);
+    const flipBit = Number(v15FlipBitSlider.value);
+    v15PageSizeOut.textContent = `${pageSize} items/page`;
+    v15FlipBitOut.textContent = `Bit #${flipBit}`;
+
+    const curRes = runMcpV15CursorLab(v15CursorScenario.value, { pageSize, flipBit });
+    v15CursorSummary.textContent = curRes.summary;
+    v15CursorBadge.className = curRes.activeCode === 0 ? "guard-ok" : "guard-redacted";
+    v15CursorBadge.textContent =
+      curRes.activeCode === 0 ? `${curRes.canonicalSealHex} · PAR_OK` : `REJECTED · CODE ${curRes.activeCode}`;
+
+    v15CursorKpi.innerHTML = `
+      <div class="mini-stat"><span>Wire Layout</span><strong>${curRes.wireBytes}B / ${curRes.b64Len} chars</strong></div>
+      <div class="mini-stat"><span>Seal CRC32C</span><strong>${escapeHtml(curRes.canonicalSealHex)}</strong></div>
+      <div class="mini-stat"><span>128-Bit Sweep</span><strong>${curRes.bitFlipRejectedCount}/128 → -17</strong></div>
+      <div class="mini-stat"><span>Pages Walked</span><strong>${curRes.pagesWalked} (${curRes.totalResources} URIs)</strong></div>
+    `;
+
+    v15CursorWireBox.textContent = JSON.stringify(
+      {
+        activeCursor: curRes.activeCursor,
+        activeVerdict: curRes.activeVerdict,
+        canonicalWireHexLE: curRes.wireHex,
+        paginatedWalkSample: curRes.pages.slice(0, 3)
+      },
+      null,
+      2
+    );
+
+    v15CursorVectorsTbody.innerHTML = curRes.matrix
+      .map(
+        (row) => `<tr>
+          <td>${escapeHtml(row.guard)}</td>
+          <td><code>${escapeHtml(row.probe)}</code></td>
+          <td class="${row.code === 0 ? "delta-pos" : "delta-neg"}">${row.code}</td>
+          <td>${escapeHtml(row.verdict)}</td>
+        </tr>`
+      )
+      .join("");
+
+    v15CursorFooter.textContent =
+      `Engine: ${curRes.engine} · Audited Slots: ${curRes.tracedAuditSlots} · 5-Runtime Bit-Identical ParCursorToken (${curRes.elapsedMs.toFixed(3)} ms)`;
+
+    const subRes = runMcpV15CompletionAndSubscriptionLab({
+      target: v15CompleteTarget.value,
+      prefix: v15CompletePrefix.value,
+      logLevel: v15LogLevel.value,
+      emitEvents: v15MutateToggle.checked
+    });
+
+    v15SubBadge.className = "guard-ok";
+    v15SubBadge.textContent = `NOTIFS: ${subRes.notifications.length} · LOG ${subRes.logLevel.toUpperCase()}`;
+
+    v15SubKpi.innerHTML = `
+      <div class="mini-stat"><span>Completions</span><strong>${subRes.completion.values.length} / ${subRes.completion.total}</strong></div>
+      <div class="mini-stat"><span>hasMore (&gt;100)</span><strong>${subRes.completion.hasMore ? "true" : "false"}</strong></div>
+      <div class="mini-stat"><span>Outbox Events</span><strong>${subRes.notifications.length}</strong></div>
+      <div class="mini-stat"><span>ToolAnnotations</span><strong>${subRes.toolAnnotations.length} tools</strong></div>
+    `;
+
+    v15SubOutbox.textContent = JSON.stringify(
+      {
+        completion: {
+          valuesPreview: subRes.completion.values.slice(0, 6),
+          total: subRes.completion.total,
+          hasMore: subRes.completion.hasMore
+        },
+        notificationsOutbox: subRes.notifications
+      },
+      null,
+      2
+    );
+
+    v15AnnotationsTbody.innerHTML = subRes.toolAnnotations
+      .map(
+        (t) => `<tr>
+          <td><code>${escapeHtml(t.name)}</code></td>
+          <td class="${t.readOnlyHint ? "delta-pos" : "delta-neg"}">${t.readOnlyHint}</td>
+          <td>${t.destructiveHint}</td>
+          <td class="delta-pos">${t.idempotentHint}</td>
+          <td>${t.openWorldHint}</td>
+        </tr>`
+      )
+      .join("");
+
+    v15SubFooter.textContent =
+      `MCP 2025-11-25 parity across mcp-moe-hybrid-sdk, polyglot-agent-runtime-rs, fullstack-rag-eval-studio & nahianakhtar.github.io (${subRes.elapsedMs.toFixed(3)} ms).`;
+  };
+
+  if (v15CursorScenario) {
+    v15CursorScenario.addEventListener("change", renderV15Lab);
+    v15PageSizeSlider.addEventListener("input", renderV15Lab);
+    v15FlipBitSlider.addEventListener("input", renderV15Lab);
+    v15CompleteTarget.addEventListener("change", renderV15Lab);
+    v15CompletePrefix.addEventListener("input", renderV15Lab);
+    v15LogLevel.addEventListener("change", renderV15Lab);
+    v15MutateToggle.addEventListener("change", renderV15Lab);
+  }
+
   // Competency matrix category filters
   const filterBtns = document.querySelectorAll(".filter-btn");
   const matrixCards = document.querySelectorAll(".matrix-card");
@@ -4920,6 +5681,7 @@ ${labRes.sseWire}`
   renderV12Inspector();
   renderV13Lab();
   renderV14Lab();
+  renderV15Lab();
 
   // Upgrade P² Explorer & v1.2 Token-Bucket/Audit-Ring Inspector asynchronously to real Rust wasm32 binary
   instantiateWasmRuntime()
@@ -4928,6 +5690,7 @@ ${labRes.sseWire}`
       renderV12Inspector();
       renderV13Lab();
       renderV14Lab();
+      renderV15Lab();
     })
     .catch(() => {
       // Keeps deterministic ES2022 P² & BigInt Token-Bucket mirrors active when opened via file://

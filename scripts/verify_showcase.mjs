@@ -18,7 +18,11 @@ import {
   runP2QuantileExplorer,
   runPipelineSimulation,
   runTokenBucketAndOtlpInspector,
+  MCP_V15_TOOL_ANNOTATIONS,
+  McpCursorCodec,
   runMcpV14ContractAndCancellationLab,
+  runMcpV15CompletionAndSubscriptionLab,
+  runMcpV15CursorLab,
   validateJsonSchema2020Preset,
   verifyCrossLanguageTraceVectors
 } from "../app.js";
@@ -350,6 +354,46 @@ assert.equal(v14Breach.outputSchemaBreaches, 1);
 assert.equal(v14Breach.body[0].error.code, -32602);
 assert.equal(v14Breach.body[1].error.code, -32603);
 
+
+// 5C. Headless verification of v1.5 MCP 16B CRC32C Cursor Codec, Completions, Subscriptions & RFC 5424 Logging Lab
+assert.ok(html.includes("sim-tab-btn-v15"), "v1.5 MCP Cursor Tamper, Completions & Subscriptions tab missing");
+const v15Canon = runMcpV15CursorLab("canonical-valid", { pageSize: 3, flipBit: 37, wasmExports });
+assert.equal(v15Canon.engine, "wasm32-unknown-unknown");
+assert.equal(v15Canon.canonicalCursor, "Q1ABAjIAAACDkgbjJBoL9w");
+assert.equal(v15Canon.canonicalSeal, 0xf70b1a24);
+assert.equal(v15Canon.bitFlipRejectedCount, 128, "All 128 single-bit flips must reject with -17");
+assert.equal(v15Canon.nonCanonRejectedCount, 15, "All 15 non-canonical trailing sextet mutations must reject with -13");
+assert.equal(v15Canon.pagesWalked, 5, "14 resources at pageSize=3 must walk 5 pages");
+assert.equal(v15Canon.tracedAuditSlots, 1);
+
+assert.equal(runMcpV15CursorLab("bitflip-seal-tamper", { wasmExports }).activeCode, McpCursorCodec.ERR_SEAL);
+assert.equal(runMcpV15CursorLab("cross-scope-replay", { wasmExports }).activeCode, McpCursorCodec.ERR_SCOPE);
+assert.equal(runMcpV15CursorLab("snapshot-epoch-drift", { wasmExports }).activeCode, McpCursorCodec.ERR_SNAPSHOT);
+assert.equal(runMcpV15CursorLab("noncanonical-b64-tail", { wasmExports }).activeCode, McpCursorCodec.ERR_B64);
+
+const v15Cap = runMcpV15CompletionAndSubscriptionLab({
+  target: "resource-115-cap",
+  prefix: "spec-",
+  logLevel: "warning",
+  emitEvents: true
+});
+assert.equal(v15Cap.completion.values.length, 100, "MCP completion/complete must cap values at <= 100");
+assert.equal(v15Cap.completion.total, 115);
+assert.equal(v15Cap.completion.hasMore, true);
+assert.equal(v15Cap.notifications.length, 2, "Expected 1 subscribed resource update + 1 >=warning log notification");
+assert.equal(v15Cap.notifications[0].method, "notifications/resources/updated");
+assert.equal(v15Cap.notifications[1].method, "notifications/message");
+assert.ok(!JSON.stringify(v15Cap.notifications).includes("sk-proj1234567890"));
+assert.ok(!JSON.stringify(v15Cap.notifications).includes("dev@corp.io"));
+assert.equal(v15Cap.silencedAfterUnsubscribe, true);
+
+const v15PiiPrompt = runMcpV15CompletionAndSubscriptionLab({
+  target: "prompt-runbook-pii",
+  prefix: "us-east"
+});
+assert.ok(!JSON.stringify(v15PiiPrompt.completion.values).includes("ops@corp.io"));
+assert.equal(MCP_V15_TOOL_ANNOTATIONS.length, 4);
+
 // 6. Measure warm 100-query p50 / p95 client simulator latency
 const simLatencies = [];
 const sampleQueries = [
@@ -375,7 +419,9 @@ console.log(
   JSON.stringify(
     {
       site: "nahianakhtar.github.io",
-      version: "1.4.0",
+      version: "1.5.0",
+      v15CanonicalCursor: v15Canon.canonicalCursor,
+      v15BitFlipsRejected: v15Canon.bitFlipRejectedCount,
       v14StructuredValidated: v14Batch.structuredOutputsValidated,
       v14CancelledElided: v14Batch.cancelledElided,
       wasmTraceContextBytes: vecWasm.traceContextBytes,

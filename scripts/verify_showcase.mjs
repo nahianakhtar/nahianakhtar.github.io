@@ -12,6 +12,7 @@ import {
   RequestCancellationRegistry,
   SamplingGovernanceGuard,
   StreamableSessionRegistry,
+  OAuthProtectedResourceGuard,
   decodeEmbeddedWasmBytes,
   deriveChildTraceparent,
   dispatchMcpStreamableBatch,
@@ -36,6 +37,8 @@ import {
   runMcpV17SamplingAndApprovalLab,
   runMcpV18ResourceLinkProvenanceLab,
   runMcpV18SessionResumabilityLab,
+  runMcpV19OAuthIntrospectionLab,
+  runMcpV19PkceAndResourceMetadataLab,
   validateJsonSchema2020Preset,
   verifyCrossLanguageTraceVectors
 } from "../app.js";
@@ -230,7 +233,7 @@ assert.equal(v12Tamper.tamperDetected, true, "1-bit payload flip in WASM audit r
 assert.equal(v12Tamper.auditVerifyCode, -8);
 
 // 5. Headless verification of v1.3 Streamable MCP Batch/SSE & Cross-Language W3C CRC32C Lineage
-assert.equal(wasmBytes.byteLength, 68842, "v1.8.0 WASM binary must equal 68,842 bytes");
+assert.equal(wasmBytes.byteLength, 90701, "v1.9.0 WASM binary must equal 90,701 bytes");
 assert.equal(wasmExports.par_trace_context_bytes(), 32, "WASM ParTraceContext must equal 32 bytes");
 
 const vecWasm = verifyCrossLanguageTraceVectors({ wasmExports });
@@ -612,6 +615,74 @@ assert.equal(
   0
 );
 
+// 5G. Headless verification of v1.9 OAuth 2.1 Protected Resource Metadata (RFC 9728), PKCE S256 & Audience Fence Lab
+assert.ok(html.includes("sim-tab-btn-v19"), "v1.9 OAuth 2.1 RFC 9728, PKCE S256 & Audience Fence tab button missing");
+assert.ok(html.includes("sim-pane-v19"), "v1.9 simulator pane missing");
+assert.equal(wasmExports.par_oauth_table_bytes(), 2112, "WASM ParOAuthTokenTable must equal 2,112 bytes");
+
+const v19OAuthOk = runMcpV19OAuthIntrospectionLab("valid-audience-and-scope", {
+  scopeMask: 0x03,
+  ttlMs: 60_000,
+  wasmExports
+});
+assert.equal(v19OAuthOk.engine, "wasm32-unknown-unknown");
+assert.equal(v19OAuthOk.oauthTableBytes, 2112);
+assert.equal(v19OAuthOk.audienceCrc32c, 0xc4ec1de9);
+assert.equal(v19OAuthOk.audienceCrc32cHex, "0xC4EC1DE9");
+assert.equal(v19OAuthOk.allProbesMatched, true, "All 6 WASM & ES2022 ParOAuthTokenTable probes must match bit-for-bit");
+assert.equal(v19OAuthOk.activeCode, 0);
+assert.equal(v19OAuthOk.httpStatus, 200);
+
+const v19QueryLeak = runMcpV19OAuthIntrospectionLab("valid-audience-and-scope", {
+  injectQueryLeak: true,
+  wasmExports
+});
+assert.equal(v19QueryLeak.activeCode, OAuthProtectedResourceGuard.ERR_BEARER_SYNTAX);
+assert.equal(v19QueryLeak.httpStatus, 400);
+
+const v19AudMismatch = runMcpV19OAuthIntrospectionLab("confused-deputy-audience-mismatch", { wasmExports });
+assert.equal(v19AudMismatch.activeCode, OAuthProtectedResourceGuard.ERR_TOKEN_AUDIENCE);
+assert.equal(v19AudMismatch.httpStatus, 401);
+
+const v19StepUp = runMcpV19OAuthIntrospectionLab("insufficient-scope-step-up-403", { wasmExports });
+assert.equal(v19StepUp.activeCode, OAuthProtectedResourceGuard.ERR_TOKEN_SCOPE);
+assert.equal(v19StepUp.httpStatus, 403);
+assert.ok(v19StepUp.wwwAuthenticate.includes('error="insufficient_scope"'));
+
+const v19Missing = runMcpV19OAuthIntrospectionLab("missing-header-rfc9728-discovery", { wasmExports });
+assert.equal(v19Missing.httpStatus, 401);
+assert.ok(v19Missing.wwwAuthenticate.includes('resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource/v1/mcp"'));
+assert.ok(!v19Missing.wwwAuthenticate.includes("error="));
+
+const v19Revoked = runMcpV19OAuthIntrospectionLab("revoked-expired-or-client-mismatch", { wasmExports });
+assert.equal(v19Revoked.activeCode, OAuthProtectedResourceGuard.ERR_TOKEN_INACTIVE);
+assert.equal(v19Revoked.httpStatus, 401);
+
+const v19PkceOk = runMcpV19PkceAndResourceMetadataLab("rfc7636-s256-and-rfc9728", { wasmExports });
+assert.equal(v19PkceOk.engine, "wasm32-unknown-unknown");
+assert.equal(v19PkceOk.activeCode, 0);
+assert.equal(v19PkceOk.s256Challenge, "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
+assert.equal(v19PkceOk.canonicalResourceUri, "https://mcp.example.com/v1/mcp");
+assert.equal(v19PkceOk.audienceCrc32cHex, "0xC4EC1DE9");
+assert.equal(v19PkceOk.allMatrixMatched, true, "All 5 WASM & ES2022 PKCE S256 / RFC 9728 checks must match");
+
+assert.equal(
+  runMcpV19PkceAndResourceMetadataLab("plain-downgrade-blocked", { wasmExports }).activeCode,
+  OAuthProtectedResourceGuard.ERR_PKCE_CHALLENGE
+);
+assert.equal(
+  runMcpV19PkceAndResourceMetadataLab("verifier-or-sextet-tamper", { wasmExports }).activeCode,
+  OAuthProtectedResourceGuard.ERR_PKCE_VERIFIER
+);
+assert.equal(
+  runMcpV19PkceAndResourceMetadataLab("non-loopback-http-or-fragment", { wasmExports }).activeCode,
+  OAuthProtectedResourceGuard.ERR_OAUTH_RESOURCE_URI
+);
+assert.equal(
+  runMcpV19PkceAndResourceMetadataLab("loopback-dev-and-dot-escape", { wasmExports }).activeCode,
+  OAuthProtectedResourceGuard.ERR_OAUTH_RESOURCE_URI
+);
+
 // 6. Measure warm 100-query p50 / p95 client simulator latency
 const simLatencies = [];
 const sampleQueries = [
@@ -637,7 +708,11 @@ console.log(
   JSON.stringify(
     {
       site: "nahianakhtar.github.io",
-      version: "1.8.0",
+      version: "1.9.0",
+      wasmOAuthTableBytes: v19OAuthOk.oauthTableBytes,
+      v19OAuthProbesMatched: v19OAuthOk.allProbesMatched,
+      v19AudienceCrc32cHex: v19PkceOk.audienceCrc32cHex,
+      v19PkceMatrixMatched: v19PkceOk.allMatrixMatched,
       wasmSessionTableBytes: v18SessOk.sessionTableBytes,
       v18SessionProbesMatched: v18SessOk.allProbesMatched,
       v18ProvenanceSealHex: v18ProvOk.canonicalSealHex,

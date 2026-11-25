@@ -188,13 +188,13 @@
             <a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open nahianakhtar.github.io on GitHub">GitHub ↗</a>
           </div>
           <p class="repo-desc">
-            Responsive dark Bento &amp; Terminal showcase (<code>v1.6.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
-            <strong>Streamable MCP JSON-RPC 2.0 Batch/SSE</strong>, <strong>Monotonic Progress &amp; RFC 8089 Roots Guard</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; W3C CRC32C Lineage</strong>.
+            Responsive dark Bento &amp; Terminal showcase (<code>v1.7.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
+            <strong>Streamable MCP JSON-RPC 2.0 Batch/SSE</strong>, <strong>Elicitation Flat-Schema &amp; Sampling HITL Fence</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; W3C CRC32C Lineage</strong>.
           </p>
           <div class="badge-row">
             <span class="stack-badge">Streamable MCP Batch/SSE</span>
-            <span class="stack-badge">Progress SSE &amp; Roots Guard</span>
-            <span class="stack-badge">Rust WASM32 (56.5 KB)</span>
+            <span class="stack-badge">Elicitation &amp; Sampling HITL</span>
+            <span class="stack-badge">Rust WASM32 (59.0 KB)</span>
             <span class="stack-badge">W3C OTLP Waterfall</span>
           </div>
           <dl class="metric-grid">
@@ -239,10 +239,10 @@
       <div class="section-header">
         <div>
           <span class="section-kicker">INTERACTIVE IN-BROWSER ENGINE · ES2022 + RUST WASM32 · ZERO API KEYS</span>
-          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.6 MCP Protocol Lab</h2>
+          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.7 MCP Protocol Lab</h2>
         </div>
         <p class="section-sub">
-          Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, inspect <strong>v1.2–v1.5 MCP Governance</strong>, or verify <strong>v1.6 Monotonic Progress SSE &amp; RFC 8089 Roots Confinement</strong>.
+          Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, inspect <strong>v1.2–v1.6 MCP Governance</strong>, or verify <strong>v1.7 Elicitation Flat-Schema &amp; Sampling HITL Approval Fencing</strong>.
         </p>
       </div>
 
@@ -317,6 +317,16 @@
             aria-controls="sim-pane-v16"
           >
             07 · Monotonic Progress SSE &amp; RFC 8089 Roots Guard <span class="tab-new-pill">v1.6</span>
+          </button>
+          <button
+            id="sim-tab-btn-v17"
+            type="button"
+            role="tab"
+            class="sim-tab-btn"
+            aria-selected="false"
+            aria-controls="sim-pane-v17"
+          >
+            08 · Elicitation Flat-Schema &amp; Sampling HITL Fence <span class="tab-new-pill">v1.7</span>
           </button>
         </div>
 
@@ -1064,6 +1074,112 @@
               </div>
 
               <div id="v16-roots-footer" class="crc-footer"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Pane 8 (v1.7): MCP 2025-11-25 Elicitation Flat-Schema & Sampling HITL Approval Fence Lab -->
+        <div id="sim-pane-v17" role="tabpanel" aria-labelledby="sim-tab-btn-v17" class="sim-tab-pane" hidden>
+          <div class="lab-split-grid">
+            <!-- Left Panel: WASM 2,112B ParApprovalTable & sampling/createMessage HITL Fence -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>1. WASM <code>ParApprovalTable</code> &amp; <code>sampling/createMessage</code> HITL Fence</h3>
+                <span id="v17-sampling-badge" class="guard-ok" aria-live="polite">WASM32 2,112B · HITL GOVERNED</span>
+              </div>
+
+              <label for="v17-sampling-scenario" class="sim-label">MCP 2025-11-25 Sampling Budget &amp; Human Approval Scenario</label>
+              <select id="v17-sampling-scenario" class="sim-select">
+                <option value="governed-accept-and-redact">Scenario #1 · Approved Sampling + Secret Scrubbing + Single-Resolution Replay Fence [0 · ACCEPTED]</option>
+                <option value="budget-or-priority-breach">Scenario #2 · maxTokens Ceiling / Priority [0,1] / allServers Context Breach [-34 · BUDGET_EXCEEDED]</option>
+                <option value="duplicate-and-type-isolation">Scenario #3 · Duplicate Pending (-29) + int(77) vs str(&quot;77&quot;) Dual-CRC32C Isolation [GUARD]</option>
+                <option value="ttl-deadline-expired">Scenario #4 · Fail-Closed Approval TTL Window Expiry [-33 · APPROVAL_EXPIRED]</option>
+                <option value="user-declined-or-capability-fence">Scenario #5 · User Decline (-1) &amp; Missing Client Capability Fence (-32004) [REJECTED]</option>
+              </select>
+              <p id="v17-sampling-summary" class="lab-desc"></p>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v17-max-tokens">Requested <code>maxTokens</code></label>
+                    <output id="v17-max-tokens-val" for="v17-max-tokens">256 tok</output>
+                  </div>
+                  <input id="v17-max-tokens" type="range" min="64" max="2048" step="64" value="256" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v17-ceiling-tokens">Policy Ceiling <code>maxTokens</code></label>
+                    <output id="v17-ceiling-tokens-val" for="v17-ceiling-tokens">512 ceiling</output>
+                  </div>
+                  <input id="v17-ceiling-tokens" type="range" min="128" max="2048" step="128" value="512" />
+                </div>
+              </div>
+
+              <div class="v12-toggle-box" style="margin-top: 0.65rem">
+                <label class="v12-check-label" for="v17-require-cap-toggle">
+                  <input id="v17-require-cap-toggle" type="checkbox" />
+                  <span>Simulate unnegotiated client <code>sampling</code> capability in <code>initialize</code> (<code>-32004</code>)</span>
+                </label>
+              </div>
+
+              <div id="v17-sampling-kpi" class="mini-stat-grid" style="margin-top: 0.75rem"></div>
+              <pre id="v17-sampling-wire-box" class="terminal-body v12-otlp-box"></pre>
+
+              <div class="table-scroll" style="margin-top: 0.75rem">
+                <table class="lab-table" aria-label="Cross-Runtime Sampling &amp; Approval Gate Invariant Matrix">
+                  <thead>
+                    <tr>
+                      <th>Approval / Sampling Probe</th>
+                      <th>WASM / ES2022</th>
+                      <th>Code</th>
+                      <th>6-Runtime Verdict</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v17-sampling-matrix-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="v17-sampling-footer" class="crc-footer"></div>
+            </div>
+
+            <!-- Right Panel: MCP 2025-11-25 elicitation/create Flat-Schema & PII Redaction Guard -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>2. MCP <code>elicitation/create</code> Flat-Schema &amp; Redaction Guard</h3>
+                <span id="v17-elicit-badge" class="guard-ok" aria-live="polite">FLAT SCHEMA · CRC32C SEALED</span>
+              </div>
+
+              <label for="v17-elicit-preset" class="sim-label">MCP 2025-11-25 Flat Primitive <code>requestedSchema</code> &amp; Response Vector</label>
+              <div class="sim-input-row">
+                <select id="v17-elicit-preset" class="sim-select">
+                  <option value="valid-flat-rollout-accept">Preset #1 · Flat Primitive Schema (email/uri/date/enumNames) + Secret Scrubbing [0 · ACCEPT]</option>
+                  <option value="nested-object-or-array-rejected">Preset #2 · Nested Object / Array / $ref / Combinator Rejected [-35 · NON_FLAT_SCHEMA]</option>
+                  <option value="format-or-additional-prop-breach">Preset #3 · Invalid Email Format / Undeclared Property Rejected [-35 · CONTENT_INVALID]</option>
+                  <option value="schema-crc32c-drift">Preset #4 · Mid-Flight requestedSchema CRC32C Tamper Rejected [-35 · CRC_MISMATCH]</option>
+                  <option value="decline-cancel-content-guard">Preset #5 · Decline / Cancel Empty-Content Invariant [0 vs -35]</option>
+                </select>
+                <button id="v17-elicit-validate-btn" type="button" class="btn-secondary">Evaluate</button>
+              </div>
+              <p id="v17-elicit-summary" class="lab-desc"></p>
+
+              <div id="v17-elicit-kpi" class="mini-stat-grid" style="margin-top: 0.75rem"></div>
+              <pre id="v17-elicit-wire-box" class="terminal-body v12-otlp-box"></pre>
+
+              <div class="table-scroll" style="margin-top: 0.75rem">
+                <table class="lab-table" aria-label="MCP 2025-11-25 Elicitation Schema Security Matrix">
+                  <thead>
+                    <tr>
+                      <th>Elicitation Contract Check</th>
+                      <th>Type / Format</th>
+                      <th>Code</th>
+                      <th>MCP Governance Verdict</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v17-elicit-matrix-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="v17-elicit-footer" class="crc-footer"></div>
             </div>
           </div>
         </div>

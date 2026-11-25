@@ -4,9 +4,12 @@ import { resolve } from "node:path";
 import {
   CANONICAL_TRACE_VECTORS,
   CancellationToken,
+  ElicitationSchemaGuard,
+  HumanApprovalRegistry,
   JsonSchema2020Validator,
   MCP_V14_TOOL_CONTRACTS,
   RequestCancellationRegistry,
+  SamplingGovernanceGuard,
   decodeEmbeddedWasmBytes,
   deriveChildTraceparent,
   dispatchMcpStreamableBatch,
@@ -27,6 +30,8 @@ import {
   runMcpV15CursorLab,
   runMcpV16ProgressLab,
   runMcpV16RootsGuardLab,
+  runMcpV17ElicitationSchemaLab,
+  runMcpV17SamplingAndApprovalLab,
   validateJsonSchema2020Preset,
   verifyCrossLanguageTraceVectors
 } from "../app.js";
@@ -221,7 +226,7 @@ assert.equal(v12Tamper.tamperDetected, true, "1-bit payload flip in WASM audit r
 assert.equal(v12Tamper.auditVerifyCode, -8);
 
 // 5. Headless verification of v1.3 Streamable MCP Batch/SSE & Cross-Language W3C CRC32C Lineage
-assert.equal(wasmBytes.byteLength, 57861, "v1.6.0 WASM binary must equal 57,861 bytes");
+assert.equal(wasmBytes.byteLength, 60466, "v1.7.0 WASM binary must equal 60,466 bytes");
 assert.equal(wasmExports.par_trace_context_bytes(), 32, "WASM ParTraceContext must equal 32 bytes");
 
 const vecWasm = verifyCrossLanguageTraceVectors({ wasmExports });
@@ -461,6 +466,80 @@ const v16RootsLockdown = runMcpV16RootsGuardLab({
 assert.equal(v16RootsLockdown.activeCode, WorkspaceRootsGuard.ERR_URI_OUTSIDE_ROOTS);
 assert.equal(v16RootsLockdown.jsonRpcCode, -32003);
 
+// 5E. Headless verification of v1.7 Elicitation Flat-Schema & Sampling HITL Approval Fence Lab + DOM ID Integrity
+assert.ok(html.includes("sim-tab-btn-v17"), "v1.7 Elicitation & Sampling HITL tab button missing");
+assert.ok(html.includes("sim-pane-v17"), "v1.7 simulator pane missing");
+assert.equal(wasmExports.par_approval_table_bytes(), 2112, "WASM ParApprovalTable must equal 2,112 bytes");
+
+const htmlIdList = [...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
+const htmlIdSet = new Set(htmlIdList);
+assert.equal(htmlIdSet.size, htmlIdList.length, "Every id attribute in index.html must be unique");
+for (const m of js.matchAll(/document\.getElementById\("([^"]+)"\)/g)) {
+  assert.ok(htmlIdSet.has(m[1]), `DOM element #${m[1]} referenced in app.js missing from index.html`);
+}
+
+const v17SampOk = runMcpV17SamplingAndApprovalLab("governed-accept-and-redact", {
+  maxTokens: 256,
+  ceilingMaxTokens: 512,
+  wasmExports
+});
+assert.equal(v17SampOk.engine, "wasm32-unknown-unknown");
+assert.equal(v17SampOk.approvalTableBytes, 2112);
+assert.equal(v17SampOk.allProbesMatched, true, "All 6 WASM & ES2022 ParApprovalTable probes must match bit-for-bit");
+assert.equal(v17SampOk.activeCode, 0);
+assert.equal(v17SampOk.replayCode, HumanApprovalRegistry.ERR_APPROVAL_INACTIVE);
+assert.equal(v17SampOk.jsonRpcCode, 200);
+assert.equal(v17SampOk.tracedAuditSlots, 1);
+assert.ok(!JSON.stringify(v17SampOk.wire).includes("sk-live1234567890abcdefgh"), "API key in sampling completion must be redacted");
+assert.ok(!JSON.stringify(v17SampOk.wire).includes("secretSys999999"), "Bearer secret in sampling prompt must be redacted");
+
+assert.equal(
+  runMcpV17SamplingAndApprovalLab("budget-or-priority-breach", { wasmExports }).activeCode,
+  SamplingGovernanceGuard.ERR_SAMPLING_BUDGET
+);
+assert.equal(
+  runMcpV17SamplingAndApprovalLab("duplicate-and-type-isolation", { wasmExports }).activeCode,
+  HumanApprovalRegistry.ERR_APPROVAL_DUPLICATE
+);
+assert.equal(
+  runMcpV17SamplingAndApprovalLab("ttl-deadline-expired", { wasmExports }).activeCode,
+  HumanApprovalRegistry.ERR_APPROVAL_EXPIRED
+);
+assert.equal(
+  runMcpV17SamplingAndApprovalLab("user-declined-or-capability-fence", { wasmExports }).jsonRpcCode,
+  -1
+);
+assert.equal(
+  runMcpV17SamplingAndApprovalLab("governed-accept-and-redact", {
+    missingClientCapability: true,
+    wasmExports
+  }).jsonRpcCode,
+  -32004
+);
+
+const v17ElicitOk = runMcpV17ElicitationSchemaLab("valid-flat-rollout-accept", { wasmExports });
+assert.equal(v17ElicitOk.engine, "wasm32-unknown-unknown");
+assert.equal(v17ElicitOk.activeCode, 0);
+assert.ok(v17ElicitOk.schemaCrc32c > 0);
+assert.equal(v17ElicitOk.allMatrixMatched, true, "All 5 elicitation schema security checks must match WASM/ES2022");
+assert.ok(!JSON.stringify(v17ElicitOk.wire).includes("sk-proj1234567890abcdefgh"));
+
+assert.equal(
+  runMcpV17ElicitationSchemaLab("nested-object-or-array-rejected", { wasmExports }).activeCode,
+  ElicitationSchemaGuard.ERR_ELICITATION_SCHEMA
+);
+assert.equal(
+  runMcpV17ElicitationSchemaLab("format-or-additional-prop-breach", { wasmExports }).activeCode,
+  ElicitationSchemaGuard.ERR_ELICITATION_SCHEMA
+);
+assert.equal(
+  runMcpV17ElicitationSchemaLab("schema-crc32c-drift", { wasmExports }).activeCode,
+  ElicitationSchemaGuard.ERR_ELICITATION_SCHEMA
+);
+const v17ElicitDecline = runMcpV17ElicitationSchemaLab("decline-cancel-content-guard", { wasmExports });
+assert.equal(v17ElicitDecline.declineEmptyCode, 0);
+assert.equal(v17ElicitDecline.declineWithContentCode, ElicitationSchemaGuard.ERR_ELICITATION_SCHEMA);
+
 // 6. Measure warm 100-query p50 / p95 client simulator latency
 const simLatencies = [];
 const sampleQueries = [
@@ -486,7 +565,10 @@ console.log(
   JSON.stringify(
     {
       site: "nahianakhtar.github.io",
-      version: "1.6.0",
+      version: "1.7.0",
+      wasmApprovalTableBytes: v17SampOk.approvalTableBytes,
+      v17SamplingProbesMatched: v17SampOk.allProbesMatched,
+      v17ElicitationMatrixMatched: v17ElicitOk.allMatrixMatched,
       wasmProgressTableBytes: v16ProgOk.progressTableBytes,
       v16ProgressProbesMatched: v16ProgOk.allProbesMatched,
       v16RootsVectorsMatched: v16RootsOk.allMatrixMatched,

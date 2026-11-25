@@ -8586,7 +8586,7 @@ const MCP_V19_OAUTH_SCENARIOS = {
 
 export function runMcpV19OAuthIntrospectionLab(scenarioId = "valid-audience-and-scope", options = {}) {
   const t0 = performance.now();
-  const ex = options.wasmExports === undefined ? wasmRuntimeExports : options.wasmExports;
+  const ex = options.wasmExports !== undefined ? options.wasmExports : cachedWasmExports;
   const grantedScopeMask = Math.max(1, Math.min(15, Number(options.scopeMask ?? 0x03))) & 0x0f;
   const ttlMs = Math.max(1000, Number(options.ttlMs ?? 60_000));
   const injectQueryLeak = Boolean(options.injectQueryLeak);
@@ -8828,7 +8828,7 @@ const MCP_V19_PKCE_PRESETS = {
 
 export function runMcpV19PkceAndResourceMetadataLab(presetId = "rfc7636-s256-and-rfc9728", options = {}) {
   const t0 = performance.now();
-  const ex = options.wasmExports === undefined ? wasmRuntimeExports : options.wasmExports;
+  const ex = options.wasmExports !== undefined ? options.wasmExports : cachedWasmExports;
 
   const rfcVerifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
   const rfcExpectedChallenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";

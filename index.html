@@ -17,7 +17,7 @@
         <span class="brand-mono">nahianakhtar</span><span class="brand-prompt"> · engineering studio</span>
       </a>
       <nav class="nav-links" aria-label="Primary Navigation">
-        <a href="#repositories">Verified Proof (6)</a>
+        <a href="#repositories">Verified Proof (7)</a>
         <a href="#simulator">Interactive Lab</a>
         <a href="#competency-matrix">Capabilities</a>
         <a href="https://github.com/nahianakhtar" target="_blank" rel="noopener noreferrer" class="btn-outline">GitHub Profile ↗</a>
@@ -56,16 +56,16 @@
         </div>
         <pre class="terminal-body"><code><span class="t-comment">// Verified GitHub CI Proof Ledger</span>
 {
-  <span class="t-key">"mcp_moe_hybrid_sdk"</span>:   <span class="t-str">"40 offline tests · CI green"</span>,
+  <span class="t-key">"mcp_moe_hybrid_sdk"</span>:   <span class="t-str">"42 offline tests · v1.9.0 CI green"</span>,
   <span class="t-key">"mcp_automation_demo"</span>:  <span class="t-str">"77 offline tests · CI green"</span>,
-  <span class="t-key">"rag_golden_recall_1"</span>:  <span class="t-str">"100.0% (0.3762ms ref p95)"</span>,
+  <span class="t-key">"api_glue_mcp"</span>:         <span class="t-str">"8 offline tests · TS MCP v2"</span>,
+  <span class="t-key">"rag_golden_recall_1"</span>:  <span class="t-str">"100.0% (0.3993ms ref p95)"</span>,
   <span class="t-key">"money_arithmetic"</span>:     <span class="t-str">"Decimal ROUND_HALF_EVEN"</span>,
-  <span class="t-key">"default_write_policy"</span>: <span class="t-str">"read-only + explicit --apply"</span>,
-  <span class="t-key">"external_runtime_deps"</span>:<span class="t-num"> 0</span>
+  <span class="t-key">"default_write_policy"</span>: <span class="t-str">"read-only + explicit --apply"</span>
 }</code></pre>
         <div class="kpi-strip">
           <div class="kpi-cell">
-            <span class="kpi-val">40</span>
+            <span class="kpi-val">42</span>
             <span class="kpi-lbl">Track 1 Tests</span>
           </div>
           <div class="kpi-cell">
@@ -73,8 +73,8 @@
             <span class="kpi-lbl">Track 2 Tests</span>
           </div>
           <div class="kpi-cell">
-            <span class="kpi-val">100%</span>
-            <span class="kpi-lbl">Golden Recall@1</span>
+            <span class="kpi-val">8</span>
+            <span class="kpi-lbl">TS MCP v2 Tests</span>
           </div>
           <div class="kpi-cell">
             <span class="kpi-val">0</span>
@@ -91,7 +91,7 @@
           <span class="section-kicker">VERIFIED OPEN-SOURCE PROOF</span>
           <h2 id="repos-heading">Production MCP &amp; Automation Repositories</h2>
         </div>
-        <p class="section-sub">Six MIT-licensed, CI-verified repositories led by two client-ready Python MCP &amp; CLI automation showcases alongside Rust/C11 and TypeScript runtimes.</p>
+        <p class="section-sub">Seven MIT-licensed, CI-verified repositories led by three client-ready Python &amp; TypeScript MCP + CLI automation showcases alongside Rust/C11 and Node.js runtimes.</p>
       </div>
 
       <div class="repo-grid">
@@ -144,6 +144,32 @@
             <div><dt>Money Precision</dt><dd>Decimal (HALF_EVEN)</dd></div>
             <div><dt>SQLite Guard</dt><dd>mode=ro + Allowlist</dd></div>
             <div><dt>Write Fence</dt><dd>Dry-Run + --apply</dd></div>
+          </dl>
+        </article>
+
+        <!-- Repo 3: api-glue-mcp -->
+        <article class="bento-card repo-card repo-card-featured">
+          <div class="repo-top">
+            <div>
+              <span class="repo-lang lang-ts">Featured Proof 03 · TypeScript · Node 22 · MCP v2</span>
+              <h3><a href="https://github.com/nahianakhtar/api-glue-mcp" target="_blank" rel="noopener noreferrer">api-glue-mcp</a></h3>
+            </div>
+            <a href="https://github.com/nahianakhtar/api-glue-mcp" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open api-glue-mcp on GitHub">GitHub ↗</a>
+          </div>
+          <p class="repo-desc">
+            <strong>Problem solved:</strong> Replaces brittle Zapier/Make webhook chains with deterministic code. Built on <code>@modelcontextprotocol/server@2.4.0</code> + <code>node:sqlite</code> WAL with timing-safe HMAC-SHA256 replay protection, SSRF host allowlists, idempotent event deduplication, <code>Retry-After</code> backoff, circuit breaker &amp; Dead-Letter Queue replay.
+          </p>
+          <div class="badge-row">
+            <span class="stack-badge">8 offline tests</span>
+            <span class="stack-badge">MCP stdio (v2.4.0)</span>
+            <span class="stack-badge">HMAC + SSRF Guard</span>
+            <span class="stack-badge">SQLite WAL + DLQ</span>
+          </div>
+          <dl class="metric-grid">
+            <div><dt>Verified Suite</dt><dd>8 offline tests</dd></div>
+            <div><dt>Typecheck</dt><dd>tsc 7.0.2 (0 errs)</dd></div>
+            <div><dt>Write Fence</dt><dd>Dry-Run + --apply</dd></div>
+            <div><dt>Audit Trail</dt><dd>Redacted JSONL</dd></div>
           </dl>
         </article>
 
@@ -1556,6 +1582,7 @@
       <div class="footer-links">
         <a href="https://github.com/nahianakhtar/mcp-moe-hybrid-sdk" target="_blank" rel="noopener noreferrer">mcp-moe-hybrid-sdk</a>
         <a href="https://github.com/nahianakhtar/mcp-automation-demo" target="_blank" rel="noopener noreferrer">mcp-automation-demo</a>
+        <a href="https://github.com/nahianakhtar/api-glue-mcp" target="_blank" rel="noopener noreferrer">api-glue-mcp</a>
         <a href="https://github.com/nahianakhtar/polyglot-agent-runtime-rs" target="_blank" rel="noopener noreferrer">polyglot-agent-runtime-rs</a>
         <a href="https://github.com/nahianakhtar/fullstack-rag-eval-studio" target="_blank" rel="noopener noreferrer">fullstack-rag-eval-studio</a>
         <a href="https://github.com/nahianakhtar/zero-to-code-systems-lab" target="_blank" rel="noopener noreferrer">zero-to-code-systems-lab</a>

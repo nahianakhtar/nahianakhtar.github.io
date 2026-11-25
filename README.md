@@ -4,7 +4,7 @@
 [![Architecture](https://img.shields.io/badge/UI-Dark%20Bento%20%2B%20Terminal-cyan.svg)](index.html)
 [![Engine](https://img.shields.io/badge/Client%20Engine-Sparse%20MoE%20%2B%20RRF%20%2B%20A%2FB%20Diff%20%2B%20Rust%20WASM32-brightgreen.svg)](app.js)
 
-Live interactive engineering portfolio and client-side Applied AI & Systems showcase (**v1.4.0**) for **Nahian Akhtar - Systems, Polyglot SDK & Applied AI Engineer (New York, NY)**.
+Live interactive engineering portfolio and client-side Applied AI & Systems showcase (**v1.6.0**) for **Nahian Akhtar - Systems, Polyglot SDK & Applied AI Engineer (New York, NY)**.
 
 ---
 
@@ -27,18 +27,21 @@ Live interactive engineering portfolio and client-side Applied AI & Systems show
 6. **Mode 06 (`v1.5`) - MCP `2025-11-25` `16B` `CRC32C` Cursor Tamper Matrix, `completion/complete` & Subscriptions Lab**:
    - **5-Runtime Bit-Identical `16B` `ParCursorToken` / `McpCursorCodec`**: Verifies canonical `22`-char RFC 4648 §5 base64url cursor `Q1ABAjIAAACDkgbjJBoL9w` (`0xF70B1A24`), exhaustive `128/128` single-bit flips (`-17`), `15/15` non-canonical trailing sextet mutations (`-13`), cross-scope replay (`-15`), and mid-pagination `rag_upsert_document` snapshot drift (`-16`).
    - **`completion/complete`, `resources/subscribe`, RFC 5424 `logging/setLevel` & `ToolAnnotations`**: Evaluates `<= 100` capped completions (`hasMore`), PII-scrubbed prompt completions, subscribed URI `notifications/resources/updated`, and RFC 5424 8-level log severity filtering.
+7. **Mode 07 (`v1.6`) - MCP `2025-11-25` Monotonic `notifications/progress` SSE & RFC 8089 `roots/list` Boundary Confinement Lab**:
+   - **WASM `2,112B` `ParProgressTable` & Monotonic `notifications/progress` SSE**: Executes C11/Rust/WASM `par_wasm_progress_*_int` alongside ES2022 `ProgressTokenRegistry` (`int(42)` vs `str("42")` key isolation, duplicate active rejection `-23`, strict monotonicity `-27`, immutable `total` ceiling `-28`, post-cancellation silencing `-26`, and SSE progress frame interleaving).
+   - **RFC 8089 `file://` Canonicalizer & `roots/list` Confinement (`-19`..`-22`)**: Executes `par_wasm_uri_normalize_file` and `par_wasm_uri_is_within_root` in WebAssembly linear memory alongside `WorkspaceRootsGuard`, blocking sibling-prefix collisions (`-22` / JSON-RPC `-32003`), `..` root escapes (`-20`), non-local authorities (`-21`), and `%2f`/`%5c`/`%00` smuggling (`-19`).
 
 ---
 
-## Featured Flagship Repositories (`v1.5.0` Parity)
+## Featured Flagship Repositories (`v1.6.0` Parity)
 
 | Repository | Stack | Highlighted Empirical Metrics |
 | :--- | :--- | :--- |
-| [**`mcp-moe-hybrid-sdk`**](https://github.com/nahianakhtar/mcp-moe-hybrid-sdk) | Python 3.10+ · `MCP 2025-11-25` · SQLite `WAL + FTS5` | **`100%` Recall@1** (`0.361 ms` $p_{95}$), **`0.014 ms`** MoE Router $p_{95}$, FTS5 `[start,end)` citation spans, `0` external deps |
-| [**`polyglot-agent-runtime-rs`**](https://github.com/nahianakhtar/polyglot-agent-runtime-rs) | Rust 2021 · ISO C11 FFI (`-Werror`) · `wasm32` | **`3.14M ops/s`** CRC32C Ring, **`12.76M ops/s`** `64B` Rational Token Bucket (`0` float drift), **`30.78M obs/s`** WASM `P²` |
-| [**`fullstack-rag-eval-studio`**](https://github.com/nahianakhtar/fullstack-rag-eval-studio) | TypeScript · Node.js 22 ESM · HTTP + SSE + `/v1/traces` | **`100%` Faithfulness**, **`97.5%` AP@2**, W3C `traceparent` `OTLP/JSON` spans, `SlidingWindowTokenRateLimiter` |
+| [**`mcp-moe-hybrid-sdk`**](https://github.com/nahianakhtar/mcp-moe-hybrid-sdk) | Python 3.10+ · `MCP 2025-11-25` · SQLite `WAL + FTS5` | **`100%` Recall@1** (`0.361 ms` $p_{95}$), **`0.014 ms`** MoE Router $p_{95}$, monotonic progress SSE & RFC 8089 roots guard, `0` external deps |
+| [**`polyglot-agent-runtime-rs`**](https://github.com/nahianakhtar/polyglot-agent-runtime-rs) | Rust 2021 · ISO C11 FFI (`-Werror`) · `wasm32` | **`3.14M ops/s`** CRC32C Ring, **`12.76M ops/s`** `64B` Rational Token Bucket (`0` float drift), `2,112B` `ParProgressTable` & RFC 8089 URI guard |
+| [**`fullstack-rag-eval-studio`**](https://github.com/nahianakhtar/fullstack-rag-eval-studio) | TypeScript · Node.js 22 ESM · HTTP + SSE + `/v1/traces` | **`100%` Faithfulness**, **`97.5%` AP@2**, Streamable MCP progress SSE, `WorkspaceRootsGuard`, `SlidingWindowTokenRateLimiter` |
 | [**`zero-to-code-systems-lab`**](https://github.com/nahianakhtar/zero-to-code-systems-lab) | Zero-Dep ES5/SVG · Native C# x64 WebView2 · Inno Setup | **100% Air-Gapped (`0` Net Calls)**, `100` CS Concepts (`300+` variants), Scoped Keystroke Dynamics, [Live Lab](https://nahianakhtar.github.io/zero-to-code-systems-lab/) & [Win x64 Installer/Portable](https://github.com/nahianakhtar/zero-to-code-systems-lab/releases/latest) |
-| [**`nahianakhtar.github.io`**](https://github.com/nahianakhtar/nahianakhtar.github.io) | Vanilla ES2022 + Rust `wasm32` (`40.9 KB`) | **`< 0.80 ms`** MoE + RRF, A/B RAG Diff, `512 B` WASM `P²`, MCP Citation Spans & `64B` WASM Token-Bucket + OTLP Waterfall |
+| [**`nahianakhtar.github.io`**](https://github.com/nahianakhtar/nahianakhtar.github.io) | Vanilla ES2022 + Rust `wasm32` (`56.5 KB`) | **`< 0.80 ms`** MoE + RRF, 7 interactive systems/MCP lab modes, `57,861 B` Rust `wasm32` runtime, WCAG AA |
 
 ---
 

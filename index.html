@@ -188,13 +188,13 @@
             <a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open nahianakhtar.github.io on GitHub">GitHub ↗</a>
           </div>
           <p class="repo-desc">
-            Responsive dark Bento &amp; Terminal showcase (<code>v1.5.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
-            <strong>Streamable MCP JSON-RPC 2.0 Batch/SSE</strong>, <strong>Pairwise A/B RAG Diffs</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; W3C CRC32C Lineage</strong>.
+            Responsive dark Bento &amp; Terminal showcase (<code>v1.6.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
+            <strong>Streamable MCP JSON-RPC 2.0 Batch/SSE</strong>, <strong>Monotonic Progress &amp; RFC 8089 Roots Guard</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; W3C CRC32C Lineage</strong>.
           </p>
           <div class="badge-row">
             <span class="stack-badge">Streamable MCP Batch/SSE</span>
-            <span class="stack-badge">A/B RAG Diff Gate</span>
-            <span class="stack-badge">Rust WASM32 (40.9 KB)</span>
+            <span class="stack-badge">Progress SSE &amp; Roots Guard</span>
+            <span class="stack-badge">Rust WASM32 (56.5 KB)</span>
             <span class="stack-badge">W3C OTLP Waterfall</span>
           </div>
           <dl class="metric-grid">
@@ -239,10 +239,10 @@
       <div class="section-header">
         <div>
           <span class="section-kicker">INTERACTIVE IN-BROWSER ENGINE · ES2022 + RUST WASM32 · ZERO API KEYS</span>
-          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.5 MCP Protocol Lab</h2>
+          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.6 MCP Protocol Lab</h2>
         </div>
         <p class="section-sub">
-          Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, or inspect <strong>v1.2 MCP Citation Spans, 64B WASM Token-Buckets &amp; W3C OTLP Trace Waterfalls</strong>.
+          Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, inspect <strong>v1.2–v1.5 MCP Governance</strong>, or verify <strong>v1.6 Monotonic Progress SSE &amp; RFC 8089 Roots Confinement</strong>.
         </p>
       </div>
 
@@ -307,6 +307,16 @@
             aria-controls="sim-pane-v15"
           >
             06 · MCP Cursor Tamper, Completions &amp; Subscriptions <span class="tab-new-pill">v1.5</span>
+          </button>
+          <button
+            id="sim-tab-btn-v16"
+            type="button"
+            role="tab"
+            class="sim-tab-btn"
+            aria-selected="false"
+            aria-controls="sim-pane-v16"
+          >
+            07 · Monotonic Progress SSE &amp; RFC 8089 Roots Guard <span class="tab-new-pill">v1.6</span>
           </button>
         </div>
 
@@ -931,6 +941,129 @@
               </div>
 
               <div id="v15-sub-footer" class="crc-footer"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Pane 7 (v1.6): MCP 2025-11-25 Monotonic Progress SSE & RFC 8089 Workspace Roots Confinement Lab -->
+        <div id="sim-pane-v16" role="tabpanel" aria-labelledby="sim-tab-btn-v16" class="sim-tab-pane" hidden>
+          <div class="lab-split-grid">
+            <!-- Left Panel: WASM 2,112B ParProgressTable & Monotonic notifications/progress SSE -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>1. WASM <code>ParProgressTable</code> &amp; Monotonic <code>notifications/progress</code> SSE</h3>
+                <span id="v16-progress-badge" class="guard-ok" aria-live="polite">WASM32 2,112B · MONOTONIC</span>
+              </div>
+
+              <label for="v16-progress-scenario" class="sim-label">MCP 2025-11-25 <code>_meta.progressToken</code> Stream Scenario</label>
+              <select id="v16-progress-scenario" class="sim-select">
+                <option value="monotonic-sse-complete">Scenario #1 · Monotonic 4-Step RAG Evaluation SSE Stream + Token Reuse [0 · PAR_OK]</option>
+                <option value="non-monotonic-regression">Scenario #2 · Non-Monotonic Stalled/Regressed Update Rejected [-27 · NON_MONOTONIC]</option>
+                <option value="exceeds-or-mutates-total">Scenario #3 · Progress Exceeds Total / Mid-Stream Total Drift [-28 · EXCEEDS_TOTAL]</option>
+                <option value="duplicate-and-type-isolation">Scenario #4 · Duplicate Active Token (-23) + int(42) vs str(&quot;42&quot;) Isolation [GUARD]</option>
+                <option value="cancel-suppresses-post-abort">Scenario #5 · Cooperative Cancellation Aborts Stream (-26 Post-Abort Silenced) [ABORTED]</option>
+              </select>
+              <p id="v16-progress-summary" class="lab-desc"></p>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v16-progress-steps">Pipeline Progress Milestones</label>
+                    <output id="v16-progress-steps-val" for="v16-progress-steps">4 steps</output>
+                  </div>
+                  <input id="v16-progress-steps" type="range" min="2" max="8" step="1" value="4" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v16-progress-cap">Active Progress Table Slots</label>
+                    <output id="v16-progress-cap-val" for="v16-progress-cap">64 slots</output>
+                  </div>
+                  <input id="v16-progress-cap" type="range" min="2" max="64" step="2" value="64" />
+                </div>
+              </div>
+
+              <div class="v12-toggle-box" style="margin-top: 0.65rem">
+                <label class="v12-check-label" for="v16-progress-sse-toggle">
+                  <input id="v16-progress-sse-toggle" type="checkbox" checked />
+                  <span>Interleave <code>notifications/progress</code> SSE frames ahead of JSON-RPC 2.0 response</span>
+                </label>
+              </div>
+
+              <div id="v16-progress-kpi" class="mini-stat-grid" style="margin-top: 0.75rem"></div>
+              <pre id="v16-progress-wire-box" class="terminal-body v12-otlp-box"></pre>
+
+              <div class="table-scroll" style="margin-top: 0.75rem">
+                <table class="lab-table" aria-label="Cross-Runtime Progress Token Invariant Matrix">
+                  <thead>
+                    <tr>
+                      <th>Invariant Probe</th>
+                      <th>WASM / ES2022</th>
+                      <th>Code</th>
+                      <th>6-Runtime Verdict</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v16-progress-matrix-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="v16-progress-footer" class="crc-footer"></div>
+            </div>
+
+            <!-- Right Panel: RFC 8089 file:// Canonicalizer & roots/list Boundary Confinement Guard -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>2. RFC 8089 <code>file://</code> Canonicalizer &amp; <code>roots/list</code> Boundary Guard</h3>
+                <span id="v16-roots-badge" class="guard-ok" aria-live="polite">RFC 8089 · CONFINED (0)</span>
+              </div>
+
+              <label for="v16-roots-preset" class="sim-label">Workspace Root Boundary &amp; Smuggling Attack Vector</label>
+              <div class="sim-input-row">
+                <select id="v16-roots-preset" class="sim-select">
+                  <option value="canonical-localhost-inside">Probe #1 · file://LOCALHOST/workspace/rag//docs/./arch%2Dspec.md [0 · ALLOWED]</option>
+                  <option value="sibling-prefix-escape">Probe #2 · Sibling-Prefix Collision file:///workspace/rag-secrets/keys.json [-22 · -32003]</option>
+                  <option value="dotdot-root-escape">Probe #3 · Above-Root Traversal file:///workspace/../../../etc/passwd [-20 · -32602]</option>
+                  <option value="remote-unc-authority">Probe #4 · Non-Local Authority Smuggling file://attacker.example/share/doc.md [-21 · -32602]</option>
+                  <option value="encoded-slash-null-smuggle">Probe #5 · Encoded %2f / %5c / %00 Separator Smuggling [-19 · -32602]</option>
+                </select>
+                <button id="v16-roots-check-btn" type="button" class="btn-secondary">Check URI</button>
+              </div>
+
+              <div style="margin-top: 0.65rem">
+                <label for="v16-roots-uri" class="sim-label">Candidate <code>file://</code> Resource URI (Checked in WASM32 + ES2022)</label>
+                <input
+                  id="v16-roots-uri"
+                  type="text"
+                  class="sim-mono-input"
+                  value="file://LOCALHOST/workspace/rag//docs/./arch%2Dspec.md"
+                  spellcheck="false"
+                />
+              </div>
+
+              <div class="v12-toggle-box" style="margin-top: 0.65rem">
+                <label class="v12-check-label" for="v16-enforce-empty-toggle">
+                  <input id="v16-enforce-empty-toggle" type="checkbox" />
+                  <span>Simulate zero-root lockdown (<code>enforceWhenEmpty: true</code> → <code>-22 / -32003</code>)</span>
+                </label>
+              </div>
+
+              <div id="v16-roots-kpi" class="mini-stat-grid" style="margin-top: 0.75rem"></div>
+              <pre id="v16-roots-wire-box" class="terminal-body v12-otlp-box"></pre>
+
+              <div class="table-scroll" style="margin-top: 0.75rem">
+                <table class="lab-table" aria-label="RFC 8089 Workspace Roots Security Matrix">
+                  <thead>
+                    <tr>
+                      <th>Attack / Confinement Vector</th>
+                      <th>WASM == JS</th>
+                      <th>Code</th>
+                      <th>MCP JSON-RPC Mapping</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v16-roots-matrix-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="v16-roots-footer" class="crc-footer"></div>
             </div>
           </div>
         </div>

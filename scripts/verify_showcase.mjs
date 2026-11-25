@@ -20,9 +20,13 @@ import {
   runTokenBucketAndOtlpInspector,
   MCP_V15_TOOL_ANNOTATIONS,
   McpCursorCodec,
+  ProgressTokenRegistry,
+  WorkspaceRootsGuard,
   runMcpV14ContractAndCancellationLab,
   runMcpV15CompletionAndSubscriptionLab,
   runMcpV15CursorLab,
+  runMcpV16ProgressLab,
+  runMcpV16RootsGuardLab,
   validateJsonSchema2020Preset,
   verifyCrossLanguageTraceVectors
 } from "../app.js";
@@ -217,7 +221,7 @@ assert.equal(v12Tamper.tamperDetected, true, "1-bit payload flip in WASM audit r
 assert.equal(v12Tamper.auditVerifyCode, -8);
 
 // 5. Headless verification of v1.3 Streamable MCP Batch/SSE & Cross-Language W3C CRC32C Lineage
-assert.equal(wasmBytes.byteLength, 41925, "v1.3.0 WASM binary must equal 41,925 bytes");
+assert.equal(wasmBytes.byteLength, 57861, "v1.6.0 WASM binary must equal 57,861 bytes");
 assert.equal(wasmExports.par_trace_context_bytes(), 32, "WASM ParTraceContext must equal 32 bytes");
 
 const vecWasm = verifyCrossLanguageTraceVectors({ wasmExports });
@@ -363,7 +367,7 @@ assert.equal(v15Canon.canonicalCursor, "Q1ABAjIAAACDkgbjJBoL9w");
 assert.equal(v15Canon.canonicalSeal, 0xf70b1a24);
 assert.equal(v15Canon.bitFlipRejectedCount, 128, "All 128 single-bit flips must reject with -17");
 assert.equal(v15Canon.nonCanonRejectedCount, 15, "All 15 non-canonical trailing sextet mutations must reject with -13");
-assert.equal(v15Canon.pagesWalked, 5, "14 resources at pageSize=3 must walk 5 pages");
+assert.equal(v15Canon.pagesWalked, 6, "16 resources at pageSize=3 must walk 6 pages");
 assert.equal(v15Canon.tracedAuditSlots, 1);
 
 assert.equal(runMcpV15CursorLab("bitflip-seal-tamper", { wasmExports }).activeCode, McpCursorCodec.ERR_SEAL);
@@ -394,6 +398,69 @@ const v15PiiPrompt = runMcpV15CompletionAndSubscriptionLab({
 assert.ok(!JSON.stringify(v15PiiPrompt.completion.values).includes("ops@corp.io"));
 assert.equal(MCP_V15_TOOL_ANNOTATIONS.length, 4);
 
+// 5D. Headless verification of v1.6 Monotonic Progress SSE & RFC 8089 Workspace Roots Guard Lab
+assert.ok(html.includes("sim-tab-btn-v16"), "v1.6 Monotonic Progress SSE & RFC 8089 Roots Guard tab missing");
+assert.ok(html.includes("sim-pane-v16"), "v1.6 simulator pane missing");
+assert.equal(wasmExports.par_progress_table_bytes(), 2112, "WASM ParProgressTable must equal 2,112 bytes");
+
+const v16ProgOk = runMcpV16ProgressLab("monotonic-sse-complete", { steps: 4, maxActive: 16, interleaveSse: true, wasmExports });
+assert.equal(v16ProgOk.engine, "wasm32-unknown-unknown");
+assert.equal(v16ProgOk.progressTableBytes, 2112);
+assert.equal(v16ProgOk.allProbesMatched, true, "All 6 WASM & ES2022 ParProgressTable probes must match bit-for-bit");
+assert.equal(v16ProgOk.activeCode, 0);
+assert.equal(v16ProgOk.reusedCode, 0);
+assert.equal(v16ProgOk.emittedNotifications.length, 4);
+assert.ok(v16ProgOk.sseWire.includes('"method":"notifications/progress"'));
+assert.ok(!v16ProgOk.sseWire.includes("ops.lead@corp.invalid"), "PII in progress message must be redacted");
+assert.equal(v16ProgOk.tracedAuditSlots, 1);
+
+assert.equal(
+  runMcpV16ProgressLab("non-monotonic-regression", { wasmExports }).activeCode,
+  ProgressTokenRegistry.ERR_PROGRESS_NON_MONOTONIC
+);
+assert.equal(
+  runMcpV16ProgressLab("exceeds-or-mutates-total", { wasmExports }).activeCode,
+  ProgressTokenRegistry.ERR_PROGRESS_EXCEEDS_TOTAL
+);
+assert.equal(
+  runMcpV16ProgressLab("duplicate-and-type-isolation", { wasmExports }).activeCode,
+  ProgressTokenRegistry.ERR_PROGRESS_DUPLICATE
+);
+const v16ProgCancel = runMcpV16ProgressLab("cancel-suppresses-post-abort", { wasmExports });
+assert.equal(v16ProgCancel.activeCode, ProgressTokenRegistry.ERR_PROGRESS_INACTIVE);
+assert.equal(v16ProgCancel.httpStatus, 202);
+
+const v16RootsOk = runMcpV16RootsGuardLab({ preset: "canonical-localhost-inside", wasmExports });
+assert.equal(v16RootsOk.engine, "wasm32-unknown-unknown");
+assert.equal(v16RootsOk.activeCode, 0);
+assert.equal(v16RootsOk.canonicalUri, "file:///workspace/rag/docs/arch-spec.md");
+assert.equal(v16RootsOk.wasmMatchedJs, true);
+assert.equal(v16RootsOk.allMatrixMatched, true, "All 5 RFC 8089 WASM & ES2022 URI confinement vectors must match");
+
+const v16RootsSibling = runMcpV16RootsGuardLab({ preset: "sibling-prefix-escape", wasmExports });
+assert.equal(v16RootsSibling.activeCode, WorkspaceRootsGuard.ERR_URI_OUTSIDE_ROOTS);
+assert.equal(v16RootsSibling.jsonRpcCode, -32003);
+
+const v16RootsDotDot = runMcpV16RootsGuardLab({ preset: "dotdot-root-escape", wasmExports });
+assert.equal(v16RootsDotDot.activeCode, WorkspaceRootsGuard.ERR_URI_TRAVERSAL);
+assert.equal(v16RootsDotDot.jsonRpcCode, -32602);
+
+const v16RootsAuth = runMcpV16RootsGuardLab({ preset: "remote-unc-authority", wasmExports });
+assert.equal(v16RootsAuth.activeCode, WorkspaceRootsGuard.ERR_URI_AUTHORITY);
+assert.equal(v16RootsAuth.jsonRpcCode, -32602);
+
+const v16RootsSmuggle = runMcpV16RootsGuardLab({ preset: "encoded-slash-null-smuggle", wasmExports });
+assert.equal(v16RootsSmuggle.activeCode, WorkspaceRootsGuard.ERR_URI_SYNTAX);
+assert.equal(v16RootsSmuggle.jsonRpcCode, -32602);
+
+const v16RootsLockdown = runMcpV16RootsGuardLab({
+  preset: "canonical-localhost-inside",
+  enforceWhenEmpty: true,
+  wasmExports
+});
+assert.equal(v16RootsLockdown.activeCode, WorkspaceRootsGuard.ERR_URI_OUTSIDE_ROOTS);
+assert.equal(v16RootsLockdown.jsonRpcCode, -32003);
+
 // 6. Measure warm 100-query p50 / p95 client simulator latency
 const simLatencies = [];
 const sampleQueries = [
@@ -419,7 +486,10 @@ console.log(
   JSON.stringify(
     {
       site: "nahianakhtar.github.io",
-      version: "1.5.0",
+      version: "1.6.0",
+      wasmProgressTableBytes: v16ProgOk.progressTableBytes,
+      v16ProgressProbesMatched: v16ProgOk.allProbesMatched,
+      v16RootsVectorsMatched: v16RootsOk.allMatrixMatched,
       v15CanonicalCursor: v15Canon.canonicalCursor,
       v15BitFlipsRejected: v15Canon.bitFlipRejectedCount,
       v14StructuredValidated: v14Batch.structuredOutputsValidated,

@@ -17,7 +17,7 @@
         <span class="brand-mono">nahianakhtar :: nyc</span><span class="brand-prompt">:~/systems-ai$</span>
       </a>
       <nav class="nav-links" aria-label="Primary Navigation">
-        <a href="#repositories">Flagship Repos (4)</a>
+        <a href="#repositories">Flagship Repos (6)</a>
         <a href="#simulator">Live MoE + RRF Lab</a>
         <a href="#competency-matrix">12-Dim Matrix</a>
         <a href="https://github.com/nahianakhtar" target="_blank" rel="noopener noreferrer" class="btn-outline">GitHub Profile ↗</a>
@@ -44,7 +44,7 @@
         </p>
         <div class="hero-actions">
           <a href="#simulator" class="btn-primary">Launch Live MoE + RRF Simulator <kbd>/</kbd></a>
-          <a href="#repositories" class="btn-secondary">Explore 4 Flagship Repositories</a>
+          <a href="#repositories" class="btn-secondary">Explore 6 Flagship Repositories</a>
         </div>
       </div>
 
@@ -93,7 +93,7 @@
           <span class="section-kicker">PRODUCTION OPEN-SOURCE PORTFOLIO</span>
           <h2 id="repos-heading">Flagship Polyglot Repositories</h2>
         </div>
-        <p class="section-sub">Four MIT-licensed, CI-gated repositories spanning C11, Rust 2021, Python 3.10+, and TypeScript / Node.js 22 ESM.</p>
+        <p class="section-sub">Six MIT-licensed, CI-gated repositories spanning Python 3.10+ MCP servers &amp; automation CLIs, Rust 2021 + ISO C11 FFI, and TypeScript / Node.js 22 ESM.</p>
       </div>
 
       <div class="repo-grid">
@@ -101,14 +101,14 @@
         <article class="bento-card repo-card">
           <div class="repo-top">
             <div>
-              <span class="repo-lang lang-py">Python 3.10+ · SQLite WAL FTS5</span>
+              <span class="repo-lang lang-py">Python 3.10+ · MCP 2025-11-25 · SQLite WAL FTS5</span>
               <h3><a href="https://github.com/nahianakhtar/mcp-moe-hybrid-sdk" target="_blank" rel="noopener noreferrer">mcp-moe-hybrid-sdk</a></h3>
             </div>
             <a href="https://github.com/nahianakhtar/mcp-moe-hybrid-sdk" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open mcp-moe-hybrid-sdk on GitHub">GitHub ↗</a>
           </div>
           <p class="repo-desc">
-            Zero-bloat <strong>MCP 2025-11-25 JSON-RPC 2.0</strong> SDK &amp; server uniting VRAM/SLA-aware Sparse Top-2 MoE routing,
-            SQLite <code>WAL + FTS5</code> BM25 + L2 Cosine Reciprocal Rank Fusion (<code>k=60</code>), and deterministic secret/PII redaction.
+            Zero-dependency <strong>MCP 2025-11-25 Streamable JSON-RPC 2.0</strong> SDK &amp; HTTP/SSE server (<code>v1.8.0</code>) uniting <code>Mcp-Session-Id</code> + <code>Last-Event-ID</code> replay,
+            VRAM/SLA-aware Sparse Top-2 MoE routing, SQLite <code>WAL + FTS5</code> BM25 + L2 Cosine RRF (<code>k=60</code>), and deterministic secret/PII redaction.
           </p>
           <div class="badge-row">
             <span class="stack-badge">MCP 2025-11-25</span>
@@ -118,9 +118,35 @@
           </div>
           <dl class="metric-grid">
             <div><dt>Recall@1 (100 Q)</dt><dd>100.0% (1.0000)</dd></div>
-            <div><dt>Hybrid RAG p95</dt><dd>0.4660 ms</dd></div>
-            <div><dt>MoE Router p95</dt><dd>0.0122 ms</dd></div>
-            <div><dt>Runtime Deps</dt><dd>0 (Stdlib)</dd></div>
+            <div><dt>Hybrid RAG p95</dt><dd>0.3762 ms (ref)</dd></div>
+            <div><dt>MoE Router p95</dt><dd>0.0123 ms (ref)</dd></div>
+            <div><dt>Offline Suite</dt><dd>40 passed (0 Deps)</dd></div>
+          </dl>
+        </article>
+
+        <!-- Repo 2: mcp-automation-demo -->
+        <article class="bento-card repo-card">
+          <div class="repo-top">
+            <div>
+              <span class="repo-lang lang-py">Python 3.12 · uv · MCP stdio + CLI</span>
+              <h3><a href="https://github.com/nahianakhtar/mcp-automation-demo" target="_blank" rel="noopener noreferrer">mcp-automation-demo</a></h3>
+            </div>
+            <a href="https://github.com/nahianakhtar/mcp-automation-demo" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open mcp-automation-demo on GitHub">GitHub ↗</a>
+          </div>
+          <p class="repo-desc">
+            Guardrailed offline invoice &amp; expense reconciliation showcase (<code>recon-mcp</code>) exposing an official <code>mcp==2.3.0</code> stdio server and single-command <code>recon</code> CLI over CSV &amp; read-only SQLite with <code>Decimal</code> arithmetic and append-only JSONL audit logging.
+          </p>
+          <div class="badge-row">
+            <span class="stack-badge">MCP stdio (2.3.0)</span>
+            <span class="stack-badge">Read-Only Default</span>
+            <span class="stack-badge">JSONL Audit Log</span>
+            <span class="stack-badge">Offline pytest</span>
+          </div>
+          <dl class="metric-grid">
+            <div><dt>Money Precision</dt><dd>Decimal (HALF_EVEN)</dd></div>
+            <div><dt>SQLite Guard</dt><dd>mode=ro + Allowlist</dd></div>
+            <div><dt>Write Fence</dt><dd>Dry-Run + --apply</dd></div>
+            <div><dt>Test Isolation</dt><dd>Socket-Guarded Offline</dd></div>
           </dl>
         </article>
 
@@ -188,13 +214,13 @@
             <a href="https://github.com/nahianakhtar/nahianakhtar.github.io" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open nahianakhtar.github.io on GitHub">GitHub ↗</a>
           </div>
           <p class="repo-desc">
-            Responsive dark Bento &amp; Terminal showcase (<code>v1.7.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
-            <strong>Streamable MCP JSON-RPC 2.0 Batch/SSE</strong>, <strong>Elicitation Flat-Schema &amp; Sampling HITL Fence</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; W3C CRC32C Lineage</strong>.
+            Responsive dark Bento &amp; Terminal showcase (<code>v1.8.0</code>) executing live client-side <strong>Sparse Top-2 MoE Gating</strong>,
+            <strong>Streamable MCP Session SSE Replay</strong>, <strong>21B CRC32C ResourceLink Provenance</strong>, and <strong>Rust <code>wasm32</code> P², 64B Token-Bucket &amp; W3C CRC32C Lineage</strong>.
           </p>
           <div class="badge-row">
             <span class="stack-badge">Streamable MCP Batch/SSE</span>
             <span class="stack-badge">Elicitation &amp; Sampling HITL</span>
-            <span class="stack-badge">Rust WASM32 (59.0 KB)</span>
+            <span class="stack-badge">Rust WASM32 (67.2 KB)</span>
             <span class="stack-badge">W3C OTLP Waterfall</span>
           </div>
           <dl class="metric-grid">
@@ -239,10 +265,10 @@
       <div class="section-header">
         <div>
           <span class="section-kicker">INTERACTIVE IN-BROWSER ENGINE · ES2022 + RUST WASM32 · ZERO API KEYS</span>
-          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.7 MCP Protocol Lab</h2>
+          <h2 id="sim-heading">Live Sparse Top-2 MoE, Hybrid RRF, A/B Diff &amp; v1.8 MCP Protocol Lab</h2>
         </div>
         <p class="section-sub">
-          Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, inspect <strong>v1.2–v1.6 MCP Governance</strong>, or verify <strong>v1.7 Elicitation Flat-Schema &amp; Sampling HITL Approval Fencing</strong>.
+          Explore real-time PII redaction and Hybrid RRF (<code>k=60</code>), run <strong>v1.1 A/B RAG Diffs &amp; WASM P² Quantiles</strong>, inspect <strong>v1.2–v1.7 MCP Governance</strong>, or verify <strong>v1.8 Streamable Mcp-Session-Id SSE Replay &amp; 21B CRC32C ResourceLink Provenance</strong>.
         </p>
       </div>
 
@@ -327,6 +353,16 @@
             aria-controls="sim-pane-v17"
           >
             08 · Elicitation Flat-Schema &amp; Sampling HITL Fence <span class="tab-new-pill">v1.7</span>
+          </button>
+          <button
+            id="sim-tab-btn-v18"
+            type="button"
+            role="tab"
+            class="sim-tab-btn"
+            aria-selected="false"
+            aria-controls="sim-pane-v18"
+          >
+            09 · Mcp-Session-Id SSE Replay &amp; ResourceLink Seal <span class="tab-new-pill">v1.8</span>
           </button>
         </div>
 
@@ -1183,6 +1219,112 @@
             </div>
           </div>
         </div>
+
+        <!-- Tab Pane 9 (v1.8): MCP 2025-11-25 Mcp-Session-Id SSE Replay & 21B ResourceLink Provenance Seal Lab -->
+        <div id="sim-pane-v18" role="tabpanel" aria-labelledby="sim-tab-btn-v18" class="sim-tab-pane" hidden>
+          <div class="lab-split-grid">
+            <!-- Left Panel: WASM 2,112B ParSessionTable & Last-Event-ID SSE Replay Ring -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>1. WASM <code>ParSessionTable</code> &amp; <code>Last-Event-ID</code> SSE Replay</h3>
+                <span id="v18-session-badge" class="guard-ok" aria-live="polite">WASM32 2,112B · HTTP 200</span>
+              </div>
+
+              <label for="v18-session-scenario" class="sim-label">MCP 2025-11-25 <code>Mcp-Session-Id</code> &amp; Resumable Stream Scenario</label>
+              <select id="v18-session-scenario" class="sim-select">
+                <option value="sse-replay-window-resume">Scenario #1 · Client-Bound Mcp-Session-Id + SEVT Last-Event-ID SSE Replay [0 · HTTP 200]</option>
+                <option value="cross-tenant-binding-hijack">Scenario #2 · Cross-Tenant Session Hijack Blocked [-39 · HTTP 403 FORBIDDEN]</option>
+                <option value="evicted-gap-or-tampered-seal">Scenario #3 · Evicted Ring Window (&lt; minRetainedSeq) Gap [-41 · HTTP 409 CONFLICT]</option>
+                <option value="delete-204-and-404-terminated">Scenario #4 · DELETE /v1/mcp (204) + Post-Termination Reuse [-37 · HTTP 404]</option>
+                <option value="ttl-expiry-or-invalid-ascii">Scenario #5 · Fail-Closed Session TTL Expiry (-38) &amp; Visible-ASCII Guard (-36)</option>
+              </select>
+              <p id="v18-session-summary" class="lab-desc"></p>
+
+              <div class="lab-sliders-2col">
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v18-ring-cap">Session Replay Ring Capacity</label>
+                    <output id="v18-ring-cap-val" for="v18-ring-cap">4 slots</output>
+                  </div>
+                  <input id="v18-ring-cap" type="range" min="2" max="16" step="1" value="4" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-head">
+                    <label for="v18-total-events">Appended SSE Frames</label>
+                    <output id="v18-total-events-val" for="v18-total-events">3 frames</output>
+                  </div>
+                  <input id="v18-total-events" type="range" min="2" max="8" step="1" value="3" />
+                </div>
+              </div>
+
+              <div class="v12-toggle-box" style="margin-top: 0.65rem">
+                <label class="v12-check-label" for="v18-tamper-seal-toggle">
+                  <input id="v18-tamper-seal-toggle" type="checkbox" />
+                  <span>Inject 1-nibble <code>Last-Event-ID</code> SEVT CRC32C seal tamper (<code>-41 / HTTP 409</code>)</span>
+                </label>
+              </div>
+
+              <div id="v18-session-kpi" class="mini-stat-grid" style="margin-top: 0.75rem"></div>
+              <pre id="v18-session-wire-box" class="terminal-body v12-otlp-box"></pre>
+
+              <div class="table-scroll" style="margin-top: 0.75rem">
+                <table class="lab-table" aria-label="Cross-Runtime Session Resumability Invariant Matrix">
+                  <thead>
+                    <tr>
+                      <th>Session / Replay Probe</th>
+                      <th>WASM / ES2022</th>
+                      <th>Code</th>
+                      <th>6-Runtime Verdict</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v18-session-matrix-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="v18-session-footer" class="crc-footer"></div>
+            </div>
+
+            <!-- Right Panel: 21B CRC32C ResourceLink Provenance Seal & Content Annotations Guard -->
+            <div class="sim-panel">
+              <div class="panel-header">
+                <h3>2. <code>ResourceLink</code> <code>21B</code> Provenance Seal &amp; Media Guard</h3>
+                <span id="v18-prov-badge" class="guard-ok" aria-live="polite">RLNK SEAL · 0x119980AF</span>
+              </div>
+
+              <label for="v18-prov-preset" class="sim-label">MCP 2025-11-25 <code>ResourceLink</code>, Leap-Year <code>Annotations</code> &amp; Media Vector</label>
+              <div class="sim-input-row">
+                <select id="v18-prov-preset" class="sim-select">
+                  <option value="canonical-rlnk-seal">Preset #1 · Canonical 21B RLNK Seal (0x119980AF &amp; 0xF28542A7) [0 · 6-RUNTIME]</option>
+                  <option value="confined-file-link-redact">Preset #2 · Confined file:// ResourceLink + Title PII Scrubbing [0 · SEALED]</option>
+                  <option value="non-leap-or-priority-breach">Preset #3 · Non-Leap 2026-02-29 / Priority &gt; 1.0 / Role Guard [-42 · BLOCKED]</option>
+                  <option value="file-root-escape-blocked">Preset #4 · Sibling-Prefix (-22) &amp; Dot-Dot (-20) file:// Escape Blocked</option>
+                  <option value="canonical-media-base64-guard">Preset #5 · Audio/Image Canonical RFC 4648 Base64 &amp; MIME Allowlist [0 vs -42]</option>
+                </select>
+                <button id="v18-prov-eval-btn" type="button" class="btn-secondary">Verify Seal</button>
+              </div>
+              <p id="v18-prov-summary" class="lab-desc"></p>
+
+              <div id="v18-prov-kpi" class="mini-stat-grid" style="margin-top: 0.75rem"></div>
+              <pre id="v18-prov-wire-box" class="terminal-body v12-otlp-box"></pre>
+
+              <div class="table-scroll" style="margin-top: 0.75rem">
+                <table class="lab-table" aria-label="MCP 2025-11-25 ResourceLink &amp; Annotations Security Matrix">
+                  <thead>
+                    <tr>
+                      <th>Provenance / Media Check</th>
+                      <th>Wire Spec</th>
+                      <th>Code</th>
+                      <th>6-Runtime Verdict</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v18-prov-matrix-tbody"></tbody>
+                </table>
+              </div>
+
+              <div id="v18-prov-footer" class="crc-footer"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1296,6 +1438,7 @@
       </div>
       <div class="footer-links">
         <a href="https://github.com/nahianakhtar/mcp-moe-hybrid-sdk" target="_blank" rel="noopener noreferrer">mcp-moe-hybrid-sdk</a>
+        <a href="https://github.com/nahianakhtar/mcp-automation-demo" target="_blank" rel="noopener noreferrer">mcp-automation-demo</a>
         <a href="https://github.com/nahianakhtar/polyglot-agent-runtime-rs" target="_blank" rel="noopener noreferrer">polyglot-agent-runtime-rs</a>
         <a href="https://github.com/nahianakhtar/fullstack-rag-eval-studio" target="_blank" rel="noopener noreferrer">fullstack-rag-eval-studio</a>
         <a href="https://github.com/nahianakhtar/zero-to-code-systems-lab" target="_blank" rel="noopener noreferrer">zero-to-code-systems-lab</a>

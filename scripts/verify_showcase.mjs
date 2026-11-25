@@ -4,12 +4,14 @@ import { resolve } from "node:path";
 import {
   CANONICAL_TRACE_VECTORS,
   CancellationToken,
+  ContentAnnotationGuard,
   ElicitationSchemaGuard,
   HumanApprovalRegistry,
   JsonSchema2020Validator,
   MCP_V14_TOOL_CONTRACTS,
   RequestCancellationRegistry,
   SamplingGovernanceGuard,
+  StreamableSessionRegistry,
   decodeEmbeddedWasmBytes,
   deriveChildTraceparent,
   dispatchMcpStreamableBatch,
@@ -32,6 +34,8 @@ import {
   runMcpV16RootsGuardLab,
   runMcpV17ElicitationSchemaLab,
   runMcpV17SamplingAndApprovalLab,
+  runMcpV18ResourceLinkProvenanceLab,
+  runMcpV18SessionResumabilityLab,
   validateJsonSchema2020Preset,
   verifyCrossLanguageTraceVectors
 } from "../app.js";
@@ -226,7 +230,7 @@ assert.equal(v12Tamper.tamperDetected, true, "1-bit payload flip in WASM audit r
 assert.equal(v12Tamper.auditVerifyCode, -8);
 
 // 5. Headless verification of v1.3 Streamable MCP Batch/SSE & Cross-Language W3C CRC32C Lineage
-assert.equal(wasmBytes.byteLength, 60466, "v1.7.0 WASM binary must equal 60,466 bytes");
+assert.equal(wasmBytes.byteLength, 68842, "v1.8.0 WASM binary must equal 68,842 bytes");
 assert.equal(wasmExports.par_trace_context_bytes(), 32, "WASM ParTraceContext must equal 32 bytes");
 
 const vecWasm = verifyCrossLanguageTraceVectors({ wasmExports });
@@ -540,6 +544,74 @@ const v17ElicitDecline = runMcpV17ElicitationSchemaLab("decline-cancel-content-g
 assert.equal(v17ElicitDecline.declineEmptyCode, 0);
 assert.equal(v17ElicitDecline.declineWithContentCode, ElicitationSchemaGuard.ERR_ELICITATION_SCHEMA);
 
+// 5F. Headless verification of v1.8 Mcp-Session-Id SSE Event-Ring Replay & 21B ResourceLink Provenance Seal Lab
+assert.ok(html.includes("sim-tab-btn-v18"), "v1.8 Mcp-Session-Id SSE Replay & ResourceLink Seal tab button missing");
+assert.ok(html.includes("sim-pane-v18"), "v1.8 simulator pane missing");
+assert.equal(wasmExports.par_session_table_bytes(), 2112, "WASM ParSessionTable must equal 2,112 bytes");
+
+const v18SessOk = runMcpV18SessionResumabilityLab("sse-replay-window-resume", {
+  ringCapacity: 4,
+  totalEvents: 3,
+  wasmExports
+});
+assert.equal(v18SessOk.engine, "wasm32-unknown-unknown");
+assert.equal(v18SessOk.sessionTableBytes, 2112);
+assert.equal(v18SessOk.allProbesMatched, true, "All 6 WASM & ES2022 ParSessionTable probes must match bit-for-bit");
+assert.equal(v18SessOk.activeCode, 0);
+assert.equal(v18SessOk.httpStatus, 200);
+assert.equal(v18SessOk.replayedCount, 2);
+assert.equal(v18SessOk.tracedAuditSlots, 1);
+
+const v18SessTamper = runMcpV18SessionResumabilityLab("sse-replay-window-resume", {
+  tamperSeal: true,
+  wasmExports
+});
+assert.equal(v18SessTamper.activeCode, StreamableSessionRegistry.ERR_REPLAY_GAP);
+assert.equal(v18SessTamper.httpStatus, 409);
+
+assert.equal(
+  runMcpV18SessionResumabilityLab("cross-tenant-binding-hijack", { wasmExports }).activeCode,
+  StreamableSessionRegistry.ERR_SESSION_BINDING
+);
+assert.equal(
+  runMcpV18SessionResumabilityLab("evicted-gap-or-tampered-seal", { wasmExports }).activeCode,
+  StreamableSessionRegistry.ERR_REPLAY_GAP
+);
+assert.equal(
+  runMcpV18SessionResumabilityLab("delete-204-and-404-terminated", { wasmExports }).activeCode,
+  StreamableSessionRegistry.ERR_SESSION_UNKNOWN
+);
+assert.equal(
+  runMcpV18SessionResumabilityLab("ttl-expiry-or-invalid-ascii", { wasmExports }).activeCode,
+  StreamableSessionRegistry.ERR_SESSION_EXPIRED
+);
+
+const v18ProvOk = runMcpV18ResourceLinkProvenanceLab("canonical-rlnk-seal", { wasmExports });
+assert.equal(v18ProvOk.engine, "wasm32-unknown-unknown");
+assert.equal(v18ProvOk.activeCode, 0);
+assert.equal(v18ProvOk.canonicalSealCrc32c, 0x119980af);
+assert.equal(v18ProvOk.canonicalSealHex, "0x119980AF");
+assert.equal(v18ProvOk.wire.secondaryVectorArchMcp.sealHex, "0xF28542A7");
+assert.equal(v18ProvOk.allMatrixMatched, true, "All 5 WASM & ES2022 ResourceLink / Annotations checks must match");
+
+const v18ProvFile = runMcpV18ResourceLinkProvenanceLab("confined-file-link-redact", { wasmExports });
+assert.equal(v18ProvFile.activeCode, 0);
+assert.equal(v18ProvFile.wire.uri, "file:///workspace/docs/spec.md");
+assert.ok(!JSON.stringify(v18ProvFile.wire).includes("corp.invalid"), "PII email in ResourceLink name must be redacted");
+
+assert.equal(
+  runMcpV18ResourceLinkProvenanceLab("non-leap-or-priority-breach", { wasmExports }).activeCode,
+  ContentAnnotationGuard.ERR_CONTENT_ANNOTATION
+);
+assert.equal(
+  runMcpV18ResourceLinkProvenanceLab("file-root-escape-blocked", { wasmExports }).activeCode,
+  WorkspaceRootsGuard.ERR_URI_OUTSIDE_ROOTS
+);
+assert.equal(
+  runMcpV18ResourceLinkProvenanceLab("canonical-media-base64-guard", { wasmExports }).activeCode,
+  0
+);
+
 // 6. Measure warm 100-query p50 / p95 client simulator latency
 const simLatencies = [];
 const sampleQueries = [
@@ -565,7 +637,11 @@ console.log(
   JSON.stringify(
     {
       site: "nahianakhtar.github.io",
-      version: "1.7.0",
+      version: "1.8.0",
+      wasmSessionTableBytes: v18SessOk.sessionTableBytes,
+      v18SessionProbesMatched: v18SessOk.allProbesMatched,
+      v18ProvenanceSealHex: v18ProvOk.canonicalSealHex,
+      v18ProvenanceMatrixMatched: v18ProvOk.allMatrixMatched,
       wasmApprovalTableBytes: v17SampOk.approvalTableBytes,
       v17SamplingProbesMatched: v17SampOk.allProbesMatched,
       v17ElicitationMatrixMatched: v17ElicitOk.allMatrixMatched,

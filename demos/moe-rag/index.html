@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparse Top-2 MoE &amp; Bitset Hybrid RRF Workbench | Nahian Akhtar</title>
+  <style>
+    :root { --bg:#FAF8F4; --surface:#FFFFFF; --inset:#F2EDE4; --ink:#111315; --muted:#4F5459; --forest:#1B4332; --forest-soft:rgba(27,67,50,0.1); --rule:rgba(17,19,21,0.14); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.5; }
+    .shell { max-width:1180px; margin:0 auto; padding:1.5rem 1.25rem 3rem; }
+    .bar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; padding-bottom:0.9rem; border-bottom:1px solid var(--rule); margin-bottom:1.25rem; }
+    .bar h1 { margin:0; font-family:Georgia,serif; font-size:clamp(1.3rem,2.4vw,1.8rem); font-weight:600; }
+    .bar-links { display:flex; gap:0.5rem; }
+    .bar-links a { font-family:ui-monospace,monospace; font-size:0.78rem; color:var(--ink); text-decoration:none; padding:0.32rem 0.68rem; border:1px solid var(--rule); border-radius:5px; background:var(--surface); }
+    .grid { display:grid; grid-template-columns:360px 1fr; gap:1.1rem; }
+    @media (max-width:900px) { .grid { grid-template-columns:1fr; } }
+    .panel { background:var(--surface); border:1px solid var(--rule); border-radius:8px; padding:1.1rem; }
+    .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.72rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--forest); font-weight:700; margin-bottom:0.35rem; }
+    label { display:block; font-size:0.82rem; font-weight:600; margin:0.7rem 0 0.25rem; }
+    input[type="text"] { width:100%; padding:0.55rem 0.7rem; border:1px solid var(--rule); border-radius:6px; font-family:ui-monospace,monospace; font-size:0.84rem; background:var(--bg); color:var(--ink); }
+    input[type="range"] { width:100%; accent-color:var(--forest); }
+    .presets { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.65rem; }
+    .chip { border:1px solid var(--rule); background:var(--inset); color:var(--ink); border-radius:5px; padding:0.34rem 0.6rem; font-size:0.76rem; font-family:ui-monospace,monospace; cursor:pointer; }
+    .chip:hover, .chip.active { background:var(--forest); color:#fff; border-color:var(--forest); }
+    .tags { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.45rem; }
+    .run-btn { margin-top:0.9rem; width:100%; padding:0.62rem; border:none; border-radius:6px; background:var(--forest); color:#fff; font-weight:600; font-size:0.88rem; cursor:pointer; }
+    .svg-box { background:var(--bg); border:1px solid var(--rule); border-radius:7px; padding:0.6rem; margin-bottom:0.9rem; }
+    .svg-box svg { width:100%; height:auto; display:block; }
+    table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+    th, td { text-align:left; padding:0.5rem 0.55rem; border-bottom:1px solid var(--rule); font-variant-numeric:tabular-nums; }
+    th { font-family:ui-monospace,monospace; font-size:0.74rem; text-transform:uppercase; color:var(--muted); }
+    .badge { display:inline-block; padding:0.15rem 0.45rem; border-radius:4px; font-family:ui-monospace,monospace; font-size:0.72rem; background:var(--forest-soft); color:var(--forest); font-weight:700; }
+    .stat-row { display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.6rem; font-family:ui-monospace,monospace; font-size:0.8rem; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="bar">
+      <div>
+        <span class="kicker">Project A · Warm Ivory Engineering Instrument</span>
+        <h1>Sparse Top-2 MoE &amp; Bitset Hybrid RRF Workbench</h1>
+      </div>
+      <div class="bar-links">
+        <a href="../">All 5 Workbenches</a>
+        <a href="../../">Portfolio Studio</a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="panel" aria-label="Gating and Bitset Controls">
+        <span class="kicker">Router &amp; Vector Filter</span>
+        <label for="moe-query">Query Prompt</label>
+        <input id="moe-query" type="text" value="SQLite WAL FTS5 Okapi BM25 cosine vector RRF" />
+
+        <div class="presets" id="preset-wrap">
+          <button type="button" class="chip" data-q="SQLite WAL FTS5 Okapi BM25 cosine vector RRF">Hybrid RAG RRF</button>
+          <button type="button" class="chip" data-q="Rust C11 CRC32C 64 byte cache line FFI ring">Rust + C11 Ring</button>
+          <button type="button" class="chip" data-q="MCP 2025-11-25 OAuth PKCE S256 token schema">OAuth 2.1 PKCE</button>
+          <button type="button" class="chip" data-q="Formal Merkle audit DAG convexity verification">Formal Architect</button>
+        </div>
+
+        <label for="vram-slider">VRAM Ceiling: <strong id="vram-val">6.0 GiB</strong></label>
+        <input id="vram-slider" type="range" min="2" max="16" step="0.5" value="6" />
+
+        <label for="sla-slider">Latency SLA (p95): <strong id="sla-val">450 ms</strong></label>
+        <input id="sla-slider" type="range" min="25" max="900" step="25" value="450" />
+
+        <label>Uint32 Metadata Bitset Filter</label>
+        <div class="tags" id="tag-wrap">
+          <button type="button" class="chip active" data-mask="0">All (0x07)</button>
+          <button type="button" class="chip" data-mask="1">Kernel/HW (0x01)</button>
+          <button type="button" class="chip" data-mask="2">RAG/Eval (0x02)</button>
+          <button type="button" class="chip" data-mask="4">Security/Ledger (0x04)</button>
+        </div>
+
+        <button id="run-btn" type="button" class="run-btn">Recompute Routing &amp; RRF Fusion</button>
+      </section>
+
+      <section class="panel" aria-live="polite">
+        <div class="stat-row">
+          <span id="compute-time">Compute: 0.00 ms</span>
+          <span id="active-pair">Top-2 Active: -</span>
+        </div>
+        <div id="bipartite-host" class="svg-box" aria-label="Bipartite MoE Routing SVG"></div>
+        <span class="kicker">Okapi BM25 + Float32 Cosine + Reciprocal Rank Fusion (k=60)</span>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>Document</th><th>BitMask</th><th>BM25</th><th>Cosine</th><th>RRF Score</th></tr>
+            </thead>
+            <tbody id="rrf-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { hybridRrfSearch, routeSparseTop2Moe } from "../algorithms.mjs";
+
+    const qEl = document.getElementById("moe-query");
+    const vEl = document.getElementById("vram-slider");
+    const sEl = document.getElementById("sla-slider");
+    const vOut = document.getElementById("vram-val");
+    const sOut = document.getElementById("sla-val");
+    const runBtn = document.getElementById("run-btn");
+    const timeEl = document.getElementById("compute-time");
+    const pairEl = document.getElementById("active-pair");
+    const svgHost = document.getElementById("bipartite-host");
+    const rrfBody = document.getElementById("rrf-body");
+
+    let tagMask = 0;
+
+    function render() {
+      const t0 = performance.now();
+      const vram = Number(vEl.value);
+      const sla = Number(sEl.value);
+      vOut.textContent = `${vram.toFixed(1)} GiB`;
+      sOut.textContent = `${sla} ms`;
+
+      const gates = routeSparseTop2Moe(qEl.value, vram, sla);
+      const hits = hybridRrfSearch(qEl.value, tagMask);
+      const dt = performance.now() - t0;
+
+      const active = gates.filter((g) => g.active).sort((a, b) => b.gateWeight - a.gateWeight);
+      pairEl.textContent = `Top-2 Active: ${active.map((g) => `${g.id} (${(g.gateWeight * 100).toFixed(1)}%)`).join(" + ")}`;
+
+      const expertY = [34, 82, 130, 178];
+      const topHits = hits.slice(0, 3);
+      const hitY = [46, 106, 166];
+
+      let edgesSvg = "";
+      gates.forEach((g, gi) => {
+        const y1 = expertY[gi];
+        const col = g.active ? "#1B4332" : "#CBD2D9";
+        const sw = g.active ? (1.8 + g.gateWeight * 3.5).toFixed(2) : "1.0";
+        edgesSvg += `<line x1="150" y1="106" x2="310" y2="${y1}" stroke="${col}" stroke-width="${sw}" ${g.eligible ? "" : 'stroke-dasharray="4 3"'} />`;
+        if (g.active) {
+          topHits.forEach((h, hi) => {
+            edgesSvg += `<line x1="490" y1="${y1}" x2="610" y2="${hitY[hi]}" stroke="#1B4332" stroke-opacity="0.45" stroke-width="1.6" />`;
+          });
+        }
+      });
+
+      const expertNodes = gates.map((g, gi) => {
+        const y = expertY[gi];
+        const fill = g.active ? "#1B4332" : (g.eligible ? "#FFFFFF" : "#EAE5DC");
+        const txt = g.active ? "#FFFFFF" : "#111315";
+        const border = g.active ? "#1B4332" : "#9AA5B1";
+        return `<rect x="310" y="${y - 16}" width="180" height="32" rx="5" fill="${fill}" stroke="${border}" />
+                <text x="400" y="${y + 4}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="${txt}">${g.id} (${Math.round(g.gateWeight * 100)}%)</text>`;
+      }).join("");
+
+      const docNodes = topHits.map((h, hi) => {
+        const y = hitY[hi];
+        return `<rect x="610" y="${y - 18}" width="190" height="36" rx="5" fill="#FFFFFF" stroke="#1B4332" />
+                <text x="705" y="${y + 4}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#111315">#${hi + 1} ${h.id} (${h.rrf.toFixed(4)})</text>`;
+      }).join("");
+
+      svgHost.innerHTML = `<svg viewBox="0 0 820 212" role="img" aria-label="Bipartite routing graph from query to experts to RRF documents">
+        ${edgesSvg}
+        <rect x="20" y="84" width="130" height="44" rx="6" fill="#111315" />
+        <text x="85" y="103" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#FFFFFF">Query Router</text>
+        <text x="85" y="119" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#D8E2DC">${vram.toFixed(1)}G / ${sla}ms</text>
+        ${expertNodes}
+        ${docNodes}
+      </svg>`;
+
+      rrfBody.innerHTML = hits.map((h) => `<tr>
+        <td><strong>${h.title}</strong></td>
+        <td><code>0x0${h.tagMask}</code></td>
+        <td>${h.bm25.toFixed(4)}</td>
+        <td>${h.cosine.toFixed(4)}</td>
+        <td><span class="badge">${h.rrf.toFixed(5)}</span></td>
+      </tr>`).join("");
+
+      timeEl.textContent = `Compute: ${dt.toFixed(2)} ms`;
+    }
+
+    document.querySelectorAll("#preset-wrap .chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        qEl.value = btn.getAttribute("data-q") || "";
+        render();
+      });
+    });
+
+    document.querySelectorAll("#tag-wrap .chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#tag-wrap .chip").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        tagMask = Number(btn.getAttribute("data-mask") || 0);
+        render();
+      });
+    });
+
+    qEl.addEventListener("input", render);
+    vEl.addEventListener("input", render);
+    sEl.addEventListener("input", render);
+    runBtn.addEventListener("click", render);
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aho-Corasick Guardrail Automaton &amp; 120-Case Eval | Nahian Akhtar</title>
+  <style>
+    :root { --bg:#FFFFFF; --ink:#09090B; --muted:#52525B; --crimson:#D92D20; --crimson-soft:#FEF3F2; --rule:#E4E4E7; --panel:#FAFAFA; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.5; }
+    .wrap { max-width:1160px; margin:0 auto; padding:1.5rem 1.25rem 3rem; }
+    .hdr { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; border-bottom:2px solid var(--ink); padding-bottom:0.85rem; margin-bottom:1.25rem; }
+    .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--crimson); font-weight:700; }
+    .hdr h1 { margin:0.15rem 0 0; font-size:clamp(1.25rem,2.3vw,1.75rem); letter-spacing:-0.02em; }
+    .nav { display:flex; gap:0.5rem; }
+    .nav a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.68rem; border:1px solid var(--rule); border-radius:4px; background:var(--panel); color:var(--ink); text-decoration:none; }
+    .grid { display:grid; grid-template-columns:1.1fr 1fr; gap:1.1rem; }
+    @media (max-width:900px) { .grid { grid-template-columns:1fr; } }
+    .box { background:var(--panel); border:1px solid var(--rule); border-radius:6px; padding:1rem; }
+    textarea { width:100%; min-height:92px; padding:0.65rem; border:1px solid var(--rule); border-radius:4px; font-family:ui-monospace,monospace; font-size:0.82rem; background:#fff; color:var(--ink); }
+    .btns { display:flex; flex-wrap:wrap; gap:0.45rem; margin:0.65rem 0; }
+    button { border:1px solid var(--ink); background:var(--ink); color:#fff; padding:0.42rem 0.75rem; border-radius:4px; font-family:ui-monospace,monospace; font-size:0.76rem; font-weight:600; cursor:pointer; }
+    button.danger { background:var(--crimson); border-color:var(--crimson); }
+    button.alt { background:#fff; color:var(--ink); }
+    .out { background:#fff; border:1px solid var(--rule); border-radius:4px; padding:0.65rem; font-family:ui-monospace,monospace; font-size:0.78rem; margin-top:0.55rem; word-break:break-word; }
+    .matrix { display:grid; grid-template-columns:repeat(2, 1fr); gap:0.5rem; margin-top:0.65rem; }
+    .cell { background:#fff; border:1px solid var(--rule); padding:0.6rem; border-radius:4px; font-family:ui-monospace,monospace; }
+    .cell span { display:block; font-size:0.68rem; color:var(--muted); text-transform:uppercase; }
+    .cell strong { font-size:1.05rem; color:var(--ink); }
+    .sim-bits { display:grid; grid-template-columns:repeat(16, 1fr); gap:2px; margin-top:0.55rem; }
+    .sbit { height:12px; border-radius:2px; background:#E4E4E7; }
+    .sbit.on { background:var(--crimson); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="hdr">
+      <div>
+        <span class="kicker">Project D · High-Contrast Security &amp; Evaluation Console</span>
+        <h1>Aho-Corasick Secret Automaton, 64-Bit SimHash &amp; 120-Case Eval</h1>
+      </div>
+      <div class="nav">
+        <a href="../">All 5 Workbenches</a>
+        <a href="../../">Portfolio Studio</a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="box" aria-live="polite">
+        <span class="kicker">1. Aho-Corasick Trie Automaton &amp; Live Redaction</span>
+        <textarea id="payload-in" aria-label="Payload to scan">Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.payloaddemo.sig | key=sk-demo9876543210 | ssn=123-45-6789</textarea>
+        <div class="btns">
+          <button id="preset-jwt-btn" type="button" class="danger">Inject Multi-Secret Attack</button>
+          <button id="preset-aws-btn" type="button" class="alt">Inject AWS + GitHub PAT</button>
+          <button id="preset-clean-btn" type="button" class="alt">Clean Telemetry Text</button>
+        </div>
+        <div id="ac-meta" class="out"></div>
+        <div id="ac-redacted" class="out"></div>
+        <span class="kicker" style="margin-top:0.85rem;">2. 64-Bit FNV-1a SimHash Fingerprint (Hamming Near-Dup)</span>
+        <div id="simhash-meta" class="out"></div>
+        <div id="simhash-bits" class="sim-bits" aria-label="64-bit SimHash visual matrix"></div>
+      </section>
+
+      <section class="box" aria-live="polite">
+        <span class="kicker">3. Streaming 120-Case Evaluation Confusion Matrix</span>
+        <p style="margin:0.25rem 0 0.65rem;font-size:0.86rem;color:var(--muted);">Executes 60 adversarial secret/PII injections and 60 clean engineering telemetry records synchronously through the compiled trie automaton.</p>
+        <div class="btns">
+          <button id="bench-120-btn" type="button" class="danger">Run 120-Case Benchmark</button>
+          <span id="bench-ms" style="font-family:ui-monospace,monospace;font-size:0.78rem;color:var(--muted);align-self:center;">0.00 ms</span>
+        </div>
+        <div id="conf-matrix" class="matrix"></div>
+        <div id="bench-summary" class="out" style="margin-top:0.75rem;"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import {
+      computeSimHash64,
+      hammingDistance64,
+      runGuardrailBenchmark120,
+      scanAndRedactWithAutomaton
+    } from "../algorithms.mjs";
+
+    const baselineCorpusText = "64-byte cache line Castagnoli CRC32C telemetry ring buffer verification PASS";
+    const baseHash = computeSimHash64(baselineCorpusText);
+
+    const inEl = document.getElementById("payload-in");
+    const acMeta = document.getElementById("ac-meta");
+    const acOut = document.getElementById("ac-redacted");
+    const simMeta = document.getElementById("simhash-meta");
+    const simBits = document.getElementById("simhash-bits");
+    const confEl = document.getElementById("conf-matrix");
+    const benchSummary = document.getElementById("bench-summary");
+    const benchMsEl = document.getElementById("bench-ms");
+
+    function renderScanner() {
+      const text = inEl.value;
+      const res = scanAndRedactWithAutomaton(text);
+      acMeta.textContent = `Trie States: ${res.stateCount} | Prefix Hits: ${res.prefixHits.map((h) => h.label).join(", ") || "NONE"} | Regex Matches: ${res.regexMatches} | Status: ${res.clean ? "CLEAN" : "REDACTED"}`;
+      acOut.textContent = res.redacted;
+
+      const fp = computeSimHash64(text);
+      const dist = hammingDistance64(fp, baseHash);
+      simMeta.textContent = `SimHash64: 0x${fp.toString(16).padStart(16, "0")} | Hamming Distance vs Reference: ${dist}/64 bits`;
+      let bitsHtml = "";
+      for (let b = 63; b >= 0; b -= 1) {
+        const on = (fp & (1n << BigInt(b))) !== 0n;
+        bitsHtml += `<div class="sbit ${on ? "on" : ""}" title="bit ${b}"></div>`;
+      }
+      simBits.innerHTML = bitsHtml;
+    }
+
+    function runBench() {
+      const b = runGuardrailBenchmark120();
+      benchMsEl.textContent = `Total: ${b.totalMs.toFixed(2)} ms | p50: ${b.p50Ms.toFixed(3)} ms | p95: ${b.p95Ms.toFixed(3)} ms`;
+      confEl.innerHTML = `
+        <div class="cell"><span>True Positives (TP)</span><strong>${b.tp} / 60</strong></div>
+        <div class="cell"><span>False Positives (FP)</span><strong>${b.fp}</strong></div>
+        <div class="cell"><span>False Negatives (FN)</span><strong>${b.fn}</strong></div>
+        <div class="cell"><span>True Negatives (TN)</span><strong>${b.tn} / 60</strong></div>
+      `;
+      benchSummary.textContent = `Precision: ${(b.precision * 100).toFixed(2)}% | Recall: ${(b.recall * 100).toFixed(2)}% | F1: ${b.f1.toFixed(4)} | Verified across 120 cases`;
+    }
+
+    inEl.addEventListener("input", renderScanner);
+    document.getElementById("preset-jwt-btn").addEventListener("click", () => {
+      inEl.value = "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.payloaddemo.sig | key=sk-demo9876543210 | ssn=123-45-6789";
+      renderScanner();
+    });
+    document.getElementById("preset-aws-btn").addEventListener("click", () => {
+      inEl.value = "aws_id=AKIAIOSFODNN7EXAMPLE github=ghp_1234567890abcdef1234 operator=qa@example.org";
+      renderScanner();
+    });
+    document.getElementById("preset-clean-btn").addEventListener("click", () => {
+      inEl.value = baselineCorpusText;
+      renderScanner();
+    });
+    document.getElementById("bench-120-btn").addEventListener("click", runBench);
+
+    renderScanner();
+    runBench();
+  </script>
+</body>
+</html>

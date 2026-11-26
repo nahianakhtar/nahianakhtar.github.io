@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Five interactive client-side engineering workbenches: Sparse Top-2 MoE RRF, 128-bit Micro-Dollar Ledger Merkle Audit, 64-Byte CRC32C Ring + Kahn DAG, Aho-Corasick Guardrail Automaton, and Per-Monitor V2 UIA DPI Metrology." />
+  <title>Engineering Workbenches | Nahian Akhtar</title>
+  <style>
+    :root { --bg: #FAF8F4; --ink: #111315; --muted: #52575C; --surface: #FFFFFF; --rule: rgba(17,19,21,0.14); }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.55; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+    .top { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--rule); padding-bottom: 1rem; margin-bottom: 2rem; }
+    .top a { font-family: ui-monospace, monospace; font-size: 0.85rem; color: var(--ink); text-decoration: none; border: 1px solid var(--rule); padding: 0.35rem 0.75rem; border-radius: 6px; background: var(--surface); }
+    h1 { margin: 0 0 0.35rem; font-family: Georgia, serif; font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 600; letter-spacing: -0.02em; }
+    .lead { margin: 0; color: var(--muted); max-width: 68ch; font-size: 0.96rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; }
+    .card { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 1.35rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.9rem; }
+    .tag { font-family: ui-monospace, monospace; font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    .card h2 { margin: 0.25rem 0 0; font-size: 1.15rem; }
+    .card p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+    .swatch { height: 6px; border-radius: 999px; margin-bottom: 0.35rem; }
+    .cta { display: inline-block; font-family: ui-monospace, monospace; font-size: 0.82rem; font-weight: 600; text-decoration: none; padding: 0.5rem 0.85rem; border-radius: 6px; color: #FFFFFF; align-self: flex-start; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div>
+        <h1>Interactive Engineering Workbenches</h1>
+        <p class="lead">Five single-purpose browser laboratories running pure ES2022 + TypedArray algorithms with zero external API keys or telemetry beacons.</p>
+      </div>
+      <a href="../">Back to Studio Overview</a>
+    </div>
+    <section class="grid" aria-label="Workbench Catalog">
+      <article class="card">
+        <div>
+          <div class="swatch" style="background: linear-gradient(90deg, #FAF8F4 0%, #1B4332 65%, #111315 100%); border:1px solid var(--rule);"></div>
+          <span class="tag">Project A · Sparse Top-2 MoE &amp; Hybrid Search</span>
+          <h2>MoE + Bitset BM25 / Cosine RRF</h2>
+          <p>VRAM and p95 latency gating, Uint32 bitset metadata filtering, 64-dim Float32 cosine projections, Reciprocal Rank Fusion (k=60), and interactive SVG bipartite routing.</p>
+        </div>
+        <a class="cta" style="background:#1B4332;" href="moe-rag/">Open MoE + RAG Bench</a>
+      </article>
+      <article class="card">
+        <div>
+          <div class="swatch" style="background: linear-gradient(90deg, #F4F6F4 0%, #0F291E 65%, #8F5B0A 100%); border:1px solid var(--rule);"></div>
+          <span class="tag">Project B · Micro-Dollar Ledger &amp; Merkle Tree</span>
+          <h2>128-Bit Accounting &amp; Merkle Proof</h2>
+          <p>Exact BigInt 10^-6 USD double-entry trial balance, ROUND_HALF_EVEN banker rounding, bank CSV reconciliation, leaf tamper testing, and CSV/JSON export.</p>
+        </div>
+        <a class="cta" style="background:#0F291E;" href="ledger-audit/">Open Ledger Audit Bench</a>
+      </article>
+      <article class="card">
+        <div>
+          <div class="swatch" style="background: linear-gradient(90deg, #ECEFF3 0%, #0B192C 65%, #C85A00 100%); border:1px solid var(--rule);"></div>
+          <span class="tag">Project C · 64B Ring, Kahn DAG &amp; P2</span>
+          <h2>Hardware Ring Vault &amp; DAG Inspector</h2>
+          <p>Interactive 64-byte cache-line bit-flip injector against Castagnoli CRC32C (0xE3069283), capability-fenced Kahn topological graph, and O(1) Jain-Chlamtac P2 stream.</p>
+        </div>
+        <a class="cta" style="background:#0B192C;" href="rust-ring-dag/">Open Ring &amp; DAG Inspector</a>
+      </article>
+      <article class="card">
+        <div>
+          <div class="swatch" style="background: linear-gradient(90deg, #FFFFFF 0%, #09090B 65%, #D92D20 100%); border:1px solid var(--rule);"></div>
+          <span class="tag">Project D · Automaton, SimHash &amp; 120-Case Eval</span>
+          <h2>Aho-Corasick Security &amp; Eval Console</h2>
+          <p>Linear-time trie with failure-link scanner for API keys and JWTs, 64-bit FNV-1a SimHash Hamming comparison, and 120-case guardrail precision/recall suite.</p>
+        </div>
+        <a class="cta" style="background:#09090B;" href="guardrail-automaton/">Open Guardrail Console</a>
+      </article>
+      <article class="card">
+        <div>
+          <div class="swatch" style="background: linear-gradient(90deg, #F2EFE9 0%, #1D3557 65%, #2A9D8F 100%); border:1px solid var(--rule);"></div>
+          <span class="tag">Project E · Windows Per-Monitor V2 UIA</span>
+          <h2>Dual-Monitor DPI Metrology Bench</h2>
+          <p>CSS-to-Win32 physical pixel coordinate solver across 96 to 216 DPI scaling tiers, multi-monitor bounds detection, and AABB pointer hit-test parity verification.</p>
+        </div>
+        <a class="cta" style="background:#1D3557;" href="uia-metrology/">Open UIA Metrology Bench</a>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

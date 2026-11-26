@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>64-Byte Ring Vault, Kahn DAG &amp; P2 Quantile Inspector | Nahian Akhtar</title>
+  <style>
+    :root { --bg:#ECEFF3; --surface:#FFFFFF; --navy:#0B192C; --orange:#C85A00; --ink:#0B192C; --muted:#475569; --rule:rgba(11,25,44,0.16); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.45; }
+    .wrap { max-width:1180px; margin:0 auto; padding:1.4rem 1.25rem 3rem; }
+    .top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; border-bottom:2px solid var(--navy); padding-bottom:0.85rem; margin-bottom:1.15rem; }
+    .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--orange); font-weight:700; }
+    .top h1 { margin:0.15rem 0 0; font-size:clamp(1.25rem,2.3vw,1.72rem); font-weight:700; letter-spacing:-0.02em; }
+    .nav { display:flex; gap:0.5rem; }
+    .nav a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.68rem; border:1px solid var(--rule); border-radius:4px; background:var(--surface); color:var(--navy); text-decoration:none; }
+    .grid { display:grid; grid-template-columns:1.15fr 1fr; gap:1rem; }
+    @media (max-width:920px) { .grid { grid-template-columns:1fr; } }
+    .panel { background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1rem; }
+    .byte-grid { display:grid; grid-template-columns:repeat(8, minmax(0, 1fr)); gap:0.32rem; margin:0.7rem 0; }
+    @media (max-width:540px) { .byte-grid { grid-template-columns:repeat(4, minmax(0, 1fr)); } }
+    .byte-cell { border:1px solid var(--rule); border-radius:4px; padding:0.28rem 0.2rem; text-align:center; font-family:ui-monospace,monospace; font-size:0.72rem; background:#F8FAFC; cursor:pointer; }
+    .byte-cell strong { display:block; font-size:0.78rem; color:var(--navy); }
+    .byte-cell span { font-size:0.62rem; color:var(--muted); }
+    .byte-cell.hdr-crc { background:#FFF3E8; border-color:var(--orange); }
+    .byte-cell.flipped { background:#FEE2E2; border-color:#B91C1C; }
+    .btns { display:flex; flex-wrap:wrap; gap:0.45rem; margin:0.65rem 0; }
+    button { border:1px solid var(--navy); background:var(--navy); color:#fff; padding:0.42rem 0.72rem; border-radius:4px; font-family:ui-monospace,monospace; font-size:0.76rem; font-weight:600; cursor:pointer; }
+    button.orange { background:var(--orange); border-color:var(--orange); }
+    button.ghost { background:var(--surface); color:var(--navy); }
+    .seal-bar { font-family:ui-monospace,monospace; font-size:0.8rem; font-weight:700; padding:0.55rem 0.7rem; border-radius:4px; margin-top:0.5rem; }
+    .seal-ok { background:#DCFCE7; color:#14532D; border:1px solid #86EFAC; }
+    .seal-bad { background:#FEE2E2; color:#7F1D1D; border:1px solid #FCA5A5; }
+    svg { width:100%; height:auto; display:block; background:#F8FAFC; border:1px solid var(--rule); border-radius:4px; }
+    .metrics { display:grid; grid-template-columns:repeat(4, 1fr); gap:0.5rem; margin-top:0.65rem; }
+    .mcell { border:1px solid var(--rule); border-radius:4px; padding:0.45rem; background:#F8FAFC; font-family:ui-monospace,monospace; }
+    .mcell span { display:block; font-size:0.66rem; color:var(--muted); }
+    .mcell strong { font-size:0.86rem; color:var(--navy); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div>
+        <span class="kicker">Project C · Cold Technical Systems Hardware Inspector</span>
+        <h1>64-Byte Cache-Line Ring (CRC32C), Kahn DAG &amp; P2 Quantiles</h1>
+      </div>
+      <div class="nav">
+        <a href="../">All 5 Workbenches</a>
+        <a href="../../">Portfolio Studio</a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="panel" aria-live="polite">
+        <span class="kicker">1. 64-Byte Cache-Line Binary Layout (`_Alignas(64)`)</span>
+        <p style="margin:0.25rem 0 0.5rem;font-size:0.84rem;color:var(--muted);">Click any byte cell below to inject a bit flip (`^= 0x01`), then observe RFC 3720 Castagnoli CRC32C rejection across bytes `[40..43]` header CRC and `[36..39]` payload CRC.</p>
+        <div class="btns">
+          <button id="pack-btn" type="button">Reset Clean Slot</button>
+          <button id="flip-hdr-btn" type="button" class="orange">Flip Bit @ Byte 12 (Seq)</button>
+          <button id="flip-pay-btn" type="button" class="ghost">Flip Bit @ Byte 50 (Payload)</button>
+          <span id="ring-ms" style="font-family:ui-monospace,monospace;font-size:0.75rem;color:var(--muted);align-self:center;">0.00 ms</span>
+        </div>
+        <div id="byte-grid" class="byte-grid"></div>
+        <div id="seal-bar" class="seal-bar seal-ok"></div>
+      </section>
+
+      <section class="panel" aria-live="polite">
+        <span class="kicker">2. Capability-Fenced Kahn DAG &amp; O(1) P2 Quantile Stream</span>
+        <div class="btns">
+          <button id="cap-all-btn" type="button">Cap Mask 0x07 (All Ready)</button>
+          <button id="cap-trim-btn" type="button" class="ghost">Revoke Bit 0x04 (Fence Tail Node)</button>
+          <button id="p2-burst-btn" type="button" class="orange">+1,000 Latency Samples (P2)</button>
+        </div>
+        <div id="dag-svg-host" style="margin-bottom:0.75rem;"></div>
+        <div id="dag-status" style="font-family:ui-monospace,monospace;font-size:0.78rem;color:var(--navy);margin-bottom:0.65rem;"></div>
+        <div class="metrics" id="p2-metrics"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import {
+      P2QuantileEstimator,
+      crc32c,
+      flipBit64,
+      kahnTopoSort,
+      packRingSlot64,
+      validateRingSlot64
+    } from "../algorithms.mjs";
+
+    const fieldLabel = (i) => {
+      if (i < 4) return "MAGIC";
+      if (i < 8) return "FLAG";
+      if (i < 16) return "SEQ64";
+      if (i < 24) return "TS64";
+      if (i < 32) return "CAP64";
+      if (i < 36) return "LEN";
+      if (i < 40) return "PCRC";
+      if (i < 44) return "HCRC";
+      if (i < 48) return "PAD";
+      return `PAY${i - 48}`;
+    };
+
+    const cleanSlot = packRingSlot64({
+      seq: 1024n,
+      tsNs: 1764172800000123456n,
+      capMask: 0x07n,
+      payloadText: "crc_ring_ok"
+    });
+
+    let activeSlot = cleanSlot.slice(0);
+    let flippedIdx = -1;
+    let capMask = 0x07n;
+
+    const p50 = new P2QuantileEstimator(0.5);
+    const p95 = new P2QuantileEstimator(0.95);
+    const p99 = new P2QuantileEstimator(0.99);
+    let seed = 9191;
+    function pumpSamples(n) {
+      for (let i = 0; i < n; i += 1) {
+        seed = (1664525 * seed + 1013904223) >>> 0;
+        const base = (seed % 180) + 12;
+        const spike = (seed % 47) === 0 ? 420 : 0;
+        const v = base + spike;
+        p50.observe(v);
+        p95.observe(v);
+        p99.observe(v);
+      }
+    }
+    pumpSamples(2000);
+
+    const gridEl = document.getElementById("byte-grid");
+    const sealEl = document.getElementById("seal-bar");
+    const msEl = document.getElementById("ring-ms");
+    const dagHost = document.getElementById("dag-svg-host");
+    const dagStatus = document.getElementById("dag-status");
+    const p2El = document.getElementById("p2-metrics");
+
+    const dagNodes = [
+      { id: "N0", label: "Ingress", capMask: 1n, x: 55, y: 75 },
+      { id: "N1", label: "CRC32C", capMask: 1n, x: 185, y: 35 },
+      { id: "N2", label: "Redact", capMask: 2n, x: 185, y: 115 },
+      { id: "N3", label: "RRF", capMask: 2n, x: 325, y: 75 },
+      { id: "N4", label: "SealOut", capMask: 4n, x: 455, y: 75 }
+    ];
+    const dagEdges = [["N0", "N1"], ["N0", "N2"], ["N1", "N3"], ["N2", "N3"], ["N3", "N4"]];
+
+    function renderAll() {
+      const t0 = performance.now();
+      const u8 = new Uint8Array(activeSlot);
+      const val = validateRingSlot64(activeSlot);
+      const vecCrc = crc32c("123456789").toString(16).toUpperCase();
+
+      gridEl.innerHTML = Array.from(u8, (b, idx) => {
+        const cls = idx === flippedIdx ? "byte-cell flipped" : (idx >= 36 && idx < 44 ? "byte-cell hdr-crc" : "byte-cell");
+        return `<button type="button" class="${cls}" data-byte="${idx}"><span>${idx} ${fieldLabel(idx)}</span><strong>${b.toString(16).toUpperCase().padStart(2, "0")}</strong></button>`;
+      }).join("");
+
+      gridEl.querySelectorAll("button[data-byte]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const i = Number(btn.getAttribute("data-byte"));
+          activeSlot = flipBit64(cleanSlot, i, 0);
+          flippedIdx = i;
+          renderAll();
+        });
+      });
+
+      sealEl.className = `seal-bar ${val.valid ? "seal-ok" : "seal-bad"}`;
+      sealEl.textContent = val.valid
+        ? `CODE 0: ${val.reason} | Header ${val.headerCrcHex} | RFC3720("123456789")=0x${vecCrc}`
+        : `CODE ${val.code}: ${val.reason}`;
+
+      const dag = kahnTopoSort(dagNodes, dagEdges, capMask);
+      const posMap = new Map(dagNodes.map((n) => [n.id, n]));
+      const allowedSet = new Set(dag.order);
+      const edgeSvg = dagEdges.map(([u, v]) => {
+        const a = posMap.get(u);
+        const b = posMap.get(v);
+        const ok = allowedSet.has(u) && allowedSet.has(v);
+        return `<line x1="${a.x + 34}" y1="${a.y}" x2="${b.x - 34}" y2="${b.y}" stroke="${ok ? "#0B192C" : "#CBD5E1"}" stroke-width="2" />`;
+      }).join("");
+      const nodeSvg = dagNodes.map((n) => {
+        const ok = allowedSet.has(n.id);
+        return `<rect x="${n.x - 34}" y="${n.y - 18}" width="68" height="36" rx="5" fill="${ok ? "#0B192C" : "#C85A00"}" />
+                <text x="${n.x}" y="${n.y + 4}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#FFFFFF">${n.id}:${n.label}</text>`;
+      }).join("");
+
+      dagHost.innerHTML = `<svg viewBox="0 0 515 150" role="img" aria-label="Capability-Fenced Kahn DAG">${edgeSvg}${nodeSvg}</svg>`;
+      dagStatus.textContent = `Topological Order: [${dag.order.join(" -> ")}] | Fenced: [${dag.denied.join(", ") || "none"}]`;
+
+      p2El.innerHTML = `
+        <div class="mcell"><span>Samples (N)</span><strong>${p50.count}</strong></div>
+        <div class="mcell"><span>P2 p50 (us)</span><strong>${p50.estimate().toFixed(2)}</strong></div>
+        <div class="mcell"><span>P2 p95 (us)</span><strong>${p95.estimate().toFixed(2)}</strong></div>
+        <div class="mcell"><span>P2 p99 (us)</span><strong>${p99.estimate().toFixed(2)}</strong></div>
+      `;
+
+      msEl.textContent = `${(performance.now() - t0).toFixed(2)} ms`;
+    }
+
+    document.getElementById("pack-btn").addEventListener("click", () => { activeSlot = cleanSlot.slice(0); flippedIdx = -1; renderAll(); });
+    document.getElementById("flip-hdr-btn").addEventListener("click", () => { activeSlot = flipBit64(cleanSlot, 12, 2); flippedIdx = 12; renderAll(); });
+    document.getElementById("flip-pay-btn").addEventListener("click", () => { activeSlot = flipBit64(cleanSlot, 50, 1); flippedIdx = 50; renderAll(); });
+    document.getElementById("cap-all-btn").addEventListener("click", () => { capMask = 0x07n; renderAll(); });
+    document.getElementById("cap-trim-btn").addEventListener("click", () => { capMask = 0x03n; renderAll(); });
+    document.getElementById("p2-burst-btn").addEventListener("click", () => { pumpSamples(1000); renderAll(); });
+
+    renderAll();
+  </script>
+</body>
+</html>

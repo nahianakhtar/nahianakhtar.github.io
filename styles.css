@@ -1,11 +1,11 @@
 :root {
-  --bg-base: #FAF9F6;
+  --bg-base: #FAF8F4;
   --bg-surface: #FFFFFF;
   --bg-inset: #F3F0EA;
   --bg-inset-strong: #EAE5DC;
-  --border-subtle: rgba(20, 20, 19, 0.12);
-  --border-strong: rgba(20, 20, 19, 0.34);
-  --text-primary: #141413;
+  --border-subtle: rgba(17, 19, 21, 0.12);
+  --border-strong: rgba(17, 19, 21, 0.34);
+  --text-primary: #111315;
   --text-secondary: #43423E;
   --text-muted: #6B6860;
   --emerald: #1B4332;
@@ -46,6 +46,33 @@ body {
 
 .ambient-grid {
   display: none;
+  pointer-events: none;
+}
+
+.moe-bipartite-wrap {
+  margin-bottom: 0.9rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-base);
+  padding: 0.5rem;
+}
+
+.moe-bipartite-wrap svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
+
+.demo-launch-pill {
+  display: inline-block;
+  margin-top: 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--emerald);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .container {

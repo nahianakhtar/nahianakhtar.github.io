@@ -1,0 +1,20 @@
+# Nahian Akhtar - Systems, Protocol & Quantitative Engineering Studio
+
+> Location: New York, NY
+> GitHub: https://github.com/nahianakhtar
+> Portfolio & Interactive Proof Lab: https://nahianakhtar.github.io/
+
+## Live Browser Engineering Workbenches (/demos/)
+- Sparse Top-2 MoE & Bitset Hybrid RRF: https://nahianakhtar.github.io/demos/moe-rag/
+- 128-Bit Micro-Dollar Ledger & Merkle SHA-256 Audit: https://nahianakhtar.github.io/demos/ledger-audit/
+- 64-Byte Cache-Line CRC32C Ring, Kahn DAG & P2 Explorer: https://nahianakhtar.github.io/demos/rust-ring-dag/
+- Aho-Corasick Guardrail Automaton, SimHash & 120-Case Eval: https://nahianakhtar.github.io/demos/guardrail-automaton/
+- Per-Monitor V2 UIA DPI Coordinate Metrology Bench: https://nahianakhtar.github.io/demos/uia-metrology/
+
+## Open-Source MIT Repositories
+- https://github.com/nahianakhtar/mcp-moe-hybrid-sdk (Python 3.12 stdlib MCP 2025-11-25, OAuth 2.1 PKCE, SQLite FTS5 + Cosine RRF)
+- https://github.com/nahianakhtar/mcp-automation-demo (Python 3.12 uv stdio MCP + Decimal ROUND_HALF_EVEN CLI reconciliation)
+- https://github.com/nahianakhtar/api-glue-mcp (TypeScript Node 22 @modelcontextprotocol/server@2.4.0, HMAC-SHA256, SSRF guard, SQLite WAL + DLQ)
+- https://github.com/nahianakhtar/polyglot-agent-runtime-rs (Rust 2021 + ISO C11 FFI + wasm32 64B cache-line ring, Kahn DAG, P2 quantiles)
+- https://github.com/nahianakhtar/fullstack-rag-eval-studio (Node.js 22 ESM HTTP/SSE eval gateway, W3C OTLP traces, sliding-window rate limiter)
+- https://github.com/nahianakhtar/zero-to-code-systems-lab (Air-gapped CSP CS & touch-typing trainer + Windows x64 WebView2 Per-Monitor V2 app)

@@ -9034,6 +9034,7 @@ function initBrowserUi() {
   const slaOut = document.getElementById("sim-sla-val");
   const statusBar = document.getElementById("sim-status-bar");
   const guardBadge = document.getElementById("sim-guard-badge");
+  const bipartiteWrap = document.getElementById("sim-bipartite-svg");
   const moeSelected = document.getElementById("sim-moe-selected");
   const moeBars = document.getElementById("sim-moe-bars");
   const ragResults = document.getElementById("sim-rag-results");
@@ -9058,6 +9059,44 @@ function initBrowserUi() {
     moeSelected.innerHTML =
       `<strong>Primary:</strong> ${escapeHtml(res.moe.primaryExpert)}<br/>` +
       `<strong>Secondary:</strong> ${escapeHtml(res.moe.secondaryExpert)}`;
+
+    if (bipartiteWrap) {
+      const expY = [26, 62, 98, 134];
+      const topHits = res.hits.slice(0, 3);
+      const docY = [34, 80, 126];
+      const edges = res.moe.gates
+        .map((g, gi) => {
+          const y1 = expY[gi];
+          const col = g.active ? "#1B4332" : "#C7C3BA";
+          const sw = g.active ? (1.5 + g.gateWeight * 2.8).toFixed(2) : "1.0";
+          let line = `<line x1="128" y1="80" x2="225" y2="${y1}" stroke="${col}" stroke-width="${sw}" ${g.vramFeasible && g.slaFeasible ? "" : 'stroke-dasharray="3 3"'} />`;
+          if (g.active) {
+            topHits.forEach((h, hi) => {
+              line += `<line x1="405" y1="${y1}" x2="480" y2="${docY[hi]}" stroke="#1B4332" stroke-opacity="0.45" stroke-width="1.4" />`;
+            });
+          }
+          return line;
+        })
+        .join("");
+      const expNodes = res.moe.gates
+        .map((g, gi) => {
+          const y = expY[gi];
+          const fill = g.active ? "#1B4332" : "#FFFFFF";
+          const txt = g.active ? "#FFFFFF" : "#111315";
+          const shortName = escapeHtml(String(g.name).slice(0, 22));
+          return `<rect x="225" y="${y - 13}" width="180" height="26" rx="4" fill="${fill}" stroke="#1B4332" />
+                  <text x="315" y="${y + 4}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="${txt}">${shortName} ${Math.round(g.gateWeight * 100)}%</text>`;
+        })
+        .join("");
+      const docNodes = topHits
+        .map(
+          (h, hi) =>
+            `<rect x="480" y="${docY[hi] - 14}" width="150" height="28" rx="4" fill="#FFFFFF" stroke="#27475E" />
+             <text x="555" y="${docY[hi] + 4}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#111315">#${hi + 1} ${escapeHtml(h.id)}</text>`
+        )
+        .join("");
+      bipartiteWrap.innerHTML = `<svg viewBox="0 0 650 160" role="img" aria-label="Bipartite routing graph">${edges}<rect x="16" y="60" width="112" height="40" rx="5" fill="#111315" /><text x="72" y="84" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#FFFFFF">Query (${vram.toFixed(0)}G/${sla}ms)</text>${expNodes}${docNodes}</svg>`;
+    }
 
     moeBars.innerHTML = res.moe.gates
       .map((g) => {
@@ -9515,7 +9554,7 @@ function initBrowserUi() {
     v13LineageKpi.innerHTML = `
       <div class="mini-stat"><span>ParTraceContext</span><strong>${vecReport.traceContextBytes} B (16B-aligned)</strong></div>
       <div class="mini-stat"><span>Label CRC32C</span><strong>${cust ? escapeHtml(cust.labelCrcHex) : "INVALID TP"}</strong></div>
-      <div class="mini-stat"><span>Derived span_id</span><strong>${cust ? escapeHtml(cust.childSpanId) : "—"}</strong></div>
+      <div class="mini-stat"><span>Derived span_id</span><strong>${cust ? escapeHtml(cust.childSpanId) : "N/A"}</strong></div>
       <div class="mini-stat"><span>WASM == JS == C11</span><strong>${cust && cust.wasmMatchedJs ? "100% BIT-EXACT" : cust ? "MISMATCH" : "REJECTED"}</strong></div>
     `;
 

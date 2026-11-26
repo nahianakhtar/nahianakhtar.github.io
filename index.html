@@ -5,7 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Nahian Akhtar, Systems and Protocol Engineer (New York, NY). Python and TypeScript MCP servers, CSV/SQLite CLI pipelines, API webhook bridges, and Rust/C11 runtimes." />
   <title>Nahian Akhtar | Custom MCP Servers, CLI Pipelines &amp; Systems Studio</title>
-  <link rel="stylesheet" href="styles.css?v=1.9.2" />
+  <link rel="canonical" href="https://nahianakhtar.github.io/" />
+  <link rel="stylesheet" href="styles.css?v=1.9.3" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "name": "Nahian Akhtar",
+        "jobTitle": "Systems, Protocol and Applied AI Engineer",
+        "address": { "@type": "PostalAddress", "addressLocality": "New York", "addressRegion": "NY", "addressCountry": "US" },
+        "url": "https://nahianakhtar.github.io/",
+        "sameAs": ["https://github.com/nahianakhtar"]
+      },
+      {
+        "@type": "WebApplication",
+        "name": "Nahian Akhtar Interactive Systems and MCP Protocol Lab",
+        "url": "https://nahianakhtar.github.io/demos/",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Any"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "name": "mcp-moe-hybrid-sdk",
+        "codeRepository": "https://github.com/nahianakhtar/mcp-moe-hybrid-sdk",
+        "programmingLanguage": "Python",
+        "license": "https://opensource.org/license/mit"
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <div class="ambient-grid" aria-hidden="true"></div>
@@ -19,6 +49,7 @@
       <nav class="nav-links" aria-label="Primary Navigation">
         <a href="#repositories">Verified Proof (7)</a>
         <a href="#simulator">Interactive Lab</a>
+        <a href="demos/">5 Live Workbenches</a>
         <a href="#competency-matrix">Capabilities</a>
         <a href="https://github.com/nahianakhtar" target="_blank" rel="noopener noreferrer" class="btn-outline">GitHub Profile ↗</a>
       </nav>
@@ -42,6 +73,7 @@
         <div class="hero-actions">
           <a href="#repositories" class="btn-primary">Inspect Verified Proof Repos</a>
           <a href="#simulator" class="btn-secondary">Open Interactive Lab <kbd>/</kbd></a>
+          <a href="demos/" class="btn-secondary">5 Standalone Workbenches</a>
         </div>
       </div>
 
@@ -130,7 +162,7 @@
             <div><dt>Verified Suite</dt><dd>42 offline tests</dd></div>
             <div><dt>Recall@1 (100 Q)</dt><dd>100.0% (0.3762ms p95)</dd></div>
             <div><dt>MoE Router p95</dt><dd>0.0123 ms (ref)</dd></div>
-            <div><dt>Runtime Deps</dt><dd>0 (Python Stdlib)</dd></div>
+            <div><dt>Interactive Bench</dt><dd><a href="demos/moe-rag/">Open MoE Workbench ↗</a></dd></div>
           </dl>
         </article>
 
@@ -156,7 +188,7 @@
             <div><dt>Verified Suite</dt><dd>77 offline tests</dd></div>
             <div><dt>Money Precision</dt><dd><code>ROUND_HALF_EVEN</code></dd></div>
             <div><dt>SQLite Guard</dt><dd>mode=ro + Allowlist</dd></div>
-            <div><dt>Write Fence</dt><dd>Dry-Run + --apply</dd></div>
+            <div><dt>Interactive Bench</dt><dd><a href="demos/ledger-audit/">Open Ledger Merkle ↗</a></dd></div>
           </dl>
         </article>
 
@@ -209,7 +241,7 @@
             <div><dt>Ring Throughput</dt><dd>2.94M ops/s</dd></div>
             <div><dt>Ring Seal+Verify p95</dt><dd>0.3819 µs</dd></div>
             <div><dt>DAG Orchestration</dt><dd>432.9K DAGs/s</dd></div>
-            <div><dt>P² Quantile Stream</dt><dd>38.01M obs/s (560 B)</dd></div>
+            <div><dt>Interactive Bench</dt><dd><a href="demos/rust-ring-dag/">Open 64B Ring + DAG ↗</a></dd></div>
           </dl>
         </article>
 
@@ -236,7 +268,7 @@
             <div><dt>Faithfulness / Recall@2</dt><dd>100% / 100%</dd></div>
             <div><dt>Context Precision</dt><dd>97.5% (AP@2)</dd></div>
             <div><dt>Eval Case p95</dt><dd>0.3362 ms</dd></div>
-            <div><dt>Eval Throughput</dt><dd>7,623.5 cases/s</dd></div>
+            <div><dt>Interactive Bench</dt><dd><a href="demos/guardrail-automaton/">Open 120-Case Eval ↗</a></dd></div>
           </dl>
         </article>
 
@@ -289,7 +321,7 @@
           <dl class="metric-grid">
             <div><dt>Curriculum Depth</dt><dd>5 Stages / 100 Concepts</dd></div>
             <div><dt>Telemetry Scope</dt><dd>Input-Only (0 Keyloggers)</dd></div>
-            <div><dt>Desktop Footprint</dt><dd>407 KB Portable ZIP</dd></div>
+            <div><dt>UIA Calibration</dt><dd><a href="demos/uia-metrology/">Open UIA DPI Bench ↗</a></dd></div>
             <div><dt>Live Web Edition</dt><dd><a href="https://nahianakhtar.github.io/zero-to-code-systems-lab/" target="_blank" rel="noopener noreferrer">Launch Lab ↗</a></dd></div>
           </dl>
         </article>
@@ -462,6 +494,7 @@
                 <h3>1. Sparse Top-2 MoE Gating Decision</h3>
                 <span id="sim-guard-badge" class="guard-ok">PII Guard: CLEAN</span>
               </div>
+              <div id="sim-bipartite-svg" class="moe-bipartite-wrap" aria-label="Bipartite MoE Routing Graph"></div>
               <div id="sim-moe-selected" class="moe-selected-summary"></div>
               <div id="sim-moe-bars" class="moe-bars" aria-live="polite"></div>
             </div>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>128-Bit Micro-Dollar Ledger &amp; Merkle Proof Workbench | Nahian Akhtar</title>
+  <style>
+    :root { --bg:#F4F6F4; --surface:#FFFFFF; --pine:#0F291E; --ochre:#8F5B0A; --ink:#0E1B15; --muted:#4A5D52; --rule:rgba(15,41,30,0.16); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.5; }
+    .wrap { max-width:1180px; margin:0 auto; padding:1.5rem 1.25rem 3rem; }
+    .head { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; padding-bottom:0.85rem; border-bottom:2px solid var(--pine); margin-bottom:1.25rem; }
+    .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ochre); font-weight:700; }
+    .head h1 { margin:0.15rem 0 0; font-family:Georgia,serif; font-size:clamp(1.3rem,2.4vw,1.8rem); }
+    .links { display:flex; gap:0.5rem; }
+    .links a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.7rem; border:1px solid var(--rule); border-radius:4px; background:var(--surface); color:var(--pine); text-decoration:none; }
+    .cols { display:grid; grid-template-columns:1.25fr 1fr; gap:1.1rem; }
+    @media (max-width:920px) { .cols { grid-template-columns:1fr; } }
+    .card { background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1.1rem; }
+    .actions { display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.75rem 0; }
+    button { border:1px solid var(--pine); background:var(--pine); color:#fff; padding:0.46rem 0.8rem; border-radius:4px; font-family:ui-monospace,monospace; font-size:0.78rem; font-weight:600; cursor:pointer; }
+    button.alt { background:var(--surface); color:var(--pine); }
+    button.warn { background:var(--ochre); border-color:var(--ochre); }
+    .row-form { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:0.45rem; margin-bottom:0.85rem; }
+    @media (max-width:720px) { .row-form { grid-template-columns:1fr; } }
+    input { padding:0.45rem 0.55rem; border:1px solid var(--rule); border-radius:4px; font-family:ui-monospace,monospace; font-size:0.8rem; }
+    table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+    th, td { padding:0.46rem 0.5rem; border-bottom:1px solid var(--rule); font-variant-numeric:tabular-nums; }
+    th { text-align:left; font-family:ui-monospace,monospace; font-size:0.72rem; text-transform:uppercase; color:var(--muted); }
+    td.num, th.num { text-align:right; font-family:ui-monospace,monospace; }
+    .double-total td { font-weight:700; border-top:1px solid var(--pine); border-bottom:3px double var(--pine); background:#ECF2EE; }
+    .hash-box { font-family:ui-monospace,monospace; font-size:0.74rem; word-break:break-all; background:#F8FAF8; border:1px solid var(--rule); padding:0.65rem; border-radius:4px; margin:0.5rem 0; }
+    .status-pill { display:inline-block; padding:0.2rem 0.55rem; border-radius:4px; font-family:ui-monospace,monospace; font-size:0.76rem; font-weight:700; }
+    .ok { background:#D8F3DC; color:#0F291E; }
+    .fail { background:#FCE8E6; color:#9B1C1C; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="head">
+      <div>
+        <span class="kicker">Project B · Precision Ledger &amp; Merkle Proof Engine</span>
+        <h1>128-Bit Micro-Dollar Reconciliation &amp; Audit Workbench</h1>
+      </div>
+      <div class="links">
+        <a href="../">All 5 Workbenches</a>
+        <a href="../../">Portfolio Studio</a>
+      </div>
+    </div>
+
+    <div class="cols">
+      <section class="card">
+        <span class="kicker">Double-Entry Journal (10^-6 USD BigInt)</span>
+        <div class="row-form">
+          <input id="in-cp" type="text" value="Vertex Data LLC" aria-label="Counterparty" />
+          <input id="in-ref" type="text" value="ACH-2026-884" aria-label="Reference" />
+          <input id="in-amt" type="text" value="950.125000" aria-label="Amount USD" />
+          <button id="add-entry-btn" type="button">Post Entry</button>
+        </div>
+
+        <div class="actions">
+          <button id="export-csv-btn" type="button" class="alt">Export Reconciled CSV</button>
+          <button id="export-json-btn" type="button" class="alt">Export Audit JSON</button>
+          <span id="compute-stat" style="font-family:ui-monospace,monospace;font-size:0.78rem;color:var(--muted);align-self:center;">0.00 ms</span>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Counterparty / Memo</th><th>Ref</th><th class="num">Micro-USD Exact</th><th class="num">GAAP Cents</th></tr>
+            </thead>
+            <tbody id="ledger-rows"></tbody>
+            <tfoot>
+              <tr class="double-total">
+                <td colspan="3">Trial Balance Net Drift (Debits - Credits)</td>
+                <td id="total-micro" class="num">$0.000000</td>
+                <td id="total-drift" class="num">$0.00</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" aria-live="polite">
+        <span class="kicker">SHA-256 Merkle Inclusion Proof &amp; Tamper Check</span>
+        <p style="margin:0.35rem 0 0.65rem;font-size:0.86rem;color:var(--muted);">Verify any posted entry against the canonical SHA-256 Merkle root, or inject a 1-cent modification to observe proof invalidation.</p>
+        <div class="actions">
+          <button id="verify-clean-btn" type="button">Verify Clean Proof</button>
+          <button id="tamper-leaf-btn" type="button" class="warn">Inject $0.01 Leaf Tamper</button>
+        </div>
+        <div>Status: <span id="merkle-status" class="status-pill ok">VERIFIED</span></div>
+        <div class="hash-box" id="merkle-root-box"></div>
+        <div class="hash-box" id="recon-summary-box"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import {
+      LedgerJournal,
+      buildMerkleTree,
+      formatCentsUsd,
+      formatMicroUsd,
+      getMerkleProof,
+      parseMicroUsd,
+      reconcileCsvEntries,
+      roundHalfEvenCents,
+      verifyMerkleProof
+    } from "../algorithms.mjs";
+
+    const seedRows = [
+      { id: "INV-101", cp: "Northstar Logistics", ref: "ACH-2026-881", amt: "450.000000" },
+      { id: "INV-102", cp: "Harbor Freight API", ref: "ACH-2026-882", amt: "950.005000" },
+      { id: "INV-103", cp: "Metro Grid Ops", ref: "ACH-2026-883", amt: "175.015000" }
+    ];
+
+    const journal = new LedgerJournal();
+    const refs = new Map();
+    seedRows.forEach((r) => {
+      journal.postEntry({
+        id: r.id,
+        date: "2026-11-26",
+        accountDebit: "OperatingCash",
+        accountCredit: "ServiceRevenue",
+        amountMicro: parseMicroUsd(r.amt),
+        memo: `${r.cp} (${r.ref})`
+      });
+      refs.set(r.id, { counterparty: r.cp, reference: r.ref });
+    });
+
+    let tamperMode = false;
+    const rowsEl = document.getElementById("ledger-rows");
+    const totalMicroEl = document.getElementById("total-micro");
+    const totalDriftEl = document.getElementById("total-drift");
+    const statusEl = document.getElementById("merkle-status");
+    const rootBox = document.getElementById("merkle-root-box");
+    const reconBox = document.getElementById("recon-summary-box");
+    const statEl = document.getElementById("compute-stat");
+
+    function buildExportPayload() {
+      const leaves = journal.canonicalLeaves();
+      const tree = buildMerkleTree(leaves);
+      return {
+        merkleRoot: tree.root,
+        driftMicro: journal.trialBalanceDriftMicro().toString(),
+        entries: journal.entries.map((e) => ({
+          id: e.id,
+          date: e.date,
+          memo: e.memo,
+          amountMicro: e.amountMicro.toString(),
+          amountFormatted: formatMicroUsd(e.amountMicro)
+        }))
+      };
+    }
+
+    function render() {
+      const t0 = performance.now();
+      rowsEl.innerHTML = journal.entries.map((e) => {
+        const meta = refs.get(e.id) || { counterparty: e.memo, reference: "LOCAL" };
+        const cents = roundHalfEvenCents(e.amountMicro);
+        return `<tr>
+          <td><code>${e.id}</code></td>
+          <td>${meta.counterparty}</td>
+          <td><code>${meta.reference}</code></td>
+          <td class="num">${formatMicroUsd(e.amountMicro)}</td>
+          <td class="num">${formatCentsUsd(cents)}</td>
+        </tr>`;
+      }).join("");
+
+      totalMicroEl.textContent = formatMicroUsd(journal.totalDebitsMicro());
+      const drift = journal.trialBalanceDriftMicro();
+      totalDriftEl.textContent = `${formatMicroUsd(drift)} drift`;
+
+      const leaves = journal.canonicalLeaves();
+      const tree = buildMerkleTree(leaves);
+      const proof = getMerkleProof(tree.levels, 0);
+      const targetLeaf = tamperMode ? `${leaves[0]}|TAMPER=+10000` : leaves[0];
+      const ok = verifyMerkleProof(targetLeaf, proof, tree.root);
+
+      statusEl.className = `status-pill ${ok ? "ok" : "fail"}`;
+      statusEl.textContent = ok ? "MERKLE PROOF VALID (0.000000 DRIFT)" : "TAMPER DETECTED (PROOF MISMATCH)";
+      rootBox.textContent = `Merkle Root (SHA-256, ${leaves.length} leaves): ${tree.root} | Proof Depth: ${proof.length}`;
+
+      const ledgerList = journal.entries.map((e) => {
+        const meta = refs.get(e.id) || { counterparty: e.memo, reference: "LOCAL" };
+        return { id: e.id, counterparty: meta.counterparty, reference: meta.reference, amountMicro: e.amountMicro };
+      });
+      const bankList = ledgerList.map((r, i) => ({ id: `BNK-${200 + i}`, counterparty: r.counterparty, reference: r.reference, amountMicro: r.amountMicro }));
+      const rec = reconcileCsvEntries(ledgerList, bankList);
+      reconBox.textContent = `Reconciliation Result: ${rec.matched.length}/${ledgerList.length} matched | Unmatched Ledger: ${rec.unmatchedLedger.length} | Unmatched Bank: ${rec.unmatchedBank.length}`;
+
+      statEl.textContent = `${(performance.now() - t0).toFixed(2)} ms`;
+    }
+
+    document.getElementById("add-entry-btn").addEventListener("click", () => {
+      const cp = document.getElementById("in-cp").value.trim() || "Direct Client";
+      const ref = document.getElementById("in-ref").value.trim() || "ACH-NEW";
+      const amtStr = document.getElementById("in-amt").value.trim();
+      try {
+        const id = `INV-${101 + journal.entries.length}`;
+        journal.postEntry({
+          id,
+          date: "2026-11-26",
+          accountDebit: "OperatingCash",
+          accountCredit: "ServiceRevenue",
+          amountMicro: parseMicroUsd(amtStr),
+          memo: `${cp} (${ref})`
+        });
+        refs.set(id, { counterparty: cp, reference: ref });
+        tamperMode = false;
+        render();
+      } catch (err) {
+        statusEl.className = "status-pill fail";
+        statusEl.textContent = err.message;
+      }
+    });
+
+    document.getElementById("verify-clean-btn").addEventListener("click", () => { tamperMode = false; render(); });
+    document.getElementById("tamper-leaf-btn").addEventListener("click", () => { tamperMode = true; render(); });
+
+    function triggerDownload(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("export-csv-btn").addEventListener("click", () => {
+      const header = "id,date,counterparty,reference,amount_micro,gaap_cents";
+      const lines = journal.entries.map((e) => {
+        const m = refs.get(e.id) || { counterparty: e.memo, reference: "LOCAL" };
+        return `${e.id},${e.date},"${m.counterparty}",${m.reference},${e.amountMicro.toString()},${roundHalfEvenCents(e.amountMicro).toString()}`;
+      });
+      triggerDownload("reconciled_ledger.csv", [header, ...lines].join("\n"), "text/csv");
+    });
+
+    document.getElementById("export-json-btn").addEventListener("click", () => {
+      triggerDownload("merkle_audit_receipt.json", JSON.stringify(buildExportPayload(), null, 2), "application/json");
+    });
+
+    render();
+  </script>
+</body>
+</html>

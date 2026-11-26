@@ -11,6 +11,13 @@
 - Aho-Corasick Guardrail Automaton, SimHash & 120-Case Eval: https://nahianakhtar.github.io/demos/guardrail-automaton/
 - Per-Monitor V2 UIA DPI Coordinate Metrology Bench: https://nahianakhtar.github.io/demos/uia-metrology/
 
+## Free Local Browser Calculators (/tools/)
+- Tools Directory: https://nahianakhtar.github.io/tools/
+- RAG and GPU VRAM KV Cache Cost Calculator: https://nahianakhtar.github.io/tools/rag-vram-cost/
+- Freelance Net After Tax and Payment Fee Calculator: https://nahianakhtar.github.io/tools/freelance-net-tax/
+- Benford First Digit Chi Square and MAD Invoice Auditor: https://nahianakhtar.github.io/tools/benford-invoice-audit/
+- Little's Law WIP, Throughput and p95 Queue Latency Calculator: https://nahianakhtar.github.io/tools/littles-law-throughput/
+
 ## Published Engineering Briefs (/articles/)
 - MCP 2025-11-25 OAuth 2.1 PKCE, Session Replay & SQLite FTS5 RRF: https://nahianakhtar.github.io/articles/mcp-oauth-pkce-sqlite-rrf/
 - Zero-Allocation 64B Cache-Line Rings Across Rust 2021, C11 FFI & WebAssembly: https://nahianakhtar.github.io/articles/cache-line-64b-c11-crc32c-rust-ffi/

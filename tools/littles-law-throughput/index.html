@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free Little's Law WIP, throughput, utilization, and Kingman p95 queue latency calculator for engineering sprints and API worker pools." />
+  <link rel="canonical" href="https://nahianakhtar.github.io/tools/littles-law-throughput/" />
+  <title>Little's Law WIP, Throughput &amp; p95 Queue Latency | Nahian Akhtar</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Little's Law WIP Throughput and p95 Queue Latency Calculator",
+    "url": "https://nahianakhtar.github.io/tools/littles-law-throughput/",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "Nahian Akhtar", "url": "https://nahianakhtar.github.io/" }
+  }
+  </script>
+  <style>
+    :root { --bg:#ECEFF3; --surface:#FFFFFF; --ink:#0B192C; --muted:#475569; --accent:#C85A00; --rule:rgba(11,25,44,0.16); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.55; overflow-x:clip; }
+    .wrap { max-width:960px; margin:0 auto; padding:1.75rem 1.25rem 3.5rem; }
+    .top { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:0.85rem; border-bottom:2px solid var(--ink); padding-bottom:0.9rem; margin-bottom:1.5rem; }
+    .nav { display:flex; gap:0.45rem; flex-wrap:wrap; }
+    .nav a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.68rem; border:1px solid var(--rule); border-radius:4px; background:var(--surface); color:var(--ink); text-decoration:none; }
+    .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.73rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent); font-weight:700; margin-bottom:0.3rem; }
+    h1 { margin:0; font-family:Georgia,serif; font-size:clamp(1.38rem,2.6vw,2rem); line-height:1.2; }
+    .layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.08fr); gap:1.15rem; align-items:start; }
+    @media (max-width:760px) { .layout { grid-template-columns:1fr; } }
+    .panel { min-width:0; background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1.15rem; }
+    .panel h2 { margin:0 0 0.85rem; font-size:1rem; font-family:Georgia,serif; border-bottom:1px solid var(--rule); padding-bottom:0.4rem; }
+    .fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:0.78rem; }
+    label { display:block; font-size:0.78rem; font-weight:600; color:var(--muted); margin-bottom:0.24rem; }
+    input, select { width:100%; font:inherit; font-size:0.9rem; padding:0.46rem 0.58rem; border:1px solid var(--rule); border-radius:4px; background:#F8FAFC; color:var(--ink); }
+    .presets { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:0.85rem; }
+    button { font-family:ui-monospace,monospace; font-size:0.76rem; padding:0.38rem 0.68rem; border-radius:4px; border:1px solid var(--rule); background:var(--bg); color:var(--ink); cursor:pointer; }
+    button.primary { background:var(--ink); color:#FFFFFF; border-color:var(--ink); font-weight:600; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:0.65rem; margin-bottom:0.95rem; }
+    .kpi { min-width:0; border:1px solid var(--rule); border-radius:5px; padding:0.65rem 0.75rem; background:#F8FAFC; }
+    .kpi .lbl { display:block; font-size:0.71rem; color:var(--muted); text-transform:uppercase; font-family:ui-monospace,monospace; }
+    .kpi .val { display:block; font-size:1.14rem; font-weight:700; font-family:ui-monospace,monospace; font-variant-numeric:tabular-nums; margin-top:0.15rem; }
+    .status { padding:0.68rem 0.85rem; border-radius:5px; font-weight:600; font-size:0.86rem; margin-bottom:0.9rem; }
+    .status.ok { background:#DCFCE7; color:#14532D; }
+    .status.warn { background:#FEF3C7; color:#92400E; }
+    .status.bad { background:#FEE2E2; color:#991B1B; }
+    table { width:100%; border-collapse:collapse; font-size:0.86rem; font-variant-numeric:tabular-nums; }
+    th, td { text-align:left; padding:0.46rem 0.42rem; border-bottom:1px solid var(--rule); }
+    th { font-family:ui-monospace,monospace; font-size:0.73rem; color:var(--muted); text-transform:uppercase; }
+    .meta { margin-top:0.8rem; font-family:ui-monospace,monospace; font-size:0.75rem; color:var(--muted); }
+    .support { margin-top:1.5rem; padding:1rem 1.15rem; background:var(--surface); border:1px solid var(--rule); border-left:4px solid var(--accent); border-radius:6px; display:flex; flex-wrap:wrap; gap:0.8rem; align-items:center; justify-content:space-between; }
+    .support a { font-family:ui-monospace,monospace; font-size:0.78rem; font-weight:600; color:#FFFFFF; background:var(--ink); text-decoration:none; padding:0.46rem 0.85rem; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <span class="kicker">Tool 04 · Queueing Theory &amp; SLA Engineering</span>
+        <h1>Little's Law WIP, Throughput &amp; p95 Queue Latency</h1>
+      </div>
+      <nav class="nav" aria-label="Tool Navigation">
+        <a href="../">All Tools (4)</a>
+        <a href="../../demos/rust-ring-dag/">Ring &amp; DAG Bench</a>
+        <a href="../../">Home</a>
+      </nav>
+    </header>
+
+    <div class="layout">
+      <section class="panel" aria-label="Queue Inputs">
+        <h2>1. Arrival, Service &amp; Concurrency</h2>
+        <div class="presets" role="group" aria-label="Queue Scenarios">
+          <button type="button" data-q="sprint">Solo Kanban Sprint (WIP Cap 3)</button>
+          <button type="button" data-q="api">FastAPI Worker Pool (60% Load)</button>
+          <button type="button" data-q="burst">Saturated GPU Inference (92%)</button>
+        </div>
+
+        <div class="fields">
+          <div><label for="lambda">Arrival Rate (items / time unit)</label><input id="lambda" type="number" min="0.01" max="100000" step="0.1" value="18" /></div>
+          <div><label for="mu">Service Rate per Worker (items / unit)</label><input id="mu" type="number" min="0.01" max="100000" step="0.1" value="10" /></div>
+          <div><label for="workers">Parallel Workers / Slots (c)</label><input id="workers" type="number" min="1" max="256" step="1" value="3" /></div>
+          <div><label for="ca">Arrival Variability (Ca)</label><input id="ca" type="number" min="0.1" max="4.0" step="0.1" value="1.0" /></div>
+          <div><label for="cs">Service Variability (Cs)</label><input id="cs" type="number" min="0.1" max="4.0" step="0.1" value="1.0" /></div>
+          <div>
+            <label for="unit">Time Unit Label</label>
+            <select id="unit">
+              <option value="sec" selected>Seconds (API / RPC)</option>
+              <option value="min">Minutes (Batch Jobs)</option>
+              <option value="day">Days (Client Contracts)</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:0.9rem;">
+          <button id="sim-btn" type="button" class="primary">Update Queue Model</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Queue Outputs">
+        <h2>2. Little's Law &amp; Tail Latency</h2>
+        <div id="status-banner" class="status ok" aria-live="polite">Ready</div>
+        <div class="kpis" id="kpi-grid"></div>
+        <table aria-label="Utilization Sensitivity Sweep">
+          <thead>
+            <tr><th>Target Load</th><th>Avg Wait (Wq)</th><th>Cycle Time (W)</th><th>Est. p95 Latency</th></tr>
+          </thead>
+          <tbody id="sweep-tbody"></tbody>
+        </table>
+        <div class="meta" id="queue-meta">Ready</div>
+      </section>
+    </div>
+
+    <aside class="support" aria-label="Rust Systems Kit">
+      <div>
+        <span class="kicker">O(1) Streaming Tail Quantiles</span>
+        <strong>Track live p95 and p99 latency in 512 bytes using Rust and WebAssembly Jain-Chlamtac P2 estimators.</strong>
+      </div>
+      <a href="https://github.com/nahianakhtar/polyglot-agent-runtime-rs" target="_blank" rel="noopener noreferrer">View Rust Repo</a>
+    </aside>
+  </main>
+
+  <script>
+    (function () {
+      const el = (id) => document.getElementById(id);
+      const SCENARIOS = {
+        sprint: { lambda: 0.45, mu: 0.25, workers: 3, ca: 0.8, cs: 0.9, unit: "day" },
+        api: { lambda: 18, mu: 10, workers: 3, ca: 1.0, cs: 1.0, unit: "sec" },
+        burst: { lambda: 27.6, mu: 10, workers: 3, ca: 1.2, cs: 1.3, unit: "sec" }
+      };
+
+      function kingman(rho, mu, c, ca, cs) {
+        const serviceTime = 1 / mu;
+        if (rho >= 1) return { wq: Infinity, w: Infinity, p95: Infinity };
+        const utilFactor = Math.pow(rho, Math.sqrt(2 * (c + 1)) - 1) / (c * (1 - rho));
+        const varFactor = (ca * ca + cs * cs) / 2;
+        const wq = varFactor * utilFactor * serviceTime;
+        const w = wq + serviceTime;
+        const p95 = serviceTime + wq * 2.9957;
+        return { wq, w, p95 };
+      }
+
+      function compute() {
+        const t0 = performance.now();
+        const lambda = Math.max(0.001, Number(el("lambda").value) || 1);
+        const mu = Math.max(0.001, Number(el("mu").value) || 1);
+        const c = Math.max(1, Math.floor(Number(el("workers").value) || 1));
+        const ca = Math.max(0.1, Number(el("ca").value) || 1);
+        const cs = Math.max(0.1, Number(el("cs").value) || 1);
+        const unit = el("unit").value;
+
+        const rho = lambda / (c * mu);
+        const res = kingman(rho, mu, c, ca, cs);
+        const avgWip = Number.isFinite(res.w) ? lambda * res.w : Infinity;
+
+        const banner = el("status-banner");
+        if (rho >= 1) {
+          banner.className = "status bad";
+          banner.textContent = `Unstable Queue (rho = ${(rho * 100).toFixed(1)}%): Arrival rate exceeds capacity. Add workers or enforce admission control.`;
+        } else if (rho >= 0.85) {
+          banner.className = "status warn";
+          banner.textContent = `High Saturation (rho = ${(rho * 100).toFixed(1)}%): Queue latency climbs sharply above 85% utilization. Cap active WIP at ${Math.max(c, Math.ceil(avgWip))}.`;
+        } else {
+          banner.className = "status ok";
+          banner.textContent = `Stable Regime (rho = ${(rho * 100).toFixed(1)}%): Recommended Kanban WIP cap is ${Math.max(c, Math.ceil(avgWip))} concurrent items.`;
+        }
+
+        const fmtT = (v) => Number.isFinite(v) ? `${v.toFixed(3)} ${unit}` : "Unbounded";
+        el("kpi-grid").innerHTML = [
+          ["Utilization (rho)", (rho * 100).toFixed(1) + "%"],
+          ["Little's Law WIP (L)", Number.isFinite(avgWip) ? avgWip.toFixed(2) : "Unbounded"],
+          ["Cycle Time (W)", fmtT(res.w)],
+          ["Est. p95 Latency", fmtT(res.p95)]
+        ].map(([k, v]) => `<div class="kpi"><span class="lbl">${k}</span><span class="val">${v}</span></div>`).join("");
+
+        const loads = [0.5, 0.7, 0.85, 0.92, 0.96];
+        el("sweep-tbody").innerHTML = loads.map((r) => {
+          const k = kingman(r, mu, c, ca, cs);
+          return `<tr><td>${(r * 100).toFixed(0)}%</td><td>${k.wq.toFixed(3)} ${unit}</td><td>${k.w.toFixed(3)} ${unit}</td><td>${k.p95.toFixed(3)} ${unit}</td></tr>`;
+        }).join("");
+
+        const dt = performance.now() - t0;
+        el("queue-meta").textContent = `Solved locally in ${dt.toFixed(2)} ms · L = lambda * W verified`;
+      }
+
+      document.querySelectorAll("button[data-q]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const s = SCENARIOS[btn.dataset.q];
+          if (!s) return;
+          el("lambda").value = s.lambda;
+          el("mu").value = s.mu;
+          el("workers").value = s.workers;
+          el("ca").value = s.ca;
+          el("cs").value = s.cs;
+          el("unit").value = s.unit;
+          compute();
+        });
+      });
+
+      el("sim-btn").addEventListener("click", compute);
+      document.querySelectorAll("input, select").forEach((n) => n.addEventListener("input", compute));
+      compute();
+    })();
+  </script>
+</body>
+</html>

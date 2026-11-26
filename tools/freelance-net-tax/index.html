@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Exact integer cent freelance take-home calculator for Upwork fees, Stripe ACH $5 cap, 35% quarterly tax reserve, and New York $800 written contract alerts." />
+  <link rel="canonical" href="https://nahianakhtar.github.io/tools/freelance-net-tax/" />
+  <title>Freelance Net After Tax &amp; Payment Fee Calculator | Nahian Akhtar</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Freelance Net After Tax and Payment Fee Calculator",
+    "url": "https://nahianakhtar.github.io/tools/freelance-net-tax/",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "Nahian Akhtar", "url": "https://nahianakhtar.github.io/" }
+  }
+  </script>
+  <style>
+    :root { --bg:#F4F6F4; --surface:#FFFFFF; --ink:#0F291E; --muted:#475569; --accent:#14532D; --rule:rgba(15,41,30,0.16); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.55; overflow-x:clip; }
+    .wrap { max-width:960px; margin:0 auto; padding:1.75rem 1.25rem 3.5rem; }
+    .top { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:0.85rem; border-bottom:2px solid var(--ink); padding-bottom:0.9rem; margin-bottom:1.5rem; }
+    .nav { display:flex; gap:0.45rem; flex-wrap:wrap; }
+    .nav a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.68rem; border:1px solid var(--rule); border-radius:4px; background:var(--surface); color:var(--ink); text-decoration:none; }
+    .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.73rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent); font-weight:700; margin-bottom:0.3rem; }
+    h1 { margin:0; font-family:Georgia,serif; font-size:clamp(1.38rem,2.6vw,2rem); line-height:1.2; }
+    .layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.08fr); gap:1.15rem; align-items:start; }
+    @media (max-width:760px) { .layout { grid-template-columns:1fr; } }
+    .panel { min-width:0; background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1.15rem; }
+    .panel h2 { margin:0 0 0.85rem; font-size:1rem; font-family:Georgia,serif; border-bottom:1px solid var(--rule); padding-bottom:0.4rem; }
+    .fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:0.78rem; }
+    label { display:block; font-size:0.78rem; font-weight:600; color:var(--muted); margin-bottom:0.24rem; }
+    input, select { width:100%; font:inherit; font-size:0.9rem; padding:0.46rem 0.58rem; border:1px solid var(--rule); border-radius:4px; background:#FAFBF9; color:var(--ink); }
+    button { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.46rem 0.85rem; border-radius:4px; border:1px solid var(--accent); background:var(--accent); color:#FFFFFF; font-weight:600; cursor:pointer; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:0.65rem; margin-bottom:1rem; }
+    .kpi { min-width:0; border:1px solid var(--rule); border-radius:5px; padding:0.65rem 0.75rem; background:#FAFBF9; }
+    .kpi .lbl { display:block; font-size:0.71rem; color:var(--muted); text-transform:uppercase; font-family:ui-monospace,monospace; }
+    .kpi .val { display:block; font-size:1.16rem; font-weight:700; font-family:ui-monospace,monospace; font-variant-numeric:tabular-nums; margin-top:0.15rem; }
+    table { width:100%; border-collapse:collapse; font-size:0.87rem; font-variant-numeric:tabular-nums; }
+    th, td { text-align:left; padding:0.5rem 0.45rem; border-bottom:1px solid var(--rule); }
+    td.num, th.num { text-align:right; font-family:ui-monospace,monospace; }
+    tr.total td { border-top:2px solid var(--ink); border-bottom:3px double var(--ink); font-weight:700; }
+    .alert { margin-top:0.95rem; padding:0.75rem 0.9rem; border-radius:5px; font-size:0.86rem; border:1px solid var(--rule); }
+    .alert.ny { background:#FEF3C7; border-color:#D97706; color:#78350F; }
+    .alert.ok { background:#DCFCE7; border-color:#15803D; color:#14532D; }
+    .meta { margin-top:0.8rem; font-family:ui-monospace,monospace; font-size:0.76rem; color:var(--muted); }
+    .support { margin-top:1.5rem; padding:1rem 1.15rem; background:var(--surface); border:1px solid var(--rule); border-left:4px solid var(--accent); border-radius:6px; display:flex; flex-wrap:wrap; gap:0.8rem; align-items:center; justify-content:space-between; }
+    .support a { font-family:ui-monospace,monospace; font-size:0.78rem; font-weight:600; color:#FFFFFF; background:var(--accent); text-decoration:none; padding:0.46rem 0.85rem; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <span class="kicker">Tool 02 · Integer Cent Contractor Ledger</span>
+        <h1>Freelance Net After Tax &amp; Payment Fee Calculator</h1>
+      </div>
+      <nav class="nav" aria-label="Tool Navigation">
+        <a href="../">All Tools (4)</a>
+        <a href="../../demos/ledger-audit/">Ledger Audit Bench</a>
+        <a href="../../">Home</a>
+      </nav>
+    </header>
+
+    <div class="layout">
+      <section class="panel" aria-label="Invoice Parameters">
+        <h2>1. Contract &amp; Fee Inputs</h2>
+        <div class="fields">
+          <div><label for="gross">Gross Invoice (USD)</label><input id="gross" type="number" min="1" max="1000000" step="10" value="1500" /></div>
+          <div>
+            <label for="channel">Payment Channel</label>
+            <select id="channel">
+              <option value="upwork10" selected>Upwork Service Fee (10%)</option>
+              <option value="upwork5">Upwork Direct / Enterprise (5%)</option>
+              <option value="stripe_ach">Stripe ACH Direct Debit (0.8%, $5 cap)</option>
+              <option value="stripe_card">Stripe Card (2.9% + $0.30)</option>
+              <option value="wire">Direct Bank Transfer ($0)</option>
+            </select>
+          </div>
+          <div><label for="tax-pct">Tax Reserve Rate (%)</label><input id="tax-pct" type="number" min="0" max="60" step="1" value="35" /></div>
+          <div>
+            <label for="state">Jurisdiction</label>
+            <select id="state">
+              <option value="NY" selected>New York (NY FIFA $800 Rule)</option>
+              <option value="US">Other US State</option>
+            </select>
+          </div>
+          <div><label for="annual-count">Invoices per Year</label><input id="annual-count" type="number" min="1" max="200" step="1" value="24" /></div>
+          <div><label for="billable-hrs">Hours Spent on Deliverable</label><input id="billable-hrs" type="number" min="0.5" max="1000" step="0.5" value="28" /></div>
+        </div>
+        <div style="margin-top:0.95rem;">
+          <button id="recalc-btn" type="button">Calculate Exact Ledger</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Calculated Ledger Breakdown">
+        <h2>2. Workpaper Breakdown (Integer Cents)</h2>
+        <div class="kpis" id="kpi-strip" aria-live="polite"></div>
+
+        <table aria-label="Invoice Deduction Schedule">
+          <thead>
+            <tr><th>Line Item</th><th class="num">Amount (USD)</th><th class="num">Share</th></tr>
+          </thead>
+          <tbody id="ledger-body"></tbody>
+        </table>
+
+        <div id="ny-flag" class="alert ny" aria-live="polite"></div>
+        <div class="meta" id="calc-meta">Ready</div>
+      </section>
+    </div>
+
+    <aside class="support" aria-label="Accounting CLI Kit">
+      <div>
+        <span class="kicker">Zero Drift Accounting Engine</span>
+        <strong>Automate CSV reconciliation and Merkle receipts with exact <code>Decimal ROUND_HALF_EVEN</code> math.</strong>
+      </div>
+      <a href="https://github.com/nahianakhtar/mcp-automation-demo" target="_blank" rel="noopener noreferrer">Inspect MIT Repo</a>
+    </aside>
+  </main>
+
+  <script>
+    (function () {
+      const el = (id) => document.getElementById(id);
+      const fmtUsd = (cents) => "$" + (cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      function compute() {
+        const t0 = performance.now();
+        const grossDollars = Math.max(0, Number(el("gross").value) || 0);
+        const grossCents = Math.round(grossDollars * 100);
+        const channel = el("channel").value;
+        const taxPct = Math.min(60, Math.max(0, Number(el("tax-pct").value) || 0));
+        const state = el("state").value;
+        const annualCount = Math.max(1, Number(el("annual-count").value) || 1);
+        const hours = Math.max(0.5, Number(el("billable-hrs").value) || 1);
+
+        let feeCents = 0;
+        if (channel === "upwork10") feeCents = Math.round(grossCents * 0.10);
+        else if (channel === "upwork5") feeCents = Math.round(grossCents * 0.05);
+        else if (channel === "stripe_ach") feeCents = Math.min(500, Math.round(grossCents * 0.008));
+        else if (channel === "stripe_card") feeCents = Math.round(grossCents * 0.029) + 30;
+        else feeCents = 0;
+
+        const preTaxNet = Math.max(0, grossCents - feeCents);
+        const taxReserve = Math.round(preTaxNet * (taxPct / 100));
+        const spendable = Math.max(0, preTaxNet - taxReserve);
+        const takeHomePct = grossCents > 0 ? (spendable / grossCents) * 100 : 0;
+        const effectiveHourly = (spendable / 100) / hours;
+
+        el("kpi-strip").innerHTML = [
+          ["Spendable Net", fmtUsd(spendable)],
+          ["Tax Reserve", fmtUsd(taxReserve)],
+          ["Effective Net / Hr", "$" + effectiveHourly.toFixed(2)],
+          ["Annualized Net", fmtUsd(spendable * annualCount)]
+        ].map(([k, v]) => `<div class="kpi"><span class="lbl">${k}</span><span class="val">${v}</span></div>`).join("");
+
+        const pct = (c) => grossCents > 0 ? ((c / grossCents) * 100).toFixed(2) + "%" : "0.00%";
+        el("ledger-body").innerHTML = `
+          <tr><td>Gross Client Billing</td><td class="num">${fmtUsd(grossCents)}</td><td class="num">100.00%</td></tr>
+          <tr><td>Platform / Processing Fee</td><td class="num">-${fmtUsd(feeCents)}</td><td class="num">${pct(feeCents)}</td></tr>
+          <tr><td>Pre-Tax Bank Deposit</td><td class="num">${fmtUsd(preTaxNet)}</td><td class="num">${pct(preTaxNet)}</td></tr>
+          <tr><td>Quarterly Tax Reserve (${taxPct}%)</td><td class="num">-${fmtUsd(taxReserve)}</td><td class="num">${pct(taxReserve)}</td></tr>
+          <tr class="total"><td>Net Spendable Cash</td><td class="num">${fmtUsd(spendable)}</td><td class="num">${takeHomePct.toFixed(2)}%</td></tr>
+        `;
+
+        const flag = el("ny-flag");
+        if (state === "NY" && grossCents >= 80000) {
+          flag.className = "alert ny";
+          flag.textContent = "NY Freelance Isn't Free Act Notice: This invoice meets or exceeds $800. Execute a written contract specifying itemized services, payment date (within 30 days if unspecified), and retain copies for 6 years. Estimate only, not legal or CPA advice.";
+        } else {
+          flag.className = "alert ok";
+          flag.textContent = "Below the $800 New York single-contract threshold (note cumulative 120-day work with one client still triggers written contract protection in NY). Estimate only, not legal or CPA advice.";
+        }
+
+        const dt = performance.now() - t0;
+        el("calc-meta").textContent = `Exact integer cent audit completed in ${dt.toFixed(2)} ms`;
+      }
+
+      el("recalc-btn").addEventListener("click", compute);
+      document.querySelectorAll("input, select").forEach((n) => n.addEventListener("input", compute));
+      compute();
+    })();
+  </script>
+</body>
+</html>

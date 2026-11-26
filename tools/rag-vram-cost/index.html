@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free local browser GPU VRAM, GQA KV cache sizing, and monthly cloud API vs local inference cost calculator." />
+  <link rel="canonical" href="https://nahianakhtar.github.io/tools/rag-vram-cost/" />
+  <title>RAG &amp; GPU VRAM / KV Cache Cost Calculator | Nahian Akhtar</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "RAG and GPU VRAM KV Cache Cost Calculator",
+    "url": "https://nahianakhtar.github.io/tools/rag-vram-cost/",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "Nahian Akhtar", "url": "https://nahianakhtar.github.io/" }
+  }
+  </script>
+  <style>
+    :root { --bg:#FAF8F4; --surface:#FFFFFF; --ink:#111315; --muted:#4B5563; --accent:#1B4332; --warn:#B45309; --bad:#B91C1C; --rule:rgba(17,19,21,0.14); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.55; overflow-x:clip; }
+    .wrap { max-width:980px; margin:0 auto; padding:1.75rem 1.25rem 3.5rem; }
+    .top { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:0.85rem; border-bottom:2px solid var(--ink); padding-bottom:0.9rem; margin-bottom:1.5rem; }
+    .nav { display:flex; gap:0.45rem; flex-wrap:wrap; }
+    .nav a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.68rem; border:1px solid var(--rule); border-radius:4px; background:var(--surface); color:var(--ink); text-decoration:none; }
+    .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.73rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent); font-weight:700; margin-bottom:0.3rem; }
+    h1 { margin:0; font-family:Georgia,serif; font-size:clamp(1.38rem,2.6vw,2rem); line-height:1.2; }
+    .layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.08fr); gap:1.15rem; align-items:start; }
+    @media (max-width:760px) { .layout { grid-template-columns:1fr; } }
+    .panel { min-width:0; background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1.15rem; }
+    .panel h2 { margin:0 0 0.85rem; font-size:1rem; font-family:Georgia,serif; border-bottom:1px solid var(--rule); padding-bottom:0.4rem; }
+    .field-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:0.75rem; }
+    label { display:block; font-size:0.78rem; font-weight:600; color:var(--muted); margin-bottom:0.24rem; }
+    input, select { width:100%; font:inherit; font-size:0.9rem; padding:0.46rem 0.58rem; border:1px solid var(--rule); border-radius:4px; background:#FDFCFA; color:var(--ink); }
+    .presets { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:0.9rem; }
+    button { font-family:ui-monospace,monospace; font-size:0.76rem; padding:0.38rem 0.65rem; border-radius:4px; border:1px solid var(--rule); background:var(--bg); color:var(--ink); cursor:pointer; }
+    button.primary { background:var(--accent); color:#FFFFFF; border-color:var(--accent); font-weight:600; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:0.65rem; margin-bottom:1rem; }
+    .kpi { min-width:0; border:1px solid var(--rule); border-radius:5px; padding:0.65rem 0.75rem; background:#FDFCFA; }
+    .kpi .lbl { display:block; font-size:0.72rem; color:var(--muted); text-transform:uppercase; font-family:ui-monospace,monospace; }
+    .kpi .val { display:block; font-size:1.18rem; font-weight:700; font-family:ui-monospace,monospace; font-variant-numeric:tabular-nums; margin-top:0.15rem; }
+    table { width:100%; border-collapse:collapse; font-size:0.86rem; font-variant-numeric:tabular-nums; }
+    th, td { text-align:left; padding:0.48rem 0.45rem; border-bottom:1px solid var(--rule); }
+    th { font-family:ui-monospace,monospace; font-size:0.74rem; color:var(--muted); text-transform:uppercase; }
+    .badge { display:inline-block; font-family:ui-monospace,monospace; font-size:0.74rem; padding:0.16rem 0.45rem; border-radius:3px; font-weight:700; }
+    .ok { background:#DCFCE7; color:#14532D; }
+    .warn { background:#FEF3C7; color:#92400E; }
+    .bad { background:#FEE2E2; color:#991B1B; }
+    .meta-bar { margin-top:0.85rem; font-family:ui-monospace,monospace; font-size:0.76rem; color:var(--muted); }
+    .support { margin-top:1.5rem; padding:1rem 1.15rem; background:var(--surface); border:1px solid var(--rule); border-left:4px solid var(--accent); border-radius:6px; display:flex; flex-wrap:wrap; gap:0.8rem; align-items:center; justify-content:space-between; }
+    .support a { font-family:ui-monospace,monospace; font-size:0.78rem; font-weight:600; color:#FFFFFF; background:var(--accent); text-decoration:none; padding:0.46rem 0.85rem; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <span class="kicker">Tool 01 · Local Browser Hardware Sizing</span>
+        <h1>RAG &amp; GPU VRAM / KV Cache Cost Calculator</h1>
+      </div>
+      <nav class="nav" aria-label="Tool Navigation">
+        <a href="../">All Tools (4)</a>
+        <a href="../../demos/moe-rag/">MoE Workbench</a>
+        <a href="../../">Home</a>
+      </nav>
+    </header>
+
+    <div class="layout">
+      <section class="panel" aria-label="Model and Workload Inputs">
+        <h2>1. Model &amp; Traffic Parameters</h2>
+        <div class="presets" role="group" aria-label="Hardware Model Presets">
+          <button type="button" data-preset="qwen8">8B Dense (6 GiB GPU)</button>
+          <button type="button" data-preset="qwen14">14B GQA (12 GiB GPU)</button>
+          <button type="button" data-preset="qwen32">32B Reasoning (24 GiB)</button>
+          <button type="button" data-preset="llama70">70B Server (48 GiB)</button>
+        </div>
+
+        <div class="field-grid">
+          <div><label for="params-b">Parameters (Billions)</label><input id="params-b" type="number" min="0.5" max="405" step="0.5" value="8" /></div>
+          <div>
+            <label for="quant-bpw">Weight Quantization</label>
+            <select id="quant-bpw">
+              <option value="4.85" selected>Q4_K_M (4.85 bpw)</option>
+              <option value="5.65">Q5_K_M (5.65 bpw)</option>
+              <option value="6.56">Q6_K (6.56 bpw)</option>
+              <option value="8.50">Q8_0 (8.50 bpw)</option>
+              <option value="16.0">FP16 (16.0 bpw)</option>
+            </select>
+          </div>
+          <div><label for="ctx-tokens">Context Length (Tokens)</label><input id="ctx-tokens" type="number" min="1024" max="262144" step="1024" value="16384" /></div>
+          <div><label for="slots">Parallel KV Slots</label><input id="slots" type="number" min="1" max="32" step="1" value="2" /></div>
+          <div><label for="layers">Transformer Layers</label><input id="layers" type="number" min="8" max="128" step="1" value="32" /></div>
+          <div><label for="kv-heads">GQA KV Heads</label><input id="kv-heads" type="number" min="1" max="64" step="1" value="8" /></div>
+          <div><label for="head-dim">Head Dimension</label><input id="head-dim" type="number" min="64" max="256" step="64" value="128" /></div>
+          <div>
+            <label for="kv-bytes">KV Cache Precision</label>
+            <select id="kv-bytes">
+              <option value="1" selected>Q8_0 (1 byte/elem)</option>
+              <option value="2">FP16 (2 bytes/elem)</option>
+              <option value="0.55">Q4_0 (0.55 bytes/elem)</option>
+            </select>
+          </div>
+          <div><label for="monthly-q">Monthly RAG Queries</label><input id="monthly-q" type="number" min="100" max="50000000" step="1000" value="150000" /></div>
+          <div><label for="in-tok">Avg Prompt Tokens / Query</label><input id="in-tok" type="number" min="100" max="64000" step="100" value="2400" /></div>
+          <div><label for="out-tok">Avg Output Tokens / Query</label><input id="out-tok" type="number" min="32" max="8192" step="32" value="420" /></div>
+          <div><label for="api-in">Cloud API Input ($/1M tok)</label><input id="api-in" type="number" min="0" max="50" step="0.05" value="0.60" /></div>
+          <div><label for="api-out">Cloud API Output ($/1M tok)</label><input id="api-out" type="number" min="0" max="150" step="0.05" value="2.40" /></div>
+          <div><label for="gpu-watts">Local GPU Draw (Watts)</label><input id="gpu-watts" type="number" min="20" max="1000" step="10" value="140" /></div>
+          <div><label for="kwh-rate">Electricity ($/kWh)</label><input id="kwh-rate" type="number" min="0.04" max="0.80" step="0.01" value="0.22" /></div>
+        </div>
+        <div style="margin-top:0.9rem;">
+          <button id="calc-btn" type="button" class="primary">Recompute Sizing</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="VRAM and Cost Results">
+        <h2>2. Memory Footprint &amp; Monthly Economics</h2>
+        <div class="kpis" id="kpi-grid" aria-live="polite"></div>
+
+        <table aria-label="GPU Tier Compatibility">
+          <thead>
+            <tr><th>GPU VRAM Tier</th><th>Headroom</th><th>Deployment Fit</th></tr>
+          </thead>
+          <tbody id="tier-tbody"></tbody>
+        </table>
+
+        <table style="margin-top:1rem;" aria-label="Monthly Cost Comparison">
+          <thead>
+            <tr><th>Cost Line Item</th><th>Monthly USD</th><th>Notes</th></tr>
+          </thead>
+          <tbody id="cost-tbody"></tbody>
+        </table>
+        <div class="meta-bar" id="compute-meta">Ready</div>
+      </section>
+    </div>
+
+    <aside class="support" aria-label="Open Source Toolkit Link">
+      <div>
+        <span class="kicker">Open Source Reference Kit</span>
+        <strong>Deploy SQLite FTS5 Hybrid RRF + MCP 2025-11-25 on a single node without hosted vector DBs.</strong>
+      </div>
+      <a href="https://github.com/sponsors/nahianakhtar" target="_blank" rel="noopener noreferrer">Support on GitHub Sponsors</a>
+    </aside>
+  </main>
+
+  <script>
+    (function () {
+      const PRESETS = {
+        qwen8: { params: 8, quant: "4.85", ctx: 16384, slots: 2, layers: 32, kvHeads: 8, headDim: 128, kvBytes: "1" },
+        qwen14: { params: 14.8, quant: "4.85", ctx: 16384, slots: 2, layers: 48, kvHeads: 8, headDim: 128, kvBytes: "1" },
+        qwen32: { params: 32.8, quant: "4.85", ctx: 24576, slots: 2, layers: 64, kvHeads: 8, headDim: 128, kvBytes: "1" },
+        llama70: { params: 70.6, quant: "4.85", ctx: 32768, slots: 4, layers: 80, kvHeads: 8, headDim: 128, kvBytes: "1" }
+      };
+
+      const el = (id) => document.getElementById(id);
+
+      function compute() {
+        const t0 = performance.now();
+        const paramsB = Math.max(0.1, Number(el("params-b").value) || 8);
+        const bpw = Math.max(1, Number(el("quant-bpw").value) || 4.85);
+        const ctx = Math.max(512, Number(el("ctx-tokens").value) || 16384);
+        const slots = Math.max(1, Number(el("slots").value) || 1);
+        const layers = Math.max(1, Number(el("layers").value) || 32);
+        const kvHeads = Math.max(1, Number(el("kv-heads").value) || 8);
+        const headDim = Math.max(32, Number(el("head-dim").value) || 128);
+        const kvBytes = Math.max(0.25, Number(el("kv-bytes").value) || 1);
+        const monthlyQ = Math.max(0, Number(el("monthly-q").value) || 0);
+        const inTok = Math.max(0, Number(el("in-tok").value) || 0);
+        const outTok = Math.max(0, Number(el("out-tok").value) || 0);
+        const apiIn = Math.max(0, Number(el("api-in").value) || 0);
+        const apiOut = Math.max(0, Number(el("api-out").value) || 0);
+        const watts = Math.max(10, Number(el("gpu-watts").value) || 140);
+        const kwh = Math.max(0.01, Number(el("kwh-rate").value) || 0.22);
+
+        const gib = 1024 ** 3;
+        const weightsGib = (paramsB * 1e9 * (bpw / 8)) / gib;
+        const kvBytesTotal = 2 * layers * kvHeads * headDim * ctx * slots * kvBytes;
+        const kvGib = kvBytesTotal / gib;
+        const runtimeGib = 0.55 + 0.04 * weightsGib;
+        const totalVram = weightsGib + kvGib + runtimeGib;
+
+        const totalInM = (monthlyQ * inTok) / 1e6;
+        const totalOutM = (monthlyQ * outTok) / 1e6;
+        const cloudMonthly = totalInM * apiIn + totalOutM * apiOut;
+        const localHours = 730 * 0.35;
+        const localPowerMonthly = (watts / 1000) * localHours * kwh;
+        const deltaMonthly = cloudMonthly - localPowerMonthly;
+
+        el("kpi-grid").innerHTML = [
+          ["Weights VRAM", weightsGib.toFixed(2) + " GiB"],
+          ["KV Cache", kvGib.toFixed(2) + " GiB"],
+          ["Total Required", totalVram.toFixed(2) + " GiB"],
+          ["Cloud vs Power", (deltaMonthly >= 0 ? "+$" : "-$") + Math.abs(deltaMonthly).toFixed(2) + "/mo"]
+        ].map(([k, v]) => `<div class="kpi"><span class="lbl">${k}</span><span class="val">${v}</span></div>`).join("");
+
+        const tiers = [6, 8, 12, 16, 24, 48];
+        el("tier-tbody").innerHTML = tiers.map((cap) => {
+          const margin = cap - totalVram;
+          let cls = "ok", label = "Full GPU Fit";
+          if (margin < 0) { cls = "bad"; label = "CPU Offload Needed"; }
+          else if (margin < 0.75) { cls = "warn"; label = "Tight Margin"; }
+          return `<tr><td>${cap} GiB VRAM</td><td>${margin >= 0 ? "+" : ""}${margin.toFixed(2)} GiB</td><td><span class="badge ${cls}">${label}</span></td></tr>`;
+        }).join("");
+
+        el("cost-tbody").innerHTML = `
+          <tr><td>Cloud API Input (${totalInM.toFixed(1)}M tok)</td><td>$${(totalInM * apiIn).toFixed(2)}</td><td>$${apiIn.toFixed(2)} per 1M tokens</td></tr>
+          <tr><td>Cloud API Output (${totalOutM.toFixed(1)}M tok)</td><td>$${(totalOutM * apiOut).toFixed(2)}</td><td>$${apiOut.toFixed(2)} per 1M tokens</td></tr>
+          <tr><td>Local GPU Power (35% duty)</td><td>$${localPowerMonthly.toFixed(2)}</td><td>${watts} W at $${kwh.toFixed(2)}/kWh</td></tr>
+          <tr><td><strong>Projected Annual Savings</strong></td><td><strong>$${(deltaMonthly * 12).toFixed(2)}</strong></td><td>Before hardware amortization</td></tr>
+        `;
+
+        const dt = performance.now() - t0;
+        el("compute-meta").textContent = `Computed locally in ${dt.toFixed(2)} ms · Zero network requests`;
+      }
+
+      document.querySelectorAll("button[data-preset]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const p = PRESETS[btn.dataset.preset];
+          if (!p) return;
+          el("params-b").value = p.params;
+          el("quant-bpw").value = p.quant;
+          el("ctx-tokens").value = p.ctx;
+          el("slots").value = p.slots;
+          el("layers").value = p.layers;
+          el("kv-heads").value = p.kvHeads;
+          el("head-dim").value = p.headDim;
+          el("kv-bytes").value = p.kvBytes;
+          compute();
+        });
+      });
+
+      el("calc-btn").addEventListener("click", compute);
+      document.querySelectorAll("input, select").forEach((node) => node.addEventListener("input", compute));
+      compute();
+    })();
+  </script>
+</body>
+</html>

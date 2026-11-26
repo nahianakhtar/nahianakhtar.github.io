@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Zero upload Benford's Law first digit chi square and Nigrini MAD invoice anomaly auditor running locally inside your browser." />
+  <link rel="canonical" href="https://nahianakhtar.github.io/tools/benford-invoice-audit/" />
+  <title>Benford First Digit Chi Square &amp; MAD Invoice Auditor | Nahian Akhtar</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Benford First Digit Chi Square and MAD Invoice Auditor",
+    "url": "https://nahianakhtar.github.io/tools/benford-invoice-audit/",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "Nahian Akhtar", "url": "https://nahianakhtar.github.io/" }
+  }
+  </script>
+  <style>
+    :root { --bg:#FAF8F4; --surface:#FFFFFF; --ink:#111315; --muted:#4B5563; --accent:#1D3557; --ok:#166534; --bad:#B91C1C; --rule:rgba(17,19,21,0.14); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.55; overflow-x:clip; }
+    .wrap { max-width:980px; margin:0 auto; padding:1.75rem 1.25rem 3.5rem; }
+    .top { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:0.85rem; border-bottom:2px solid var(--ink); padding-bottom:0.9rem; margin-bottom:1.5rem; }
+    .nav { display:flex; gap:0.45rem; flex-wrap:wrap; }
+    .nav a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.68rem; border:1px solid var(--rule); border-radius:4px; background:var(--surface); color:var(--ink); text-decoration:none; }
+    .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.73rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent); font-weight:700; margin-bottom:0.3rem; }
+    h1 { margin:0; font-family:Georgia,serif; font-size:clamp(1.38rem,2.6vw,2rem); line-height:1.2; }
+    .layout { display:grid; grid-template-columns:minmax(0,0.95fr) minmax(0,1.15fr); gap:1.15rem; align-items:start; }
+    @media (max-width:760px) { .layout { grid-template-columns:1fr; } }
+    .panel { min-width:0; background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1.15rem; }
+    .panel h2 { margin:0 0 0.8rem; font-size:1rem; font-family:Georgia,serif; border-bottom:1px solid var(--rule); padding-bottom:0.4rem; }
+    textarea { width:100%; min-height:220px; font-family:ui-monospace,monospace; font-size:0.82rem; padding:0.65rem; border:1px solid var(--rule); border-radius:4px; background:#FDFCFA; color:var(--ink); resize:vertical; }
+    .btns { display:flex; flex-wrap:wrap; gap:0.45rem; margin:0.65rem 0; }
+    button { font-family:ui-monospace,monospace; font-size:0.76rem; padding:0.4rem 0.68rem; border-radius:4px; border:1px solid var(--rule); background:var(--bg); color:var(--ink); cursor:pointer; }
+    button.primary { background:var(--accent); color:#FFFFFF; border-color:var(--accent); font-weight:600; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:0.6rem; margin-bottom:0.9rem; }
+    .kpi { min-width:0; border:1px solid var(--rule); border-radius:5px; padding:0.6rem 0.7rem; background:#FDFCFA; }
+    .kpi .lbl { display:block; font-size:0.7rem; color:var(--muted); text-transform:uppercase; font-family:ui-monospace,monospace; }
+    .kpi .val { display:block; font-size:1.12rem; font-weight:700; font-family:ui-monospace,monospace; font-variant-numeric:tabular-nums; margin-top:0.15rem; }
+    table { width:100%; border-collapse:collapse; font-size:0.83rem; font-variant-numeric:tabular-nums; }
+    th, td { padding:0.42rem 0.38rem; border-bottom:1px solid var(--rule); text-align:left; }
+    th { font-family:ui-monospace,monospace; font-size:0.72rem; color:var(--muted); text-transform:uppercase; }
+    .bar-wrap { width:100%; max-width:160px; height:10px; background:#E5E7EB; border-radius:3px; overflow:hidden; position:relative; }
+    .bar-obs { height:100%; background:var(--accent); }
+    .verdict { margin-bottom:0.85rem; padding:0.65rem 0.8rem; border-radius:5px; font-weight:600; font-size:0.86rem; }
+    .verdict.ok { background:#DCFCE7; color:#14532D; }
+    .verdict.warn { background:#FEF3C7; color:#92400E; }
+    .verdict.bad { background:#FEE2E2; color:#991B1B; }
+    .meta { margin-top:0.8rem; font-family:ui-monospace,monospace; font-size:0.75rem; color:var(--muted); }
+    .support { margin-top:1.5rem; padding:1rem 1.15rem; background:var(--surface); border:1px solid var(--rule); border-left:4px solid var(--accent); border-radius:6px; display:flex; flex-wrap:wrap; gap:0.8rem; align-items:center; justify-content:space-between; }
+    .support a { font-family:ui-monospace,monospace; font-size:0.78rem; font-weight:600; color:#FFFFFF; background:var(--accent); text-decoration:none; padding:0.46rem 0.85rem; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <span class="kicker">Tool 03 · Forensic Accounting Statistics</span>
+        <h1>Benford First Digit Chi Square &amp; MAD Invoice Auditor</h1>
+      </div>
+      <nav class="nav" aria-label="Tool Navigation">
+        <a href="../">All Tools (4)</a>
+        <a href="../../demos/ledger-audit/">Ledger Audit Bench</a>
+        <a href="../../">Home</a>
+      </nav>
+    </header>
+
+    <div class="layout">
+      <section class="panel" aria-label="Invoice Amounts Input">
+        <h2>1. Paste Invoice Totals (Zero Upload)</h2>
+        <div class="btns" role="group" aria-label="Sample Datasets">
+          <button type="button" data-sample="clean">Natural Vendor Ledger (120)</button>
+          <button type="button" data-sample="fraud">Threshold Split Anomaly (8/9 Spike)</button>
+          <button type="button" data-sample="round">Duplicate Round Invoices</button>
+        </div>
+        <label for="amounts-input" style="display:block;font-size:0.78rem;color:#4B5563;margin-bottom:0.3rem;">Numbers separated by newlines, spaces, or commas ($ signs stripped locally):</label>
+        <textarea id="amounts-input" spellcheck="false"></textarea>
+        <div class="btns">
+          <button id="audit-btn" type="button" class="primary">Run Benford Audit</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Benford Audit Results">
+        <h2>2. Conformity &amp; Anomaly Diagnostics</h2>
+        <div id="verdict-box" class="verdict ok" aria-live="polite">Ready</div>
+        <div class="kpis" id="kpi-box"></div>
+        <table aria-label="Benford Leading Digit Table">
+          <thead>
+            <tr><th>Digit</th><th>Obs</th><th>Obs %</th><th>Exp %</th><th>Distribution</th><th>Z Stat</th></tr>
+          </thead>
+          <tbody id="digit-tbody"></tbody>
+        </table>
+        <div class="meta" id="audit-meta">Ready</div>
+      </section>
+    </div>
+
+    <aside class="support" aria-label="Batch Audit API">
+      <div>
+        <span class="kicker">Automated Batch Auditing</span>
+        <strong>Run SQLite Merkle chains and Benford anomaly checks in Python CI or REST workflows.</strong>
+      </div>
+      <a href="https://github.com/sponsors/nahianakhtar" target="_blank" rel="noopener noreferrer">GitHub Sponsors</a>
+    </aside>
+  </main>
+
+  <script>
+    (function () {
+      const BENFORD = Array.from({ length: 9 }, (_, i) => Math.log10(1 + 1 / (i + 1)));
+      const el = (id) => document.getElementById(id);
+
+      function makeCleanSample() {
+        const vals = [];
+        for (let i = 1; i <= 120; i += 1) {
+          const v = Math.pow(10, 1.3 + ((i * 0.6180339887) % 2.4));
+          vals.push(v.toFixed(2));
+        }
+        return vals.join("\n");
+      }
+
+      function makeFraudSample() {
+        const vals = [];
+        for (let i = 0; i < 60; i += 1) vals.push((845 + (i % 50) * 2.13).toFixed(2));
+        for (let i = 0; i < 40; i += 1) vals.push((940 + (i % 45) * 1.17).toFixed(2));
+        for (let i = 0; i < 20; i += 1) vals.push((125 + i * 31.4).toFixed(2));
+        return vals.join("\n");
+      }
+
+      function makeRoundSample() {
+        const vals = [];
+        for (let i = 0; i < 45; i += 1) vals.push("500.00");
+        for (let i = 0; i < 35; i += 1) vals.push("250.00");
+        for (let i = 0; i < 20; i += 1) vals.push("999.00");
+        return vals.join("\n");
+      }
+
+      function runAudit() {
+        const t0 = performance.now();
+        const raw = el("amounts-input").value;
+        const matches = raw.match(/\d[\d,]*(?:\.\d+)?/g) || [];
+        const counts = new Array(9).fill(0);
+        const seen = new Map();
+        let totalCents = 0;
+        let dupCount = 0;
+
+        for (const tok of matches) {
+          const clean = tok.replace(/,/g, "");
+          const num = Number(clean);
+          if (!Number.isFinite(num) || num <= 0) continue;
+          const cents = Math.round(num * 100);
+          totalCents += cents;
+          const prev = seen.get(cents) || 0;
+          if (prev >= 1) dupCount += 1;
+          seen.set(cents, prev + 1);
+          const leadMatch = clean.replace(/^0+\.?0*/, "").match(/[1-9]/);
+          if (leadMatch) counts[Number(leadMatch[0]) - 1] += 1;
+        }
+
+        const n = counts.reduce((a, b) => a + b, 0);
+        let chi2 = 0;
+        let madSum = 0;
+        const rowsHtml = [];
+
+        for (let d = 1; d <= 9; d += 1) {
+          const expP = BENFORD[d - 1];
+          const obs = counts[d - 1];
+          const obsP = n > 0 ? obs / n : 0;
+          const expC = n * expP;
+          if (expC > 0) chi2 += ((obs - expC) ** 2) / expC;
+          madSum += Math.abs(obsP - expP);
+          const denom = n > 0 ? Math.sqrt((expP * (1 - expP)) / n) : 1;
+          const z = n > 0 ? Math.abs(obsP - expP) / denom : 0;
+          const barW = Math.min(100, (obsP * 100) * 2.2);
+          rowsHtml.push(
+            `<tr><td><strong>${d}</strong></td><td>${obs}</td><td>${(obsP * 100).toFixed(1)}%</td><td>${(expP * 100).toFixed(1)}%</td><td><div class="bar-wrap"><div class="bar-obs" style="width:${barW.toFixed(1)}%"></div></div></td><td>${z.toFixed(2)}${z > 2.58 ? " *" : ""}</td></tr>`
+          );
+        }
+
+        const mad = madSum / 9;
+        let band = "Close Conformity", cls = "ok";
+        if (n < 30) { band = "Small Sample (Use N >= 50)"; cls = "warn"; }
+        else if (mad > 0.015 || chi2 > 20.09) { band = "Nonconformity Anomaly Flag"; cls = "bad"; }
+        else if (mad > 0.012 || chi2 > 15.507) { band = "Marginal Conformity Review"; cls = "warn"; }
+        else if (mad > 0.006) { band = "Acceptable Conformity"; cls = "ok"; }
+
+        const vbox = el("verdict-box");
+        vbox.className = "verdict " + cls;
+        vbox.textContent = `${band} (MAD ${mad.toFixed(4)} · Chi2 ${chi2.toFixed(2)} vs 15.51 critical)`;
+
+        el("kpi-box").innerHTML = [
+          ["Rows Audited", String(n)],
+          ["Pearson Chi2", chi2.toFixed(2)],
+          ["Nigrini MAD", mad.toFixed(4)],
+          ["Duplicate Amounts", String(dupCount)]
+        ].map(([k, v]) => `<div class="kpi"><span class="lbl">${k}</span><span class="val">${v}</span></div>`).join("");
+
+        el("digit-tbody").innerHTML = rowsHtml.join("");
+        const dt = performance.now() - t0;
+        el("audit-meta").textContent = `Audited ${n} rows ($${(totalCents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })} total) in ${dt.toFixed(2)} ms`;
+      }
+
+      document.querySelectorAll("button[data-sample]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const kind = btn.dataset.sample;
+          el("amounts-input").value = kind === "fraud" ? makeFraudSample() : kind === "round" ? makeRoundSample() : makeCleanSample();
+          runAudit();
+        });
+      });
+
+      el("audit-btn").addEventListener("click", runAudit);
+      el("amounts-input").addEventListener("input", runAudit);
+      el("amounts-input").value = makeCleanSample();
+      runAudit();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Four free local browser engineering and quantitative calculators by Nahian Akhtar: GPU VRAM KV cache sizing, freelance net tax and fee math, Benford invoice auditing, and Little's Law queue latency." />
+  <link rel="canonical" href="https://nahianakhtar.github.io/tools/" />
+  <title>Free Engineering &amp; Quant Calculators | Nahian Akhtar</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Nahian Akhtar Free Engineering and Quantitative Calculators",
+    "url": "https://nahianakhtar.github.io/tools/",
+    "description": "Four static browser utilities running with zero cookies, zero tracking scripts, and sub-millisecond local math.",
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "url": "https://nahianakhtar.github.io/tools/rag-vram-cost/", "name": "RAG and GPU VRAM KV Cache Cost Calculator" },
+        { "@type": "ListItem", "position": 2, "url": "https://nahianakhtar.github.io/tools/freelance-net-tax/", "name": "Freelance Net After Tax and Payment Fee Calculator" },
+        { "@type": "ListItem", "position": 3, "url": "https://nahianakhtar.github.io/tools/benford-invoice-audit/", "name": "Benford First Digit Chi Square and MAD Invoice Auditor" },
+        { "@type": "ListItem", "position": 4, "url": "https://nahianakhtar.github.io/tools/littles-law-throughput/", "name": "Little's Law WIP, Throughput and p95 Queue Latency Calculator" }
+      ]
+    }
+  }
+  </script>
+  <style>
+    :root { --bg:#FAF8F4; --surface:#FFFFFF; --ink:#111315; --muted:#4B5563; --accent:#1B4332; --rule:rgba(17,19,21,0.14); --chip:#F0ECE1; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.6; overflow-x:clip; }
+    .wrap { max-width:960px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+    .top { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem; border-bottom:2px solid var(--ink); padding-bottom:1rem; margin-bottom:1.75rem; }
+    .top-links { display:flex; gap:0.5rem; flex-wrap:wrap; }
+    .top-links a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.35rem 0.72rem; border:1px solid var(--rule); border-radius:4px; background:var(--surface); color:var(--ink); text-decoration:none; }
+    .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.74rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent); font-weight:700; margin-bottom:0.35rem; }
+    h1 { margin:0; font-family:Georgia,serif; font-size:clamp(1.5rem,3vw,2.2rem); line-height:1.18; }
+    .intro { max-width:72ch; color:var(--muted); margin:0 0 1.6rem; font-size:0.96rem; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:1.1rem; }
+    .card { min-width:0; background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1.25rem; display:flex; flex-direction:column; justify-content:space-between; gap:1rem; }
+    .card h2 { margin:0.2rem 0 0.45rem; font-family:Georgia,serif; font-size:1.12rem; line-height:1.25; }
+    .card p { margin:0; font-size:0.9rem; color:#2B3440; }
+    .tags { display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.75rem; }
+    .tag { font-family:ui-monospace,monospace; font-size:0.72rem; background:var(--chip); padding:0.16rem 0.48rem; border-radius:3px; color:var(--ink); }
+    .actions { display:flex; flex-wrap:wrap; gap:0.5rem; }
+    .btn { display:inline-block; font-family:ui-monospace,monospace; font-size:0.8rem; font-weight:600; padding:0.5rem 0.88rem; border-radius:4px; text-decoration:none; background:var(--accent); color:#FFFFFF; }
+    .btn.alt { background:var(--bg); color:var(--ink); border:1px solid var(--rule); }
+    .sponsor-box { margin-top:2rem; padding:1.15rem 1.25rem; background:var(--surface); border:1px solid var(--rule); border-left:4px solid var(--accent); border-radius:6px; display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; }
+    .sponsor-box p { margin:0.25rem 0 0; font-size:0.88rem; color:var(--muted); max-width:56ch; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <span class="kicker">Local Browser Instruments · Zero Cookies · Instant Execution</span>
+        <h1>Engineering &amp; Quantitative Calculators</h1>
+      </div>
+      <nav class="top-links" aria-label="Site Navigation">
+        <a href="../demos/">5 Workbenches</a>
+        <a href="../articles/">Articles (4)</a>
+        <a href="../">Home</a>
+      </nav>
+    </header>
+
+    <p class="intro">
+      Every calculator below runs strictly inside your browser tab using pure JavaScript math. No input numbers leave your machine, and no external scripts load.
+    </p>
+
+    <section class="grid" aria-label="Calculator Directory">
+      <article class="card">
+        <div>
+          <span class="kicker">Tool 01 · GPU Sizing &amp; Inference Economics</span>
+          <h2>RAG &amp; GPU VRAM / KV Cache Cost Calculator</h2>
+          <p>Estimate weight memory, quantized KV cache footprint across parallel slots, and monthly API spend against local power draw.</p>
+          <div class="tags"><span class="tag">Q4 &amp; Q8 Quant</span><span class="tag">GQA KV Math</span><span class="tag">Break Even</span></div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="rag-vram-cost/">Open Calculator</a>
+          <a class="btn alt" href="../demos/moe-rag/">MoE Workbench</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div>
+          <span class="kicker">Tool 02 · Independent Contractor Finance</span>
+          <h2>Freelance Net After Tax &amp; Payment Fee Calculator</h2>
+          <p>Compute integer cent platform fees for Upwork and Stripe ACH ($5 cap), reserve 35% for taxes, and verify New York $800 written contract rules.</p>
+          <div class="tags"><span class="tag">Integer Cents</span><span class="tag">35% Reserve</span><span class="tag">NY $800 Rule</span></div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="freelance-net-tax/">Open Calculator</a>
+          <a class="btn alt" href="../demos/ledger-audit/">Ledger Bench</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div>
+          <span class="kicker">Tool 03 · Forensic Accounting Statistics</span>
+          <h2>Benford First Digit Chi Square &amp; MAD Invoice Auditor</h2>
+          <p>Paste raw invoice amounts to measure Benford first digit conformity using Pearson chi square (df 8), Nigrini MAD bands, and duplicate detection.</p>
+          <div class="tags"><span class="tag">Chi Square df=8</span><span class="tag">Nigrini MAD</span><span class="tag">Zero Upload</span></div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="benford-invoice-audit/">Open Calculator</a>
+          <a class="btn alt" href="../articles/microdollar-reconciliation-merkle-audit/">Read Note</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div>
+          <span class="kicker">Tool 04 · Queueing Theory &amp; SLA Modeling</span>
+          <h2>Little's Law WIP, Throughput &amp; p95 Queue Latency</h2>
+          <p>Model arrival rate, multi-slot capacity, utilization saturation, and Kingman p95 wait latency to choose safe Kanban WIP caps.</p>
+          <div class="tags"><span class="tag">L = lambda * W</span><span class="tag">Kingman p95</span><span class="tag">WIP Limits</span></div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="littles-law-throughput/">Open Calculator</a>
+          <a class="btn alt" href="../demos/rust-ring-dag/">Ring &amp; DAG Bench</a>
+        </div>
+      </article>
+    </section>
+
+    <aside class="sponsor-box" aria-label="Open Source Support and Starter Kits">
+      <div>
+        <span class="kicker">Zero Cookie Open Source Support</span>
+        <strong>Need production Python, Rust, or TypeScript source kits?</strong>
+        <p>Support open engineering utilities on GitHub Sponsors or inspect the MIT reference repositories with full CI test suites.</p>
+      </div>
+      <div class="actions">
+        <a class="btn" href="https://github.com/sponsors/nahianakhtar" target="_blank" rel="noopener noreferrer">GitHub Sponsors</a>
+        <a class="btn alt" href="https://github.com/nahianakhtar" target="_blank" rel="noopener noreferrer">MIT Source Repos</a>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>

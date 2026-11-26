@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Technical engineering notes by Nahian Akhtar covering MCP 2025-11-25 OAuth 2.1, C11/Rust 64-byte CRC32C rings, fixed-point micro-dollar reconciliation, and Per-Monitor V2 Windows UIA metrology." />
+  <link rel="canonical" href="https://nahianakhtar.github.io/articles/" />
+  <title>Engineering Notes &amp; Architecture Briefs | Nahian Akhtar</title>
+  <style>
+  :root { --bg:#FAF8F4; --surface:#FFFFFF; --ink:#111315; --muted:#4B5563; --forest:#1B4332; --rule:rgba(17,19,21,0.14); }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.65; overflow-x:clip; }
+  .wrap { max-width:880px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+  .top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; border-bottom:1px solid var(--rule); padding-bottom:0.85rem; margin-bottom:1.5rem; }
+  .top-links { display:flex; gap:0.5rem; flex-wrap:wrap; }
+  .top-links a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.7rem; border:1px solid var(--rule); border-radius:5px; background:var(--surface); color:var(--ink); text-decoration:none; }
+  .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.74rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--forest); font-weight:700; margin-bottom:0.35rem; }
+  h1 { margin:0 0 0.85rem; font-family:Georgia,serif; font-size:clamp(1.45rem,2.8vw,2.1rem); line-height:1.22; letter-spacing:-0.02em; }
+  h2 { margin:1.65rem 0 0.55rem; font-size:1.18rem; border-bottom:1px solid var(--rule); padding-bottom:0.3rem; }
+  p { margin:0.75rem 0; color:#1F2933; }
+  ul, ol { margin:0.75rem 0; padding-left:1.35rem; }
+  li { margin:0.35rem 0; color:#1F2933; }
+  code { font-family:ui-monospace,monospace; font-size:0.86em; background:#F0ECE1; padding:0.12rem 0.35rem; border-radius:4px; }
+  a { color:var(--forest); }
+  .cta-bar { margin-top:2rem; padding:1rem; background:var(--surface); border:1px solid var(--rule); border-radius:7px; display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center; justify-content:space-between; }
+  .btn { display:inline-block; font-family:ui-monospace,monospace; font-size:0.8rem; font-weight:600; padding:0.5rem 0.9rem; border-radius:5px; text-decoration:none; background:var(--forest); color:#FFFFFF; }
+  .btn.alt { background:var(--bg); color:var(--ink); border:1px solid var(--rule); }
+  .card-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1rem; }
+  .card { min-width:0; background:var(--surface); border:1px solid var(--rule); border-radius:7px; padding:1.15rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.85rem; }
+  .card h2 { margin:0.2rem 0 0.35rem; border:none; padding:0; font-size:1.08rem; }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <nav class="top" aria-label="Directory Navigation">
+      <div>
+        <span class="kicker">Engineering Architecture Briefs · Verified Against Live MIT Codebases</span>
+        <h1 style="margin-bottom:0;">Technical Articles (4)</h1>
+      </div>
+      <div class="top-links">
+        <a href="../demos/">5 Workbenches</a>
+        <a href="../">Portfolio Studio</a>
+      </div>
+    </nav>
+    <section class="card-grid" aria-label="Article Directory">
+      <article class="card">
+              <div>
+                <span class="kicker">Python 3.12 · MCP 2025-11-25 · SQLite FTS5</span>
+                <h2>MCP 2025-11-25 Without Infrastructure Sprawl: OAuth 2.1 PKCE, Session Replay, and SQLite FTS5 RRF in Pure Stdlib Python</h2>
+                <p style="font-size:0.9rem;color:#4B5563;">OAuth 2.1 RFC 9728 discovery, PKCE S256 verification, Mcp-Session-Id SSE replay, and hybrid BM25 + cosine RRF in stdlib Python.</p>
+              </div>
+              <div class="top-links">
+                <a class="btn" href="mcp-oauth-pkce-sqlite-rrf/">Read Note</a>
+                <a class="btn alt" href="https://nahianakhtar.github.io/demos/moe-rag/">Open Demo</a>
+              </div>
+            </article><article class="card">
+              <div>
+                <span class="kicker">Rust 2021 · ISO C11 FFI · WebAssembly</span>
+                <h2>Zero-Allocation Telemetry Rings Across Rust 2021, ISO C11 FFI, and WebAssembly</h2>
+                <p style="font-size:0.9rem;color:#4B5563;">Compile-time _Static_assert 64-byte cache-line CRC32C ring vaults, capability-fenced Kahn DAGs, and O(1) Jain-Chlamtac P2 quantiles.</p>
+              </div>
+              <div class="top-links">
+                <a class="btn" href="cache-line-64b-c11-crc32c-rust-ffi/">Read Note</a>
+                <a class="btn alt" href="https://nahianakhtar.github.io/demos/rust-ring-dag/">Open Demo</a>
+              </div>
+            </article><article class="card">
+              <div>
+                <span class="kicker">Fixed-Point Decimal · BigInt · SHA-256 Merkle</span>
+                <h2>Why Invoice Reconciliation Pipelines Leak Cents (and How Fixed-Point BigInt + SHA-256 Merkle Trees Fix It)</h2>
+                <p style="font-size:0.9rem;color:#4B5563;">Eliminating IEEE-754 rounding drift with 10^-6 USD micro-dollars, ROUND_HALF_EVEN banker rounding, read-only SQLite URIs, and Merkle proofs.</p>
+              </div>
+              <div class="top-links">
+                <a class="btn" href="microdollar-reconciliation-merkle-audit/">Read Note</a>
+                <a class="btn alt" href="https://nahianakhtar.github.io/demos/ledger-audit/">Open Demo</a>
+              </div>
+            </article><article class="card">
+              <div>
+                <span class="kicker">Windows UIA · Per-Monitor V2 DPI · Win32</span>
+                <h2>Per-Monitor V2 DPI Coordinate Metrology for Reliable Windows UIA Automation</h2>
+                <p style="font-size:0.9rem;color:#4B5563;">Exact CSS-to-physical screen coordinate mapping across 96 to 216 DPI displays without breaking browser foreground focus.</p>
+              </div>
+              <div class="top-links">
+                <a class="btn" href="per-monitor-v2-uia-dpi-metrology/">Read Note</a>
+                <a class="btn alt" href="https://nahianakhtar.github.io/demos/uia-metrology/">Open Demo</a>
+              </div>
+            </article>
+    </section>
+  </main>
+</body>
+</html>

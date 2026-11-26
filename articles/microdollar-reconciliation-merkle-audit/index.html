@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Eliminating IEEE-754 rounding drift with 10^-6 USD micro-dollars, ROUND_HALF_EVEN banker rounding, read-only SQLite URIs, and Merkle proofs." />
+  <link rel="canonical" href="https://nahianakhtar.github.io/articles/microdollar-reconciliation-merkle-audit/" />
+  <title>Why Invoice Reconciliation Pipelines Leak Cents (and How Fixed-Point BigInt + SHA-256 Merkle Trees Fix It) | Nahian Akhtar</title>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Why Invoice Reconciliation Pipelines Leak Cents (and How Fixed-Point BigInt + SHA-256 Merkle Trees Fix It)", "author": {"@type": "Person", "name": "Nahian Akhtar", "url": "https://nahianakhtar.github.io/"}, "url": "https://nahianakhtar.github.io/articles/microdollar-reconciliation-merkle-audit/", "description": "Eliminating IEEE-754 rounding drift with 10^-6 USD micro-dollars, ROUND_HALF_EVEN banker rounding, read-only SQLite URIs, and Merkle proofs."}</script>
+  <style>
+  :root { --bg:#FAF8F4; --surface:#FFFFFF; --ink:#111315; --muted:#4B5563; --forest:#1B4332; --rule:rgba(17,19,21,0.14); }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.65; overflow-x:clip; }
+  .wrap { max-width:880px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+  .top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; border-bottom:1px solid var(--rule); padding-bottom:0.85rem; margin-bottom:1.5rem; }
+  .top-links { display:flex; gap:0.5rem; flex-wrap:wrap; }
+  .top-links a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.7rem; border:1px solid var(--rule); border-radius:5px; background:var(--surface); color:var(--ink); text-decoration:none; }
+  .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.74rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--forest); font-weight:700; margin-bottom:0.35rem; }
+  h1 { margin:0 0 0.85rem; font-family:Georgia,serif; font-size:clamp(1.45rem,2.8vw,2.1rem); line-height:1.22; letter-spacing:-0.02em; }
+  h2 { margin:1.65rem 0 0.55rem; font-size:1.18rem; border-bottom:1px solid var(--rule); padding-bottom:0.3rem; }
+  p { margin:0.75rem 0; color:#1F2933; }
+  ul, ol { margin:0.75rem 0; padding-left:1.35rem; }
+  li { margin:0.35rem 0; color:#1F2933; }
+  code { font-family:ui-monospace,monospace; font-size:0.86em; background:#F0ECE1; padding:0.12rem 0.35rem; border-radius:4px; }
+  a { color:var(--forest); }
+  .cta-bar { margin-top:2rem; padding:1rem; background:var(--surface); border:1px solid var(--rule); border-radius:7px; display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center; justify-content:space-between; }
+  .btn { display:inline-block; font-family:ui-monospace,monospace; font-size:0.8rem; font-weight:600; padding:0.5rem 0.9rem; border-radius:5px; text-decoration:none; background:var(--forest); color:#FFFFFF; }
+  .btn.alt { background:var(--bg); color:var(--ink); border:1px solid var(--rule); }
+  .card-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1rem; }
+  .card { min-width:0; background:var(--surface); border:1px solid var(--rule); border-radius:7px; padding:1.15rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.85rem; }
+  .card h2 { margin:0.2rem 0 0.35rem; border:none; padding:0; font-size:1.08rem; }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <nav class="top" aria-label="Article Navigation">
+      <span class="kicker" style="margin:0;">Fixed-Point Decimal · BigInt · SHA-256 Merkle</span>
+      <div class="top-links">
+        <a href="../">All Articles (4)</a>
+        <a href="../../demos/">5 Workbenches</a>
+        <a href="../../">Portfolio Home</a>
+      </div>
+    </nav>
+    <article>
+      <h1>Why Invoice Reconciliation Pipelines Leak Cents (and How Fixed-Point BigInt + SHA-256 Merkle Trees Fix It)</h1>
+      <p>Binary IEEE-754 <code>float64</code> numbers cannot represent <code>0.10</code> USD without approximation (<code>0.1 + 0.2 === 0.30000000000000004</code>). Across ten thousand automated payouts, partial tax withholdings, or split fees, unquantized floats accumulate penny drift that breaks trial balances and audit trails.</p>
+      <h2>1. Integer Micro-Dollars (<code>10^-6</code> USD) and Banker&#x27;s Rounding</h2>
+      <p>In financial backends (<code>mcp-automation-demo</code> and the browser ledger workbench), internal arithmetic runs strictly on signed integers scaled at <code>10^-6</code> USD (<code>1,000,000</code> micro-dollars per dollar) or Python <code>Decimal</code>:</p>
+      <ul>
+      <li>Intermediate fee and percentage calculations (such as <code>0.8%</code> ACH fees capped at <code>$5.00</code> or <code>35%</code> estimated tax reserves) retain exact sub-cent precision until statement output.</li>
+      <li>Converting micro-dollars to GAAP cents uses <code>ROUND_HALF_EVEN</code> (banker&#x27;s rounding): <code>$10.005</code> rounds down to <code>$10.00</code> while <code>$10.015</code> rounds up to <code>$10.02</code>, eliminating systemic upward rounding bias.</li>
+      <li>Every double-entry posting credits and debits identically, holding trial balance drift strictly equal to <code>0</code> (<code>$0.000000</code>) across 1,000+ randomized transactions.</li>
+      </ul>
+      <h2>2. Read-Only Ingestion (<code>mode=ro</code>) and Two-Flag Write Gates</h2>
+      <p>Automated reconciliation tools should never alter source accounting books implicitly. Opening SQLite sources in read-only URI mode (<code>mode=ro</code> + <code>PRAGMA query_only = ON</code>) and separating <code>--allow-write</code> from <code>--apply</code> turns dry-run inspection into the safe default.</p>
+      <h2>3. Verifiable History via SHA-256 Merkle Inclusion Proofs</h2>
+      <p>Logging reconciled exports alongside a binary SHA-256 Merkle tree (<code>0x00 || leaf</code> domain separation for leaves, <code>0x01 || left || right</code> for internal nodes) lets auditors verify any single invoice row against the root digest in <code>O(log N)</code> hashes. Altering even <code>$0.01</code> invalidates the inclusion proof immediately.</p>
+      <p>Run live 128-bit BigInt ledger balancing, bank CSV matching, and Merkle leaf tamper checks in the browser: <a href="https://nahianakhtar.github.io/demos/ledger-audit/">https://nahianakhtar.github.io/demos/ledger-audit/</a>.</p>
+    </article>
+    <aside class="cta-bar" aria-label="Verification and Source">
+      <div><strong>Run Live Verification:</strong> Test these invariants interactively in the browser or inspect the MIT repository.</div>
+      <div class="top-links">
+        <a class="btn" href="https://nahianakhtar.github.io/demos/ledger-audit/">Open Live Workbench</a>
+        <a class="btn alt" href="https://github.com/nahianakhtar/mcp-automation-demo" target="_blank" rel="noopener noreferrer">View GitHub Source</a>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>

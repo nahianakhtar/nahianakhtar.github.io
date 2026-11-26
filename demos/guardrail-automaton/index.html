@@ -7,16 +7,16 @@
   <style>
     :root { --bg:#FFFFFF; --ink:#09090B; --muted:#52525B; --crimson:#D92D20; --crimson-soft:#FEF3F2; --rule:#E4E4E7; --panel:#FAFAFA; }
     * { box-sizing:border-box; }
-    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.5; }
-    .wrap { max-width:1160px; margin:0 auto; padding:1.5rem 1.25rem 3rem; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.5; overflow-x:clip; }
+    .wrap { max-width:1160px; margin:0 auto; padding:1.5rem 1rem 3rem; }
     .hdr { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; border-bottom:2px solid var(--ink); padding-bottom:0.85rem; margin-bottom:1.25rem; }
     .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--crimson); font-weight:700; }
     .hdr h1 { margin:0.15rem 0 0; font-size:clamp(1.25rem,2.3vw,1.75rem); letter-spacing:-0.02em; }
-    .nav { display:flex; gap:0.5rem; }
+    .nav { display:flex; gap:0.5rem; flex-wrap:wrap; }
     .nav a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.68rem; border:1px solid var(--rule); border-radius:4px; background:var(--panel); color:var(--ink); text-decoration:none; }
-    .grid { display:grid; grid-template-columns:1.1fr 1fr; gap:1.1rem; }
-    @media (max-width:900px) { .grid { grid-template-columns:1fr; } }
-    .box { background:var(--panel); border:1px solid var(--rule); border-radius:6px; padding:1rem; }
+    .grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:1.1rem; }
+    @media (max-width:900px) { .grid { grid-template-columns:minmax(0,1fr); } }
+    .box { min-width:0; max-width:100%; background:var(--panel); border:1px solid var(--rule); border-radius:6px; padding:1rem; }
     textarea { width:100%; min-height:92px; padding:0.65rem; border:1px solid var(--rule); border-radius:4px; font-family:ui-monospace,monospace; font-size:0.82rem; background:#fff; color:var(--ink); }
     .btns { display:flex; flex-wrap:wrap; gap:0.45rem; margin:0.65rem 0; }
     button { border:1px solid var(--ink); background:var(--ink); color:#fff; padding:0.42rem 0.75rem; border-radius:4px; font-family:ui-monospace,monospace; font-size:0.76rem; font-weight:600; cursor:pointer; }

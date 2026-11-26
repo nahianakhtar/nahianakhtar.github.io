@@ -7,16 +7,16 @@
   <style>
     :root { --bg:#F4F6F4; --surface:#FFFFFF; --pine:#0F291E; --ochre:#8F5B0A; --ink:#0E1B15; --muted:#4A5D52; --rule:rgba(15,41,30,0.16); }
     * { box-sizing:border-box; }
-    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.5; }
-    .wrap { max-width:1180px; margin:0 auto; padding:1.5rem 1.25rem 3rem; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; line-height:1.5; overflow-x:clip; }
+    .wrap { max-width:1180px; margin:0 auto; padding:1.5rem 1rem 3rem; }
     .head { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; padding-bottom:0.85rem; border-bottom:2px solid var(--pine); margin-bottom:1.25rem; }
     .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ochre); font-weight:700; }
     .head h1 { margin:0.15rem 0 0; font-family:Georgia,serif; font-size:clamp(1.3rem,2.4vw,1.8rem); }
-    .links { display:flex; gap:0.5rem; }
+    .links { display:flex; gap:0.5rem; flex-wrap:wrap; }
     .links a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.32rem 0.7rem; border:1px solid var(--rule); border-radius:4px; background:var(--surface); color:var(--pine); text-decoration:none; }
-    .cols { display:grid; grid-template-columns:1.25fr 1fr; gap:1.1rem; }
-    @media (max-width:920px) { .cols { grid-template-columns:1fr; } }
-    .card { background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1.1rem; }
+    .cols { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:1.1rem; }
+    @media (max-width:920px) { .cols { grid-template-columns:minmax(0,1fr); } }
+    .card { min-width:0; max-width:100%; background:var(--surface); border:1px solid var(--rule); border-radius:6px; padding:1rem; }
     .actions { display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.75rem 0; }
     button { border:1px solid var(--pine); background:var(--pine); color:#fff; padding:0.46rem 0.8rem; border-radius:4px; font-family:ui-monospace,monospace; font-size:0.78rem; font-weight:600; cursor:pointer; }
     button.alt { background:var(--surface); color:var(--pine); }

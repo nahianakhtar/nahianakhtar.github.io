@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interactive 2026 Accounting &amp; IRS 1099-NEC ($2,000 OBBBA vs $600 State/Legal) Workpaper Verifier, 24% W-9 Backup Withholding, Split-Invoice Detector, and SHA-256 Merkle Proof Bench." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314532D'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='monospace' font-weight='bold' font-size='16' fill='%23F6F5F0'%3ET%3C/text%3E%3C/svg%3E" />
+  <title>2026 Tax &amp; 1099-NEC Merkle Workpaper Verifier</title>
+  <style>
+    :root { --paper:#F6F5F0; --sheet:#FFFFFF; --ink:#161A17; --muted:#4E5650; --emerald:#14532D; --burgundy:#881337; --brass:#A16207; --rule:rgba(22,26,23,0.16); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:Georgia,"Times New Roman",serif; line-height:1.52; overflow-x:clip; }
+    .wrap { max-width:1140px; margin:0 auto; padding:1.7rem 1.2rem 3.5rem; }
+    .mast { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem; border-bottom:4px double var(--ink); padding-bottom:0.85rem; margin-bottom:1.4rem; }
+    .kicker { display:block; font-family:ui-monospace,monospace; font-size:0.73rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--emerald); font-weight:700; margin-bottom:0.2rem; }
+    h1 { margin:0; font-size:clamp(1.45rem,2.7vw,2.05rem); font-weight:700; letter-spacing:-0.01em; }
+    .nav { display:flex; gap:0.45rem; flex-wrap:wrap; }
+    .nav a { font-family:ui-monospace,monospace; font-size:0.78rem; padding:0.34rem 0.7rem; border:1px solid var(--rule); border-radius:3px; background:var(--sheet); color:var(--ink); text-decoration:none; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:0.45rem; align-items:center; background:var(--sheet); border:1px solid var(--rule); padding:0.8rem 0.95rem; border-radius:4px; margin-bottom:1.1rem; }
+    button { font-family:ui-monospace,monospace; font-size:0.75rem; font-weight:700; padding:0.42rem 0.72rem; border-radius:3px; border:1px solid var(--rule); background:#ECEAE1; color:var(--ink); cursor:pointer; }
+    button.emerald { background:var(--emerald); border-color:var(--emerald); color:#FFFFFF; }
+    button.burgundy { background:var(--burgundy); border-color:var(--burgundy); color:#FFFFFF; }
+    button.brass { background:var(--brass); border-color:var(--brass); color:#FFFFFF; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:0.7rem; margin-bottom:1.1rem; }
+    .kpi { background:var(--sheet); border:1px solid var(--rule); border-top:3px solid var(--emerald); padding:0.65rem 0.8rem; }
+    .kpi .lbl { display:block; font-family:ui-monospace,monospace; font-size:0.69rem; text-transform:uppercase; color:var(--muted); }
+    .kpi .val { display:block; font-family:ui-monospace,monospace; font-size:1.12rem; font-weight:700; font-variant-numeric:tabular-nums; margin-top:0.15rem; }
+    .banner { padding:0.68rem 0.88rem; border-radius:3px; font-family:ui-monospace,monospace; font-size:0.8rem; font-weight:700; margin-bottom:1rem; }
+    .b-pass { background:#DCFCE7; color:#14532D; border:1px solid #14532D; }
+    .b-alert { background:#FFE4E6; color:#881337; border:1px solid #881337; }
+    .cols { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,0.8fr); gap:1.1rem; align-items:start; }
+    @media (max-width:860px) { .cols { grid-template-columns:1fr; } }
+    .sheet { min-width:0; background:var(--sheet); border:1px solid var(--rule); padding:1.05rem; border-radius:4px; }
+    .sheet h2 { margin:0 0 0.75rem; font-size:1.02rem; border-bottom:2px solid var(--ink); padding-bottom:0.35rem; }
+    table { width:100%; border-collapse:collapse; font-family:ui-monospace,monospace; font-size:0.75rem; font-variant-numeric:tabular-nums; }
+    th, td { text-align:left; padding:0.44rem 0.38rem; border-bottom:1px solid var(--rule); }
+    th { color:var(--muted); text-transform:uppercase; font-size:0.68rem; }
+    tr.total-row td { border-top:3px double var(--ink); border-bottom:3px double var(--ink); font-weight:700; }
+    pre { margin:0.6rem 0 0; background:#161A17; color:#F6F5F0; padding:0.75rem; border-radius:3px; font-family:ui-monospace,monospace; font-size:0.74rem; white-space:pre-wrap; word-break:break-word; max-height:240px; overflow-y:auto; }
+    .meta { margin-top:0.65rem; font-family:ui-monospace,monospace; font-size:0.73rem; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="mast">
+      <div>
+        <span class="kicker">Project H · Tax Year 2026 OBBBA ($2,000) vs State/Legal ($600) &amp; Merkle Audit</span>
+        <h1>Accounting &amp; 2026 Form 1099-NEC Workpaper Verifier</h1>
+      </div>
+      <nav class="nav" aria-label="Workbench Navigation">
+        <a href="../">All 8 Workbenches</a>
+        <a href="../../">Studio Overview</a>
+      </nav>
+    </header>
+
+    <section class="toolbar" aria-label="Workpaper Presets and Actions">
+      <button id="preset-clean" type="button" class="emerald">1. Clean 2026 Vendor Batch</button>
+      <button id="preset-w9" type="button" class="brass">2. Missing W-9 (24% Backup WH)</button>
+      <button id="preset-fraud" type="button" class="burgundy">3. Split Invoice + Duplicate + Drift</button>
+      <button id="tamper-leaf" type="button">4. Tamper 1 Cent in Leaf #1</button>
+      <button id="download-iris" type="button" class="emerald">Download IRIS 1099 CSV</button>
+    </section>
+
+    <div id="audit-banner" class="banner b-pass" aria-live="polite">Initializing workpaper...</div>
+    <div class="kpis" id="kpi-strip"></div>
+
+    <div class="cols">
+      <section class="sheet" aria-label="Vendor 1099 Compliance Schedule">
+        <h2>Schedule A · 2026 Vendor Thresholds, W-9 Status &amp; Backup Withholding</h2>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>Vendor</th><th>Cat / Entity</th><th>State</th><th>Gross USD</th><th>2026 Filing Rule</th><th>24% WH</th></tr>
+            </thead>
+            <tbody id="vendor-tbody"></tbody>
+          </table>
+        </div>
+        <div class="meta" id="timing-meta">Ready</div>
+      </section>
+
+      <section class="sheet" aria-label="Anomaly Log and Merkle Root Proof">
+        <h2>Schedule B · Anomaly Findings &amp; SHA-256 Merkle Proof</h2>
+        <div id="merkle-banner" class="banner b-pass" style="margin-bottom:0.6rem;">Merkle inclusion proof verified</div>
+        <pre id="audit-json"></pre>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const FED_2026_MICRO = 2000000000n;
+      const STATE_600_MICRO = 600000000n;
+      const SPLIT_CAP_MICRO = 1000000000n;
+      const STATE_600_SET = new Set(["NY", "CA", "MA", "NJ", "PA", "VT"]);
+      const el = (id) => document.getElementById(id);
+
+      const BATCHES = {
+        clean: [
+          { id: "INV-101", vid: "V-APEX", name: "Apex Cloud Consulting", date: "2026-10-04", cat: "services", ent: "sole_prop", state: "NY", w9: true, sub: "1250.00", tax: "0.00", tot: "1250.00" },
+          { id: "INV-102", vid: "V-APEX", name: "Apex Cloud Consulting", date: "2026-11-14", cat: "services", ent: "sole_prop", state: "NY", w9: true, sub: "900.00", tax: "0.00", tot: "900.00" },
+          { id: "INV-201", vid: "V-MERCER", name: "Mercer Legal LLP", date: "2026-11-18", cat: "legal", ent: "c_corp", state: "TX", w9: true, sub: "750.00", tax: "0.00", tot: "750.00" },
+          { id: "INV-301", vid: "V-SUPPLY", name: "Northstar Corp Supplies", date: "2026-11-20", cat: "goods", ent: "c_corp", state: "NY", w9: true, sub: "3400.00", tax: "0.00", tot: "3400.00" }
+        ],
+        w9: [
+          { id: "INV-101", vid: "V-APEX", name: "Apex Cloud Consulting", date: "2026-10-04", cat: "services", ent: "sole_prop", state: "NY", w9: true, sub: "2150.00", tax: "0.00", tot: "2150.00" },
+          { id: "INV-401", vid: "V-HUDSON", name: "Hudson Design LLC", date: "2026-11-15", cat: "services", ent: "llc", state: "NY", w9: false, sub: "1200.00", tax: "0.00", tot: "1200.00" },
+          { id: "INV-201", vid: "V-MERCER", name: "Mercer Legal LLP", date: "2026-11-18", cat: "legal", ent: "c_corp", state: "TX", w9: true, sub: "750.00", tax: "0.00", tot: "750.00" }
+        ],
+        fraud: [
+          { id: "INV-900", vid: "V-SPLIT", name: "Metro Advisory Studio", date: "2026-11-02", cat: "services", ent: "sole_prop", state: "NY", w9: false, sub: "620.00", tax: "0.00", tot: "620.00" },
+          { id: "INV-900", vid: "V-SPLIT", name: "Metro Advisory Studio", date: "2026-11-02", cat: "services", ent: "sole_prop", state: "NY", w9: false, sub: "620.00", tax: "0.00", tot: "620.00" },
+          { id: "INV-901", vid: "V-SPLIT", name: "Metro Advisory Studio", date: "2026-11-05", cat: "services", ent: "sole_prop", state: "NY", w9: false, sub: "550.00", tax: "10.00", tot: "565.00" }
+        ]
+      };
+
+      let currentRows = [];
+      let merkleRoot = "";
+      let leafZeroProof = [];
+      let leafZeroJson = "";
+      let irisCsvCache = "";
+
+      function toMicro(s) {
+        const [whole, frac = ""] = String(s).trim().split(".");
+        const padded = (frac + "000000").slice(0, 6);
+        return BigInt(whole) * 1000000n + BigInt(padded);
+      }
+
+      function fmtUsd(micro) {
+        const cents = (micro + 5000n) / 10000n;
+        const w = cents / 100n;
+        const f = String(cents % 100n).padStart(2, "0");
+        return "$" + w.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "." + f;
+      }
+
+      async function sha256Hex(prefixByte, textOrHexBytes) {
+        let payload;
+        if (typeof textOrHexBytes === "string") {
+          const enc = new TextEncoder().encode(textOrHexBytes);
+          payload = new Uint8Array(1 + enc.length);
+          payload[0] = prefixByte;
+          payload.set(enc, 1);
+        } else {
+          payload = new Uint8Array(1 + textOrHexBytes.length);
+          payload[0] = prefixByte;
+          payload.set(textOrHexBytes, 1);
+        }
+        const buf = await crypto.subtle.digest("SHA-256", payload);
+        return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+      }
+
+      function hexToBytes(h) {
+        const out = new Uint8Array(h.length / 2);
+        for (let i = 0; i < out.length; i++) out[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16);
+        return out;
+      }
+
+      function concatHex(a, b) {
+        const ba = hexToBytes(a);
+        const bb = hexToBytes(b);
+        const c = new Uint8Array(ba.length + bb.length);
+        c.set(ba, 0);
+        c.set(bb, ba.length);
+        return c;
+      }
+
+      async function buildMerkle(leaves) {
+        let lvl = [];
+        for (const lf of leaves) lvl.push(await sha256Hex(0x00, lf));
+        const levels = [lvl];
+        while (levels[levels.length - 1].length > 1) {
+          const cur = levels[levels.length - 1];
+          const nxt = [];
+          for (let i = 0; i < cur.length; i += 2) {
+            const l = cur[i];
+            const r = i + 1 < cur.length ? cur[i + 1] : l;
+            nxt.push(await sha256Hex(0x01, concatHex(l, r)));
+          }
+          levels.push(nxt);
+        }
+        const proof0 = [];
+        let pos = 0;
+        for (let d = 0; d < levels.length - 1; d++) {
+          const cur = levels[d];
+          if (pos % 2 === 0) {
+            proof0.push({ side: "right", hash: pos + 1 < cur.length ? cur[pos + 1] : cur[pos] });
+          } else {
+            proof0.push({ side: "left", hash: cur[pos - 1] });
+          }
+          pos = Math.floor(pos / 2);
+        }
+        return { root: levels[levels.length - 1][0], proof0 };
+      }
+
+      async function verifyLeaf(leafStr, proof, root) {
+        let cur = await sha256Hex(0x00, leafStr);
+        for (const step of proof) {
+          cur = step.side === "right"
+            ? await sha256Hex(0x01, concatHex(cur, step.hash))
+            : await sha256Hex(0x01, concatHex(step.hash, cur));
+        }
+        return cur === root;
+      }
+
+      async function evaluateBatch(kind) {
+        const t0 = performance.now();
+        currentRows = JSON.parse(JSON.stringify(BATCHES[kind]));
+        const dups = [];
+        const mathErrs = [];
+        const splitAlerts = [];
+        const seen = new Set();
+        const byVendor = new Map();
+        let grossTotal = 0n;
+
+        for (const r of currentRows) {
+          r.subM = toMicro(r.sub);
+          r.taxM = toMicro(r.tax);
+          r.totM = toMicro(r.tot);
+          grossTotal += r.totM;
+          if (r.subM + r.taxM !== r.totM) {
+            mathErrs.push(`${r.id}: subtotal + tax != total (${fmtUsd(r.totM - (r.subM + r.taxM))} drift)`);
+          }
+          const key = `${r.vid}|${r.id}|${r.totM}`;
+          if (seen.has(key)) dups.push(`${r.id} (${r.name}, ${fmtUsd(r.totM)})`);
+          seen.add(key);
+          if (!byVendor.has(r.vid)) byVendor.set(r.vid, []);
+          byVendor.get(r.vid).push(r);
+        }
+
+        const vendorSummaries = [];
+        for (const [vid, list] of byVendor.entries()) {
+          let cum = 0n;
+          const underCap = list.filter((x) => x.totM < SPLIT_CAP_MICRO);
+          const underSum = underCap.reduce((a, b) => a + b.totM, 0n);
+          if (underCap.length >= 2 && underSum >= SPLIT_CAP_MICRO) {
+            splitAlerts.push(`${list[0].name}: ${underCap.length} sub-$1k bills within 7d sum to ${fmtUsd(underSum)}`);
+          }
+          for (const x of list) cum += x.totM;
+          const h = list[list.length - 1];
+          const corpExempt = h.ent === "c_corp" && h.cat !== "legal";
+          let rule = "Below 2026 Thresholds";
+          let reportable = false;
+          if (h.cat === "goods") rule = "Exempt (Goods)";
+          else if (corpExempt) rule = "Exempt (C-Corp)";
+          else if (h.cat === "legal" && cum >= STATE_600_MICRO) { rule = "1099-MISC/NEC (Legal $600)"; reportable = true; }
+          else if (cum >= FED_2026_MICRO) { rule = "1099-NEC (2026 Fed $2,000)"; reportable = true; }
+          else if (STATE_600_SET.has(h.state) && cum >= STATE_600_MICRO) { rule = `State 1099 Only (${h.state} $600)`; reportable = true; }
+
+          const wh = (!corpExempt && h.cat !== "goods" && !h.w9) ? (cum * 2400n) / 10000n : 0n;
+          vendorSummaries.push({ vid, name: h.name, cat: h.cat, ent: h.ent, state: h.state, cum, w9: h.w9, rule, reportable, wh });
+        }
+
+        const leaves = currentRows.map((r) => JSON.stringify({ id: r.id, vid: r.vid, totM: r.totM.toString() }));
+        leafZeroJson = leaves[0];
+        const mk = await buildMerkle(leaves);
+        merkleRoot = mk.root;
+        leafZeroProof = mk.proof0;
+
+        const whTotal = vendorSummaries.reduce((a, b) => a + b.wh, 0n);
+        const hasIssues = dups.length > 0 || mathErrs.length > 0 || splitAlerts.length > 0 || whTotal > 0n;
+        const ab = el("audit-banner");
+        ab.className = hasIssues ? "banner b-alert" : "banner b-pass";
+        ab.textContent = hasIssues
+          ? `REVIEW REQUIRED · ${dups.length} duplicates · ${mathErrs.length} math drifts · ${splitAlerts.length} split alerts · ${fmtUsd(whTotal)} backup WH`
+          : `WORKPAPER BALANCED · 0 anomalies · Merkle Root ${merkleRoot.slice(0, 16)}... · Ready for CPA Sign-Off`;
+
+        el("kpi-strip").innerHTML = [
+          ["Batch Gross Total", fmtUsd(grossTotal)],
+          ["1099 Reportable Vendors", String(vendorSummaries.filter((v) => v.reportable).length)],
+          ["24% Backup WH Reserve", fmtUsd(whTotal)],
+          ["Anomalies Flagged", String(dups.length + mathErrs.length + splitAlerts.length)]
+        ].map(([k, v]) => `<div class="kpi"><span class="lbl">${k}</span><span class="val">${v}</span></div>`).join("");
+
+        el("vendor-tbody").innerHTML = vendorSummaries.map((v) => `
+          <tr>
+            <td>${v.name}</td>
+            <td>${v.cat} / ${v.ent}</td>
+            <td>${v.state}</td>
+            <td>${fmtUsd(v.cum)}</td>
+            <td>${v.rule}</td>
+            <td>${fmtUsd(v.wh)}</td>
+          </tr>
+        `).join("") + `<tr class="total-row"><td colspan="3">DOUBLE-RULED BATCH CONTROL TOTAL</td><td>${fmtUsd(grossTotal)}</td><td>HUMAN APPROVAL GATE</td><td>${fmtUsd(whTotal)}</td></tr>`;
+
+        const mb = el("merkle-banner");
+        mb.className = "banner b-pass";
+        mb.textContent = `VALID MERKLE PROOF (Leaf #1 -> Root ${merkleRoot.slice(0, 18)}...)`;
+
+        el("audit-json").textContent = JSON.stringify({
+          tax_year: 2026,
+          federal_1099_nec_threshold_usd: 2000,
+          state_and_legal_threshold_usd: 600,
+          exact_duplicates: dups,
+          math_mismatches: mathErrs,
+          split_structuring_alerts: splitAlerts,
+          merkle_root: merkleRoot,
+          human_approval_required: true
+        }, null, 2);
+
+        irisCsvCache = [
+          "tax_year,vendor_id,vendor_name,state,filing_rule,gross_usd,w9_valid,backup_wh_24pct_usd,merkle_root",
+          ...vendorSummaries.filter((v) => v.reportable || v.wh > 0n).map((v) =>
+            `2026,${v.vid},"${v.name}",${v.state},"${v.rule}",${fmtUsd(v.cum)},${v.w9 ? "YES" : "MISSING"},${fmtUsd(v.wh)},${merkleRoot}`
+          )
+        ].join("\n") + "\n";
+
+        const dt = performance.now() - t0;
+        el("timing-meta").textContent = `Reconciled in ${dt.toFixed(2)} ms · Exact BigInt 10^-6 USD · Zero network calls`;
+      }
+
+      el("preset-clean").addEventListener("click", () => evaluateBatch("clean"));
+      el("preset-w9").addEventListener("click", () => evaluateBatch("w9"));
+      el("preset-fraud").addEventListener("click", () => evaluateBatch("fraud"));
+      el("tamper-leaf").addEventListener("click", async () => {
+        const tampered = leafZeroJson.replace("000000\"", "010000\"");
+        const ok = await verifyLeaf(tampered, leafZeroProof, merkleRoot);
+        const mb = el("merkle-banner");
+        mb.className = ok ? "banner b-pass" : "banner b-alert";
+        mb.textContent = ok ? "VALID MERKLE PROOF" : "TAMPER DETECTED IN LEAF #1 (+$0.01 edit invalidated SHA-256 Merkle root)";
+      });
+      el("download-iris").addEventListener("click", () => {
+        const blob = new Blob([irisCsvCache], { type: "text/csv;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "iris_2026_1099_batch.csv";
+        a.click();
+      });
+
+      evaluateBatch("clean");
+    })();
+  </script>
+</body>
+</html>

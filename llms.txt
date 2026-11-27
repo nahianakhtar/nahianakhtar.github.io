@@ -12,6 +12,7 @@
 - Per-Monitor V2 UIA DPI Coordinate Metrology Bench: https://nahianakhtar.github.io/demos/uia-metrology/
 - MCP 2025-11-25 Billing Firewall, x402 Meter & SHA-256 Audit Chain: https://nahianakhtar.github.io/demos/mcp-firewall/
 - LLM Cost and Latency Profiler for OpenTelemetry GenAI traces: https://nahianakhtar.github.io/demos/llm-cost-profiler/ (CLI: https://github.com/nahianakhtar/otlp-llm-cost-profiler-rs)
+- 2026 Accounting & IRS 1099-NEC ($2,000 OBBBA / $600 State) Merkle Workpaper Verifier: https://nahianakhtar.github.io/demos/tax-doc-verifier/ (Repo: https://github.com/nahianakhtar/accounting-tax-doc-verifier)
 
 ## Free Local Browser Calculators (/tools/)
 - Tools Directory: https://nahianakhtar.github.io/tools/
@@ -33,3 +34,5 @@
 - https://github.com/nahianakhtar/polyglot-agent-runtime-rs (Rust 2021 + ISO C11 FFI + wasm32 64B cache-line ring, Kahn DAG, P2 quantiles)
 - https://github.com/nahianakhtar/fullstack-rag-eval-studio (Node.js 22 ESM HTTP/SSE eval gateway, W3C OTLP traces, sliding-window rate limiter)
 - https://github.com/nahianakhtar/zero-to-code-systems-lab (Air-gapped CSP CS & touch-typing trainer + Windows x64 WebView2 Per-Monitor V2 app)
+- https://github.com/nahianakhtar/mcp-billing-firewall (Python 3.12 MCP 2025-11-25 security firewall, HTTP 402/x402 micro-credit proxy, Polar/Stripe webhooks, SHA-256 chain)
+- https://github.com/nahianakhtar/accounting-tax-doc-verifier (Python 3.12 2026 IRS 1099-NEC $2,000 OBBBA / $600 state verifier, 128-bit ledger math, 24% W-9 backup WH, SHA-256 Merkle proofs)

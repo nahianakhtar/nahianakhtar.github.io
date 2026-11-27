@@ -76,8 +76,11 @@ function render(report, elapsed) {
   } catch (e) {
     problems.push(e.message);
   }
-  const p95Limit = Number($("maxP95").value);
-  if (Number.isFinite(p95Limit) && report.worstP95 > p95Limit * 1e6) {
+  const p95Raw = $("maxP95").value.trim();
+  const p95Limit = Number(p95Raw);
+  if (!/^[0-9]+(?:\.[0-9]+)?$/.test(p95Raw) || !Number.isFinite(p95Limit) || p95Limit <= 0 || p95Limit > Number.MAX_SAFE_INTEGER / 1e6) {
+    problems.push("p95 budget must be a finite positive number of milliseconds");
+  } else if (report.worstP95 > p95Limit * 1e6) {
     problems.push(`worst p95 ${ms(report.worstP95)} ms is over ${p95Limit} ms (exit 4)`);
   }
   if (report.unpriced.length) problems.push(`no price for ${report.unpriced.join(", ")}`);
@@ -96,7 +99,12 @@ function run() {
     lastReport = report;
     render(report, performance.now() - t0);
   } catch (e) {
+    lastReport = null;
     $("err").textContent = e.message;
+    $("gate").className = "gate fail";
+    $("gate").textContent = "Invalid input — no valid current report";
+    $("rows").replaceChildren();
+    for (const id of ["kCost", "kCalls", "kP95", "kTime"]) $(id).textContent = "—";
   }
 }
 

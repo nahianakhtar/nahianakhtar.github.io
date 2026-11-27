@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Interactive 2026 Accounting &amp; IRS 1099-NEC ($2,000 OBBBA vs $600 State/Legal) Workpaper Verifier, 24% W-9 Backup Withholding, Split-Invoice Detector, and SHA-256 Merkle Proof Bench." />
+  <meta name="description" content="Interactive 2026 Accounting &amp; IRS 1099-NEC ($2,000 OBBBA vs $600 Attorney Gross Proceeds) Workpaper Verifier, 24% W-9 Backup Withholding, Split-Invoice Detector, and SHA-256 Merkle Proof Bench." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314532D'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='monospace' font-weight='bold' font-size='16' fill='%23F6F5F0'%3ET%3C/text%3E%3C/svg%3E" />
   <title>2026 Tax &amp; 1099-NEC Merkle Workpaper Verifier</title>
   <style>
@@ -41,10 +41,11 @@
   </style>
 </head>
 <body>
+  <div style="padding:1rem;background:#fff4d6;color:#392b00">Review workpaper only. Attorney service fees: $2,000; attorney gross proceeds: $600. State rules are not evaluated. Withholding is an exposure estimate. CSV is not an IRS-certified upload.</div>
   <main class="wrap">
     <header class="mast">
       <div>
-        <span class="kicker">Project H · Tax Year 2026 OBBBA ($2,000) vs State/Legal ($600) &amp; Merkle Audit</span>
+        <span class="kicker">Project H · Tax Year 2026 OBBBA ($2,000) vs Attorney Gross Proceeds ($600) &amp; Merkle Audit</span>
         <h1>Accounting &amp; 2026 Form 1099-NEC Workpaper Verifier</h1>
       </div>
       <nav class="nav" aria-label="Workbench Navigation">
@@ -58,7 +59,7 @@
       <button id="preset-w9" type="button" class="brass">2. Missing W-9 (24% Backup WH)</button>
       <button id="preset-fraud" type="button" class="burgundy">3. Split Invoice + Duplicate + Drift</button>
       <button id="tamper-leaf" type="button">4. Tamper 1 Cent in Leaf #1</button>
-      <button id="download-iris" type="button" class="emerald">Download IRIS 1099 CSV</button>
+      <button id="download-iris" type="button" class="emerald">Download Review CSV</button>
     </section>
 
     <div id="audit-banner" class="banner b-pass" aria-live="polite">Initializing workpaper...</div>
@@ -91,7 +92,7 @@
       const FED_2026_MICRO = 2000000000n;
       const STATE_600_MICRO = 600000000n;
       const SPLIT_CAP_MICRO = 1000000000n;
-      const STATE_600_SET = new Set(["NY", "CA", "MA", "NJ", "PA", "VT"]);
+      const STATE_600_SET = new Set(); // State rules require separate verified configuration.
       const el = (id) => document.getElementById(id);
 
       const BATCHES = {
@@ -236,12 +237,12 @@
           }
           for (const x of list) cum += x.totM;
           const h = list[list.length - 1];
-          const corpExempt = h.ent === "c_corp" && h.cat !== "legal";
+          const corpExempt = ["c_corp", "s_corp"].includes(h.ent) && !["legal", "attorney_gross_proceeds"].includes(h.cat);
           let rule = "Below 2026 Thresholds";
           let reportable = false;
           if (h.cat === "goods") rule = "Exempt (Goods)";
           else if (corpExempt) rule = "Exempt (C-Corp)";
-          else if (h.cat === "legal" && cum >= STATE_600_MICRO) { rule = "1099-MISC/NEC (Legal $600)"; reportable = true; }
+          else if (h.cat === "attorney_gross_proceeds" && cum >= STATE_600_MICRO) { rule = "1099-MISC Box 10 (Gross Proceeds $600)"; reportable = true; }
           else if (cum >= FED_2026_MICRO) { rule = "1099-NEC (2026 Fed $2,000)"; reportable = true; }
           else if (STATE_600_SET.has(h.state) && cum >= STATE_600_MICRO) { rule = `State 1099 Only (${h.state} $600)`; reportable = true; }
 
@@ -288,7 +289,8 @@
         el("audit-json").textContent = JSON.stringify({
           tax_year: 2026,
           federal_1099_nec_threshold_usd: 2000,
-          state_and_legal_threshold_usd: 600,
+          attorney_gross_proceeds_threshold_usd: 600,
+          state_rules_evaluated: false,
           exact_duplicates: dups,
           math_mismatches: mathErrs,
           split_structuring_alerts: splitAlerts,

@@ -22,5 +22,8 @@ jobs:
       - name: Check ES2022 module syntax
         run: node --check app.js
 
+      - name: LLM cost profiler logic tests
+        run: node --test demos/llm-cost-profiler/test_profiler.mjs
+
       - name: Verify showcase links, 12-dim matrix & MoE/RRF simulator
         run: node scripts/verify_showcase.mjs

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Paste OpenTelemetry GenAI traces and get exact cost per model, p50, p95 and p99 latency, time to first chunk and prompt cache hit ratio. Runs entirely in your browser." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2317191C'/%3E%3Cpath d='M5 22 L11 14 L16 18 L22 8 L27 12' stroke='%23F2A900' stroke-width='3' fill='none'/%3E%3C/svg%3E" />
+  <title>LLM Cost and Latency Profiler</title>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"WebApplication","name":"LLM Cost and Latency Profiler","applicationCategory":"DeveloperApplication","operatingSystem":"Any (browser)","description":"Exact cost, latency quantiles and prompt cache hit ratio from OpenTelemetry GenAI traces, computed locally in the browser.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"codeRepository":"https://github.com/nahianakhtar/otlp-llm-cost-profiler-rs"}
+  </script>
+  <style>
+    :root { --bg:#17191C; --panel:#202327; --line:#33373D; --text:#E7E5E4; --dim:#A8A29E; --amber:#F2A900; --mint:#5EEAD4; --red:#F87171; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; line-height:1.5; overflow-x:clip; }
+    .wrap { max-width:1180px; margin:0 auto; padding:1.6rem 1.2rem 3rem; }
+    header { display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap; border-bottom:2px solid var(--amber); padding-bottom:0.9rem; margin-bottom:1.3rem; }
+    .kicker { color:var(--amber); font-size:0.74rem; letter-spacing:0.08em; text-transform:uppercase; }
+    h1 { margin:0.2rem 0 0; font-size:clamp(1.3rem,2.6vw,1.9rem); font-weight:700; }
+    .sub { color:var(--dim); font-size:0.86rem; margin:0.35rem 0 0; max-width:62ch; }
+    nav { display:flex; gap:0.5rem; flex-wrap:wrap; }
+    nav a { color:var(--text); text-decoration:none; border:1px solid var(--line); padding:0.3rem 0.65rem; border-radius:4px; font-size:0.78rem; }
+    nav a:hover { border-color:var(--amber); }
+    .grid { display:grid; grid-template-columns:minmax(0,0.9fr) minmax(0,1.1fr); gap:1.1rem; align-items:start; }
+    @media (max-width:880px) { .grid { grid-template-columns:1fr; } }
+    section { min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:1rem; }
+    h2 { margin:0 0 0.7rem; font-size:0.9rem; color:var(--amber); text-transform:uppercase; letter-spacing:0.06em; }
+    label { display:block; font-size:0.74rem; color:var(--dim); margin:0.7rem 0 0.25rem; }
+    textarea, input { width:100%; background:#141619; color:var(--text); border:1px solid var(--line); border-radius:4px; padding:0.5rem; font:inherit; font-size:0.76rem; }
+    textarea { resize:vertical; }
+    #traces { min-height:150px; }
+    #prices { min-height:92px; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; }
+    .btns { display:flex; flex-wrap:wrap; gap:0.45rem; margin-top:0.85rem; }
+    button { font:inherit; font-size:0.76rem; padding:0.45rem 0.75rem; border-radius:4px; border:1px solid var(--line); background:#2A2E33; color:var(--text); cursor:pointer; }
+    button.go { background:var(--amber); border-color:var(--amber); color:#17191C; font-weight:700; }
+    button:hover { border-color:var(--amber); }
+    .file { font-size:0.74rem; color:var(--dim); margin-top:0.6rem; }
+    .file input { width:auto; border:none; padding:0; background:none; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:0.6rem; margin-bottom:0.9rem; }
+    .kpi { border:1px solid var(--line); border-radius:5px; padding:0.6rem 0.7rem; background:#1A1D20; min-width:0; }
+    .kpi span { display:block; font-size:0.68rem; color:var(--dim); text-transform:uppercase; letter-spacing:0.05em; }
+    .kpi b { display:block; font-size:1.15rem; margin-top:0.15rem; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+    .gate { padding:0.6rem 0.75rem; border-radius:5px; font-size:0.8rem; font-weight:700; margin-bottom:0.9rem; border:1px solid; }
+    .pass { color:var(--mint); border-color:var(--mint); background:rgba(94,234,212,0.08); }
+    .fail { color:var(--red); border-color:var(--red); background:rgba(248,113,113,0.08); }
+    .tbl { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:0.74rem; font-variant-numeric:tabular-nums; }
+    th, td { padding:0.42rem 0.45rem; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; }
+    th:first-child, td:first-child { text-align:left; }
+    th { color:var(--dim); font-weight:600; }
+    .bar { height:6px; background:#2A2E33; border-radius:3px; margin-top:4px; }
+    .bar i { display:block; height:6px; background:var(--amber); border-radius:3px; }
+    .note { color:var(--dim); font-size:0.74rem; margin-top:0.8rem; }
+    .err { color:var(--red); font-size:0.76rem; margin-top:0.6rem; min-height:1em; }
+    .cli { margin-top:1.1rem; }
+    pre { background:#141619; border:1px solid var(--line); border-radius:4px; padding:0.7rem; font-size:0.74rem; overflow-x:auto; margin:0.4rem 0 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <span class="kicker">OpenTelemetry GenAI · exact integer money · runs in your browser</span>
+        <h1>LLM Cost and Latency Profiler</h1>
+        <p class="sub">Paste spans from any app that follows the OpenTelemetry GenAI conventions. You get cost per model to the micro dollar, latency quantiles, time to first chunk and how much of your input came from the prompt cache. Nothing leaves this page.</p>
+      </div>
+      <nav>
+        <a href="../">All demos</a>
+        <a href="https://github.com/nahianakhtar/otlp-llm-cost-profiler-rs">Source and CLI</a>
+      </nav>
+    </header>
+
+    <div class="grid">
+      <section>
+        <h2>Input</h2>
+        <label for="traces">OTLP JSON traces (an ExportTraceServiceRequest, an array of them, or JSON lines)</label>
+        <textarea id="traces" spellcheck="false"></textarea>
+        <div class="file"><label for="file">or load a file from your machine</label><input id="file" type="file" accept=".json,.jsonl,.txt" /></div>
+        <label for="prices">Prices, USD per one million tokens (model,input,output,cache_read,cache_write; a trailing * matches by prefix)</label>
+        <textarea id="prices" spellcheck="false"></textarea>
+        <div class="row">
+          <div><label for="maxCost">Cost budget, USD</label><input id="maxCost" inputmode="decimal" value="4.00" /></div>
+          <div><label for="maxP95">p95 budget, ms</label><input id="maxP95" inputmode="numeric" value="30000" /></div>
+        </div>
+        <div class="btns">
+          <button class="go" id="run" type="button">Profile traces</button>
+          <button id="sample" type="button">New sample traffic</button>
+          <button id="nocache" type="button">Same traffic, cache off</button>
+          <button id="csv" type="button">Download CSV</button>
+        </div>
+        <div class="err" id="err" role="alert"></div>
+        <p class="note">The sample uses placeholder model names and example prices. Put your vendor's current list prices in the price box for real numbers.</p>
+      </section>
+
+      <section>
+        <h2>Result</h2>
+        <div class="kpis">
+          <div class="kpi"><span>Total cost</span><b id="kCost">0</b></div>
+          <div class="kpi"><span>Model calls</span><b id="kCalls">0</b></div>
+          <div class="kpi"><span>Worst p95</span><b id="kP95">0</b></div>
+          <div class="kpi"><span>Computed in</span><b id="kTime">0</b></div>
+        </div>
+        <div class="gate pass" id="gate">Within budget</div>
+        <div class="tbl">
+          <table>
+            <thead><tr><th>Model</th><th>Calls</th><th>Input</th><th>Output</th><th>Cache</th><th>Cost USD</th><th>p50 ms</th><th>p95 ms</th><th>p99 ms</th><th>TTFC p95</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="cli">
+          <h2>Same check in CI</h2>
+          <pre>llmprof report traces.json --prices prices.csv \
+  --max-cost-usd <span id="cliCost">4.00</span> --max-p95-ms <span id="cliP95">30000</span>
+# exit 3 when over the cost budget, exit 4 when p95 is too slow</pre>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

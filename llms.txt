@@ -11,6 +11,7 @@
 - Aho-Corasick Guardrail Automaton, SimHash & 120-Case Eval: https://nahianakhtar.github.io/demos/guardrail-automaton/
 - Per-Monitor V2 UIA DPI Coordinate Metrology Bench: https://nahianakhtar.github.io/demos/uia-metrology/
 - MCP 2025-11-25 Billing Firewall, x402 Meter & SHA-256 Audit Chain: https://nahianakhtar.github.io/demos/mcp-firewall/
+- LLM Cost and Latency Profiler for OpenTelemetry GenAI traces: https://nahianakhtar.github.io/demos/llm-cost-profiler/ (CLI: https://github.com/nahianakhtar/otlp-llm-cost-profiler-rs)
 
 ## Free Local Browser Calculators (/tools/)
 - Tools Directory: https://nahianakhtar.github.io/tools/

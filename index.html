@@ -47,9 +47,9 @@
         <span class="brand-mono">nahianakhtar</span><span class="brand-prompt"> · engineering studio</span>
       </a>
       <nav class="nav-links" aria-label="Primary Navigation">
-        <a href="#repositories">Verified Proof (7)</a>
+        <a href="#repositories">Verified Proof (11)</a>
         <a href="#simulator">Interactive Lab</a>
-        <a href="demos/">5 Live Workbenches</a>
+        <a href="demos/">8 Live Workbenches</a>
         <a href="tools/">Tools (4)</a>
         <a href="articles/">Articles (4)</a>
         <a href="#competency-matrix">Capabilities</a>
@@ -75,7 +75,7 @@
         <div class="hero-actions">
           <a href="#repositories" class="btn-primary">Inspect Verified Proof Repos</a>
           <a href="#simulator" class="btn-secondary">Open Interactive Lab <kbd>/</kbd></a>
-          <a href="demos/" class="btn-secondary">5 Standalone Workbenches</a>
+          <a href="demos/" class="btn-secondary">8 Standalone Workbenches</a>
         </div>
       </div>
 
@@ -138,10 +138,114 @@
           <span class="section-kicker">VERIFIED OPEN-SOURCE PROOF</span>
           <h2 id="repos-heading">Production MCP &amp; Automation Repositories</h2>
         </div>
-        <p class="section-sub">Seven MIT-licensed, CI-verified repositories led by three client-ready Python &amp; TypeScript MCP + CLI automation showcases alongside Rust/C11 and Node.js runtimes.</p>
+        <p class="section-sub">Eleven MIT-licensed, CI-verified repositories spanning Rust OpenTelemetry profiling, MCP 2025-11-25 security and billing proxies, 2026 IRS 1099 verification, hybrid retrieval, and C11 FFI runtimes.</p>
       </div>
 
       <div class="repo-grid">
+        <!-- Flagship A: otlp-llm-cost-profiler-rs -->
+        <article class="bento-card repo-card repo-card-featured">
+          <div class="repo-top">
+            <div>
+              <span class="repo-lang lang-rs">Featured Flagship · Rust 2021 · OpenTelemetry GenAI</span>
+              <h3><a href="https://github.com/nahianakhtar/otlp-llm-cost-profiler-rs" target="_blank" rel="noopener noreferrer">otlp-llm-cost-profiler-rs</a></h3>
+            </div>
+            <a href="https://github.com/nahianakhtar/otlp-llm-cost-profiler-rs" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open otlp-llm-cost-profiler-rs on GitHub">GitHub ↗</a>
+          </div>
+          <p class="repo-desc">
+            <strong>Problem solved:</strong> Reads OpenTelemetry GenAI trace spans and computes exact LLM spend in integer picodollars, per-model <code>p50</code>/<code>p95</code>/<code>p99</code> tail latency, time to first chunk, and prompt-cache savings, with an exit-code CI budget gate and prebuilt Linux, Windows, and macOS binaries (<code>v0.1.1</code>).
+          </p>
+          <div class="badge-row">
+            <span class="stack-badge">Integer Picodollars</span>
+            <span class="stack-badge">OTLP HTTP + JSONL</span>
+            <span class="stack-badge">CI Budget Gate</span>
+            <span class="stack-badge">3-OS Releases + CI</span>
+          </div>
+          <dl class="metric-grid">
+            <div><dt>Money Precision</dt><dd>10⁻¹² USD Integer</dd></div>
+            <div><dt>Sample Cache Cut</dt><dd>$5.41 → $2.84</dd></div>
+            <div><dt>Exporter Check</dt><dd>Live OTel Python CI</dd></div>
+            <div><dt>Interactive Bench</dt><dd><a href="demos/llm-cost-profiler/">Open Cost Profiler ↗</a></dd></div>
+          </dl>
+        </article>
+
+        <!-- Flagship B: mcp-billing-firewall -->
+        <article class="bento-card repo-card repo-card-featured">
+          <div class="repo-top">
+            <div>
+              <span class="repo-lang lang-py">Featured Flagship · Python 3.12 · MCP 2025-11-25 Security</span>
+              <h3><a href="https://github.com/nahianakhtar/mcp-billing-firewall" target="_blank" rel="noopener noreferrer">mcp-billing-firewall</a></h3>
+            </div>
+            <a href="https://github.com/nahianakhtar/mcp-billing-firewall" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open mcp-billing-firewall on GitHub">GitHub ↗</a>
+          </div>
+          <p class="repo-desc">
+            <strong>Problem solved:</strong> Sits in front of MCP servers to block prompt injection and private-network SSRF, meter per-call micro-credits via atomic SQLite WAL locks (<code>HTTP 402</code> / <code>x402</code>), verify Stripe and Polar HMAC webhooks, and record a SHA-256 hash chain (<code>v1.0.0</code>).
+          </p>
+          <div class="badge-row">
+            <span class="stack-badge">mypy --strict</span>
+            <span class="stack-badge">HTTP 402 Metering</span>
+            <span class="stack-badge">SSRF + Injection Block</span>
+            <span class="stack-badge">SHA-256 Audit Chain</span>
+          </div>
+          <dl class="metric-grid">
+            <div><dt>Concurrency Gate</dt><dd>12-Thread Race Test</dd></div>
+            <div><dt>Webhook Auth</dt><dd>Stripe + Polar HMAC</dd></div>
+            <div><dt>Deploy Target</dt><dd>CLI + Vercel ASGI</dd></div>
+            <div><dt>Interactive Bench</dt><dd><a href="demos/mcp-firewall/">Open Firewall Demo ↗</a></dd></div>
+          </dl>
+        </article>
+
+        <!-- Flagship C: accounting-tax-doc-verifier -->
+        <article class="bento-card repo-card repo-card-featured">
+          <div class="repo-top">
+            <div>
+              <span class="repo-lang lang-py">Featured Flagship · Python 3.12 · 2026 IRS 1099 &amp; Ledger</span>
+              <h3><a href="https://github.com/nahianakhtar/accounting-tax-doc-verifier" target="_blank" rel="noopener noreferrer">accounting-tax-doc-verifier</a></h3>
+            </div>
+            <a href="https://github.com/nahianakhtar/accounting-tax-doc-verifier" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open accounting-tax-doc-verifier on GitHub">GitHub ↗</a>
+          </div>
+          <p class="repo-desc">
+            <strong>Problem solved:</strong> Audits AP ledgers against 2026 federal 1099-NEC (<code>$2,000</code> OBBBA) and <code>$600</code> attorney gross-proceeds rules using 128-bit micro-dollar arithmetic, <code>24%</code> missing W-9 backup withholding calculations, split-invoice detection, and SHA-256 Merkle proofs over MCP <code>2025-11-25</code>.
+          </p>
+          <div class="badge-row">
+            <span class="stack-badge">19 offline tests</span>
+            <span class="stack-badge">2026 1099 Rules</span>
+            <span class="stack-badge">24% W-9 Withholding</span>
+            <span class="stack-badge">SHA-256 Merkle Tree</span>
+          </div>
+          <dl class="metric-grid">
+            <div><dt>Type Safety</dt><dd>mypy --strict (0 errs)</dd></div>
+            <div><dt>Money Unit</dt><dd>10⁻⁶ USD Integer</dd></div>
+            <div><dt>Split Detector</dt><dd>48h Rolling Window</dd></div>
+            <div><dt>Interactive Bench</dt><dd><a href="demos/tax-doc-verifier/">Open 1099 Verifier ↗</a></dd></div>
+          </dl>
+        </article>
+
+        <!-- Flagship D: invoice-audit-mcp-saas -->
+        <article class="bento-card repo-card">
+          <div class="repo-top">
+            <div>
+              <span class="repo-lang lang-py">Python 3.12 · Streamable HTTP MCP + GitHub Action</span>
+              <h3><a href="https://github.com/nahianakhtar/invoice-audit-mcp-saas" target="_blank" rel="noopener noreferrer">invoice-audit-mcp-saas</a></h3>
+            </div>
+            <a href="https://github.com/nahianakhtar/invoice-audit-mcp-saas" target="_blank" rel="noopener noreferrer" class="repo-link" aria-label="Open invoice-audit-mcp-saas on GitHub">GitHub ↗</a>
+          </div>
+          <p class="repo-desc">
+            Zero-dependency 128-bit invoice reconciliation REST API, Streamable HTTP MCP <code>2025-11-25</code> server, and reusable GitHub Action catching line-item math mismatches, duplicate bills, and tax-rate drift with SHA-256 Merkle proofs.
+          </p>
+          <div class="badge-row">
+            <span class="stack-badge">REST + MCP HTTP</span>
+            <span class="stack-badge">HTTP 402 Credits</span>
+            <span class="stack-badge">Stripe Webhooks</span>
+            <span class="stack-badge">GitHub Action v1</span>
+          </div>
+          <dl class="metric-grid">
+            <div><dt>Arithmetic</dt><dd>128-Bit Micro-USD</dd></div>
+            <div><dt>Audit Output</dt><dd>SHA-256 Merkle Root</dd></div>
+            <div><dt>CI Integration</dt><dd>Composite Action</dd></div>
+            <div><dt>Calculator</dt><dd><a href="tools/benford-invoice-audit/">Open Benford Tool ↗</a></dd></div>
+          </dl>
+        </article>
+
         <!-- Repo 1: mcp-moe-hybrid-sdk -->
         <article class="bento-card repo-card repo-card-featured">
           <div class="repo-top">
@@ -1628,6 +1732,10 @@
         <strong>Nahian Akhtar</strong> · Systems, Polyglot SDK &amp; Applied AI Engineer · New York, NY
       </div>
       <div class="footer-links">
+        <a href="https://github.com/nahianakhtar/otlp-llm-cost-profiler-rs" target="_blank" rel="noopener noreferrer">otlp-llm-cost-profiler-rs</a>
+        <a href="https://github.com/nahianakhtar/mcp-billing-firewall" target="_blank" rel="noopener noreferrer">mcp-billing-firewall</a>
+        <a href="https://github.com/nahianakhtar/accounting-tax-doc-verifier" target="_blank" rel="noopener noreferrer">accounting-tax-doc-verifier</a>
+        <a href="https://github.com/nahianakhtar/invoice-audit-mcp-saas" target="_blank" rel="noopener noreferrer">invoice-audit-mcp-saas</a>
         <a href="https://github.com/nahianakhtar/mcp-moe-hybrid-sdk" target="_blank" rel="noopener noreferrer">mcp-moe-hybrid-sdk</a>
         <a href="https://github.com/nahianakhtar/mcp-automation-demo" target="_blank" rel="noopener noreferrer">mcp-automation-demo</a>
         <a href="https://github.com/nahianakhtar/api-glue-mcp" target="_blank" rel="noopener noreferrer">api-glue-mcp</a>

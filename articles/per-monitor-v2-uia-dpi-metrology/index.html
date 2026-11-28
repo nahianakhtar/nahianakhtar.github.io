@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Exact CSS-to-physical screen coordinate mapping across 96 to 216 DPI displays without breaking browser foreground focus." />
+  <meta name="description" content="Exact CSS to physical screen coordinate mapping across 96 to 216 DPI displays without breaking browser foreground focus." />
   <link rel="canonical" href="https://nahianakhtar.github.io/articles/per-monitor-v2-uia-dpi-metrology/" />
   <title>Per-Monitor V2 DPI Coordinate Metrology for Reliable Windows UIA Automation | Nahian Akhtar</title>
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Per-Monitor V2 DPI Coordinate Metrology for Reliable Windows UIA Automation", "author": {"@type": "Person", "name": "Nahian Akhtar", "url": "https://nahianakhtar.github.io/"}, "url": "https://nahianakhtar.github.io/articles/per-monitor-v2-uia-dpi-metrology/", "description": "Exact CSS-to-physical screen coordinate mapping across 96 to 216 DPI displays without breaking browser foreground focus."}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Per-Monitor V2 DPI Coordinate Metrology for Reliable Windows UIA Automation", "author": {"@type": "Person", "name": "Nahian Akhtar", "url": "https://nahianakhtar.github.io/"}, "url": "https://nahianakhtar.github.io/articles/per-monitor-v2-uia-dpi-metrology/", "description": "Exact CSS to physical screen coordinate mapping across 96 to 216 DPI displays without breaking browser foreground focus."}</script>
   <style>
   :root { --bg:#FAF8F4; --surface:#FFFFFF; --ink:#111315; --muted:#4B5563; --forest:#1B4332; --rule:rgba(17,19,21,0.14); }
   * { box-sizing:border-box; }
@@ -46,7 +46,7 @@
       <p>Automated desktop and browser tests frequently work at <code>100%</code> scaling (<code>96 DPI</code>) and miss controls by 40 to 150 pixels the moment a user runs a primary display at <code>125%</code> (<code>120 DPI</code>), <code>150%</code> (<code>144 DPI</code>), or spans an external monitor. The root cause is mixing logical CSS pixels (<code>window.devicePixelRatio</code>), DPI-virtualized Win32 client coordinates, and physical screen coordinates reported by UI Automation (<code>UIA</code>).</p>
       <h2>1. Declare Per-Monitor V2 Context Before Window Creation</h2>
       <p>Every native Windows automation probe or desktop shell (<code>ZeroToCodeLab.exe</code> and <code>UiaDpiVerifier.exe</code>) must call <code>SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)</code> before allocating HWNDs or message loops. Without Per-Monitor V2, Windows bitmap-scales UIA bounding rectangles transparently and returns stale coordinates relative to system DPI.</p>
-      <h2>2. Exact Logical-to-Physical Projection</h2>
+      <h2>2. Exact Logical to Physical Projection</h2>
       <p>Inside a Chromium/Edge or WebView2 client area (<code>Chrome Legacy Window</code> / <code>Chrome_WidgetWin_1</code>):</p>
       <ul>
       <li>Scale factor equals <code>dpi / 96.0</code> (for example, <code>120 / 96 = 1.2500</code>).</li>
